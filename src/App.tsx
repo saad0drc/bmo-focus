@@ -50,15 +50,9 @@ export default function App() {
   };
 
   // Refs so the timer callback always reads current values without re-subscribing
-  const modeRef = useRef<TimerMode>('focus');
   const settingsRef = useRef<TimerSettings>(DEFAULT_SETTINGS);
   const activeTaskIdRef = useRef<string | null>(null);
   const tasksRef = useRef<Task[]>([]);
-  // Refs for timer control functions — populated after useTimer call below
-  const setModeRef = useRef<(m: TimerMode) => void>(() => {});
-  const startTimerRef = useRef<() => void>(() => {});
-  // Tracks how many focus sessions completed in the current round (for long-break logic)
-  const focusSessionCountRef = useRef(0);
 
   useEffect(() => { activeTaskIdRef.current = activeTaskId; }, [activeTaskId]);
   useEffect(() => { tasksRef.current = tasks; }, [tasks]);
@@ -75,24 +69,14 @@ export default function App() {
     }
   }, [emotion]);
 
-  const handleTimerComplete = useCallback(() => {
-    const mode = modeRef.current;
+  const handleTimerComplete = useCallback((completedMode: TimerMode) => {
     const s = settingsRef.current;
 
     // Local date string (avoids UTC offset bug)
     const now = new Date();
     const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
 
-    const scheduleAdvance = (nextMode: TimerMode, delay = 2800) => {
-      setTimeout(() => {
-        playSound.transition();
-        setModeRef.current(nextMode);
-        setTimeout(() => startTimerRef.current(), 900);
-      }, delay);
-    };
-
-    if (mode === 'focus') {
-      focusSessionCountRef.current += 1;
+    if (completedMode === 'focus') {
       const taskId = activeTaskIdRef.current;
       const duration = s.focus;
 
@@ -117,34 +101,25 @@ export default function App() {
         flashEmotion('success');
       }
 
-      // Decide break type: long every N sessions (use task setting or default 4)
-      const task = tasksRef.current.find(t => t.id === activeTaskIdRef.current);
-      const longBreakEvery = task?.settings?.sessionsPerRound ?? 4;
-      const nextMode: TimerMode =
-        focusSessionCountRef.current % longBreakEvery === 0 ? 'longBreak' : 'shortBreak';
-
-      scheduleAdvance(nextMode);
-
-    } else if (mode === 'shortBreak') {
+    } else if (completedMode === 'shortBreak') {
       playSound.breakComplete();
       flashEmotion('idle');
-      scheduleAdvance('focus', 2000);
 
     } else {
       // longBreak
       playSound.longBreakComplete();
       flashEmotion('idle');
-      focusSessionCountRef.current = 0; // reset round counter after long break
-      scheduleAdvance('focus', 2500);
     }
+
+    // Play transition sound after the completion fanfare, right before BMO switches modes
+    setTimeout(() => playSound.transition(), 2800);
   }, [addSession, incrementPomodoro, completeRound, flashEmotion]);
 
   const { timeLeft, isActive, mode, startTimer, pauseTimer, resetTimer, setMode, settings, updateSettings } =
     useTimer(handleTimerComplete);
 
-  // Sync timer control functions into refs (used by handleTimerComplete for auto-advance)
-  useEffect(() => { setModeRef.current = setMode; }, [setMode]);
-  useEffect(() => { startTimerRef.current = startTimer; }, [startTimer]);
+  // Keep settings ref in sync for use inside handleTimerComplete
+  useEffect(() => { settingsRef.current = settings; }, [settings]);
 
   // Tick sound — only during breaks (not focus, so you can actually focus 😄)
   useEffect(() => {
@@ -152,6 +127,21 @@ export default function App() {
     if (mode === 'focus') return;
     playSound.tick();
   }, [timeLeft, isActive, mode]);
+
+  // Keep the browser tab title in sync — visible from the tab bar at a glance
+  useEffect(() => {
+    const mm = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+    const ss = (timeLeft % 60).toString().padStart(2, '0');
+    const emoji = mode === 'focus' ? '🍅' : mode === 'shortBreak' ? '☕' : '⭐';
+    const label = mode === 'focus' ? 'Focus' : mode === 'shortBreak' ? 'Break' : 'Long Break';
+    if (isActive) {
+      document.title = `${emoji} ${mm}:${ss} · ${label} | BMO`;
+    } else if (timeLeft > 0 && timeLeft < settings[mode] * 60) {
+      document.title = `⏸ ${mm}:${ss} · ${label} | BMO`;
+    } else {
+      document.title = 'BMO Focus';
+    }
+  }, [timeLeft, isActive, mode, settings]);
 
   // Randomly pick between face variants when mode changes
   const focusVariantRef = useRef<'focus' | 'focus2'>('focus');
@@ -162,9 +152,8 @@ export default function App() {
   }, [mode]);
 
   useEffect(() => {
-    modeRef.current = mode;
     settingsRef.current = settings;
-  }, [mode, settings]);
+  }, [settings]);
 
   // Sync per-task timer settings when active task changes
   useEffect(() => {
@@ -175,6 +164,7 @@ export default function App() {
         focus: task.settings.focusDuration,
         shortBreak: task.settings.shortBreakDuration,
         longBreak: task.settings.longBreakDuration,
+        sessionsPerRound: task.settings.sessionsPerRound,
       });
     }
   }, [activeTaskId, tasks, updateSettings]);

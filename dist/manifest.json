@@ -1,12 +1,15 @@
 {
   "manifest_version": 3,
   "name": "BMO Focus",
-  "version": "1.0",
+  "version": "1.1",
   "description": "A gamified focus timer and new tab experience inspired by BMO from Adventure Time.",
   "chrome_url_overrides": {
     "newtab": "index.html"
   },
-  "permissions": ["storage"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["storage", "alarms", "notifications", "tabs", "windows"],
   "icons": {
     "16": "icon16.png",
     "48": "icon48.png",
