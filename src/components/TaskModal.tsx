@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Calendar, Clock, RotateCcw, Save } from 'lucide-react';
+import { X, Calendar, Clock, Save, Pin, Repeat2 } from 'lucide-react';
 import { Task, TaskSettings } from '../types';
 
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (title: string, settings: TaskSettings, dueDate?: string) => void;
+  onSave: (title: string, settings: TaskSettings, dueDate?: string, pinned?: boolean, repeatDaily?: boolean) => void;
   initialTask?: Task;
 }
 
@@ -21,6 +21,8 @@ export function TaskModal({ isOpen, onClose, onSave, initialTask }: TaskModalPro
   const [title, setTitle] = useState('');
   const [settings, setSettings] = useState<TaskSettings>(DEFAULT_SETTINGS);
   const [dueDate, setDueDate] = useState('');
+  const [pinned, setPinned] = useState(false);
+  const [repeatDaily, setRepeatDaily] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -28,10 +30,14 @@ export function TaskModal({ isOpen, onClose, onSave, initialTask }: TaskModalPro
         setTitle(initialTask.title);
         setSettings(initialTask.settings || DEFAULT_SETTINGS);
         setDueDate(initialTask.dueDate || '');
+        setPinned(initialTask.pinned ?? false);
+        setRepeatDaily(initialTask.repeatDaily ?? false);
       } else {
         setTitle('');
         setSettings(DEFAULT_SETTINGS);
         setDueDate(new Date().toISOString().split('T')[0]);
+        setPinned(false);
+        setRepeatDaily(false);
       }
     }
   }, [isOpen, initialTask]);
@@ -39,7 +45,7 @@ export function TaskModal({ isOpen, onClose, onSave, initialTask }: TaskModalPro
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (title.trim()) {
-      onSave(title, settings, dueDate);
+      onSave(title, settings, dueDate, pinned, repeatDaily);
       onClose();
     }
   };
@@ -105,7 +111,35 @@ export function TaskModal({ isOpen, onClose, onSave, initialTask }: TaskModalPro
                 {/* Divider */}
                 <div className="h-0.5 bg-[#1F4E5A]/5 rounded-full" />
 
-                {/* Timer Settings */}
+                {/* Pin + Repeat Daily toggles */}
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setPinned(v => !v)}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 text-sm font-bold transition-all ${
+                      pinned
+                        ? 'bg-[#FFD93D]/15 border-[#FFD93D] text-[#B89400]'
+                        : 'bg-[#F0F4F8] border-transparent text-[#1F4E5A]/50 hover:border-[#1F4E5A]/20'
+                    }`}
+                  >
+                    <Pin size={15} strokeWidth={2.5} />
+                    Pinned
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRepeatDaily(v => !v)}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 text-sm font-bold transition-all ${
+                      repeatDaily
+                        ? 'bg-[#4ECDC4]/15 border-[#4ECDC4] text-[#1F4E5A]'
+                        : 'bg-[#F0F4F8] border-transparent text-[#1F4E5A]/50 hover:border-[#1F4E5A]/20'
+                    }`}
+                  >
+                    <Repeat2 size={15} strokeWidth={2.5} />
+                    Daily
+                  </button>
+                </div>
+
+                {/* Divider */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-bold text-[#1F4E5A]">Focus Duration</span>

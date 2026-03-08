@@ -16,6 +16,10 @@ export interface Task {
   completed: boolean;
   settings: TaskSettings;
   dueDate?: string;
+  pinned?: boolean;
+  repeatDaily?: boolean;
+  lastCompletedDate?: string; // YYYY-MM-DD, used to auto-reset daily tasks
+  dailyStreak?: number;       // consecutive days this mission has been completed
 }
 
 export interface Session {

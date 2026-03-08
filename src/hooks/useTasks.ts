@@ -28,14 +28,45 @@ function migrateTask(t: any): Task {
     totalFocusMinutes: t.totalFocusMinutes ?? 0,
     settings: t.settings ?? DEFAULT_TASK_SETTINGS,
     dueDate: t.dueDate,
+    pinned: t.pinned ?? false,
+    repeatDaily: t.repeatDaily ?? false,
+    lastCompletedDate: t.lastCompletedDate,
+    dailyStreak: t.dailyStreak ?? 0,
   };
+}
+
+function todayStr() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+function yesterdayStr() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 function loadTasks(): Task[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
-    return (JSON.parse(raw) as any[]).map(migrateTask);
+    const today = todayStr();
+    const yesterday = yesterdayStr();
+    return (JSON.parse(raw) as any[]).map(t => {
+      const task = migrateTask(t);
+      // Auto-reset daily repeat missions that were completed before today
+      if (task.repeatDaily && task.completed && task.lastCompletedDate !== today) {
+        // Streak breaks if the user missed yesterday entirely
+        const streakBroken = task.lastCompletedDate !== yesterday;
+        return {
+          ...task,
+          completed: false,
+          completedPomodoros: 0,
+          dailyStreak: streakBroken ? 0 : task.dailyStreak,
+        };
+      }
+      return task;
+    });
   } catch {
     return [];
   }
@@ -54,7 +85,7 @@ export function useTasks() {
   }, []);
 
   const addTask = useCallback(
-    (title: string, settings: TaskSettings = DEFAULT_TASK_SETTINGS, dueDate?: string) => {
+    (title: string, settings: TaskSettings = DEFAULT_TASK_SETTINGS, dueDate?: string, pinned?: boolean, repeatDaily?: boolean) => {
       const newTask: Task = {
         id: crypto.randomUUID(),
         title,
@@ -64,8 +95,10 @@ export function useTasks() {
         totalFocusMinutes: 0,
         settings,
         dueDate,
+        pinned: pinned ?? false,
+        repeatDaily: repeatDaily ?? false,
       };
-      save([...tasks, newTask]);
+      save([newTask, ...tasks]); // prepend — newest missions appear first
     },
     [tasks, save],
   );
@@ -79,7 +112,31 @@ export function useTasks() {
 
   const toggleTask = useCallback(
     (id: string) => {
-      save(tasks.map(t => (t.id === id ? { ...t, completed: !t.completed } : t)));
+      const today = todayStr();
+      save(tasks.map(t => {
+        if (t.id !== id) return t;
+        const nowCompleted = !t.completed;
+        if (!t.repeatDaily) {
+          return { ...t, completed: nowCompleted, lastCompletedDate: nowCompleted ? today : t.lastCompletedDate };
+        }
+        // Daily mission: track streak
+        if (nowCompleted) {
+          return {
+            ...t,
+            completed: true,
+            lastCompletedDate: today,
+            dailyStreak: (t.dailyStreak ?? 0) + 1,
+          };
+        } else {
+          // Un-completing: only roll back streak if it was completed today
+          const wasToday = t.lastCompletedDate === today;
+          return {
+            ...t,
+            completed: false,
+            dailyStreak: wasToday ? Math.max(0, (t.dailyStreak ?? 1) - 1) : (t.dailyStreak ?? 0),
+          };
+        }
+      }));
     },
     [tasks, save],
   );
@@ -112,6 +169,7 @@ export function useTasks() {
   /** Called when the final pomodoro of the round completes — increments AND marks done atomically */
   const completeRound = useCallback(
     (id: string, duration: number) => {
+      const today = todayStr();
       save(
         tasks.map(t =>
           t.id === id
@@ -120,6 +178,8 @@ export function useTasks() {
                 completedPomodoros: t.completedPomodoros + 1,
                 totalFocusMinutes: t.totalFocusMinutes + duration,
                 completed: true,
+                lastCompletedDate: today,
+                dailyStreak: t.repeatDaily ? (t.dailyStreak ?? 0) + 1 : (t.dailyStreak ?? 0),
               }
             : t,
         ),

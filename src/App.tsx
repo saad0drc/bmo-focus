@@ -41,11 +41,11 @@ export default function App() {
 
   const handleOpenAdd = () => { setEditingTask(undefined); setIsTaskModalOpen(true); };
   const handleOpenEdit = (task: Task) => { setEditingTask(task); setIsTaskModalOpen(true); };
-  const handleModalSave = (title: string, settings: TaskSettings, dueDate?: string) => {
+  const handleModalSave = (title: string, settings: TaskSettings, dueDate?: string, pinned?: boolean, repeatDaily?: boolean) => {
     if (editingTask) {
-      updateTask(editingTask.id, { title, settings, dueDate });
+      updateTask(editingTask.id, { title, settings, dueDate, pinned, repeatDaily });
     } else {
-      addTask(title, settings, dueDate);
+      addTask(title, settings, dueDate, pinned, repeatDaily);
     }
   };
 
