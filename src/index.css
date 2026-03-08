@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=VT323&family=Inter:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-pixel: "VT323", monospace;
+  --font-sans: "Inter", sans-serif;
+  
+  --color-bmo-teal: #4ECDC4;
+  --color-bmo-dark: #1F4E5A;
+  --color-bmo-screen: #E8F5E9;
+  --color-bmo-face: #1F4E5A;
+  --color-bmo-button-red: #FF5E5E;
+  --color-bmo-button-yellow: #FFD93D;
+  --color-bmo-button-green: #6BCB77;
+  --color-bmo-button-blue: #4D96FF;
+}
+
+body {
+  background-color: #1a2332;
+  color: var(--color-bmo-dark);
+  font-family: var(--font-sans);
+  overflow: hidden; /* Prevent scrollbars for full-screen app */
+}
+
+/* Custom scrollbar for tasks */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(31, 78, 90, 0.2);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(31, 78, 90, 0.4);
+}
