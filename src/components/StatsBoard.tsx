@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo, memo } from 'react';
 import { motion } from 'motion/react';
 import { Flame, Target, Clock, BarChart2, TrendingUp, CheckCircle2, Timer } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -29,16 +29,16 @@ function MiniStat({ label, value, icon, bg }: MiniStatProps) {
         {icon}
         <span className="text-[9px] font-black uppercase tracking-widest text-[#1F4E5A]/50">{label}</span>
       </div>
-      <div className="font-pixel text-3xl text-[#1F4E5A] leading-none">{value}</div>
+      <div className="font-pixel text-xl lg:text-3xl text-[#1F4E5A] leading-none">{value}</div>
     </div>
   );
 }
 
-export function StatsBoard({ sessions, tasks }: StatsBoardProps) {
-  const today = computeTodayStats(sessions);
-  const week  = computeWeekStats(sessions);
-  const streak = computeStreak(sessions);
-  const chartData = computeChartData(sessions);
+export const StatsBoard = memo(function StatsBoard({ sessions, tasks }: StatsBoardProps) {
+  const today    = useMemo(() => computeTodayStats(sessions), [sessions]);
+  const week     = useMemo(() => computeWeekStats(sessions),  [sessions]);
+  const streak   = useMemo(() => computeStreak(sessions),     [sessions]);
+  const chartData = useMemo(() => computeChartData(sessions), [sessions]);
 
   // Only render the chart once the container has positive dimensions.
   // In browser extension popups the layout isn't always computed before
@@ -62,7 +62,7 @@ export function StatsBoard({ sessions, tasks }: StatsBoardProps) {
   const maxCount = Math.max(...chartData.map(d => d.count), 1);
 
   return (
-    <div className="w-full h-full flex flex-col p-4 bg-[#F5F5F0] overflow-y-auto gap-4 custom-scrollbar">
+    <div className="w-full h-full flex flex-col p-3 lg:p-4 bg-[#F5F5F0] overflow-y-auto gap-3 lg:gap-4 custom-scrollbar">
 
       {/* Header */}
       <div className="flex items-center justify-between shrink-0">
@@ -71,7 +71,7 @@ export function StatsBoard({ sessions, tasks }: StatsBoardProps) {
           <div className="w-2.5 h-2.5 rounded-full bg-[#FFD93D]" />
           <div className="w-2.5 h-2.5 rounded-full bg-[#6BCB77]" />
         </div>
-        <h3 className="font-mono text-base text-[#1F4E5A] tracking-widest font-bold">DATA CENTER</h3>
+        <h3 className="font-mono text-sm lg:text-base text-[#1F4E5A] tracking-widest font-bold">DATA CENTER</h3>
       </div>
 
       {/* TODAY — 2×2 compact grid */}
@@ -116,7 +116,7 @@ export function StatsBoard({ sessions, tasks }: StatsBoardProps) {
           </div>
           <span className="text-[9px] font-black text-[#4ECDC4]">{week.totalPomodoros} total</span>
         </div>
-        <div ref={chartContainerRef} className="h-36 min-w-0">
+        <div ref={chartContainerRef} className="h-24 lg:h-36 min-w-0">
           {chartReady && (
             <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <BarChart data={chartData} barSize={20} margin={{ top: 4, right: 0, left: -28, bottom: 0 }}>
@@ -172,7 +172,7 @@ export function StatsBoard({ sessions, tasks }: StatsBoardProps) {
             { label: 'Best',    value: week.bestDay,        color: 'text-[#FFD93D]', bg: 'bg-[#FFD93D]/8'  },
           ].map(s => (
             <div key={s.label} className={`${s.bg} rounded-xl p-2.5 flex flex-col items-center gap-1 border border-current/10`}>
-              <div className={`font-pixel text-2xl leading-none ${s.color}`}>{s.value}</div>
+              <div className={`font-pixel text-lg lg:text-2xl leading-none ${s.color}`}>{s.value}</div>
               <div className="text-[8px] font-black uppercase tracking-widest text-[#1F4E5A]/40">{s.label}</div>
             </div>
           ))}
@@ -209,4 +209,4 @@ export function StatsBoard({ sessions, tasks }: StatsBoardProps) {
 
     </div>
   );
-}
+});

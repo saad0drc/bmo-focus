@@ -146,8 +146,9 @@ export function TaskModal({ isOpen, onClose, onSave, initialTask }: TaskModalPro
                     <div className="flex items-center gap-2 bg-[#F0F4F8] rounded-lg p-1 border-2 border-transparent focus-within:border-[#63C5DA]">
                       <input
                         type="number"
+                        min={1} max={180}
                         value={settings.focusDuration}
-                        onChange={(e) => setSettings({ ...settings, focusDuration: Number(e.target.value) })}
+                        onChange={(e) => setSettings({ ...settings, focusDuration: Math.max(1, Math.min(180, Number(e.target.value) || 1)) })}
                         className="w-16 text-center bg-transparent text-sm font-bold text-[#1F4E5A] focus:outline-none"
                       />
                       <span className="text-xs font-bold text-[#1F4E5A]/40 pr-2 uppercase">min</span>
@@ -159,8 +160,9 @@ export function TaskModal({ isOpen, onClose, onSave, initialTask }: TaskModalPro
                     <div className="flex items-center gap-2 bg-[#F0F4F8] rounded-lg p-1 border-2 border-transparent focus-within:border-[#63C5DA]">
                       <input
                         type="number"
+                        min={1} max={60}
                         value={settings.shortBreakDuration}
-                        onChange={(e) => setSettings({ ...settings, shortBreakDuration: Number(e.target.value) })}
+                        onChange={(e) => setSettings({ ...settings, shortBreakDuration: Math.max(1, Math.min(60, Number(e.target.value) || 1)) })}
                         className="w-16 text-center bg-transparent text-sm font-bold text-[#1F4E5A] focus:outline-none"
                       />
                       <span className="text-xs font-bold text-[#1F4E5A]/40 pr-2 uppercase">min</span>
@@ -172,8 +174,9 @@ export function TaskModal({ isOpen, onClose, onSave, initialTask }: TaskModalPro
                     <div className="flex items-center gap-2 bg-[#F0F4F8] rounded-lg p-1 border-2 border-transparent focus-within:border-[#63C5DA]">
                       <input
                         type="number"
+                        min={1} max={120}
                         value={settings.longBreakDuration}
-                        onChange={(e) => setSettings({ ...settings, longBreakDuration: Number(e.target.value) })}
+                        onChange={(e) => setSettings({ ...settings, longBreakDuration: Math.max(1, Math.min(120, Number(e.target.value) || 1)) })}
                         className="w-16 text-center bg-transparent text-sm font-bold text-[#1F4E5A] focus:outline-none"
                       />
                       <span className="text-xs font-bold text-[#1F4E5A]/40 pr-2 uppercase">min</span>
@@ -185,8 +188,9 @@ export function TaskModal({ isOpen, onClose, onSave, initialTask }: TaskModalPro
                     <div className="flex items-center gap-2 bg-[#F0F4F8] rounded-lg p-1 border-2 border-transparent focus-within:border-[#63C5DA]">
                       <input
                         type="number"
+                        min={1} max={10}
                         value={settings.sessionsPerRound}
-                        onChange={(e) => setSettings({ ...settings, sessionsPerRound: Number(e.target.value) })}
+                        onChange={(e) => setSettings({ ...settings, sessionsPerRound: Math.max(1, Math.min(10, Number(e.target.value) || 1)) })}
                         className="w-16 text-center bg-transparent text-sm font-bold text-[#1F4E5A] focus:outline-none"
                       />
                       <span className="text-xs font-bold text-[#1F4E5A]/40 pr-2 uppercase">x</span>

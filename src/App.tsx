@@ -19,6 +19,7 @@ import { Task, TaskSettings } from './types';
 import confetti from 'canvas-confetti';
 import { motion } from 'motion/react';
 import { playSound } from './utils/audio';
+import { todayStr } from './utils/date';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 
 const DEFAULT_SETTINGS: TimerSettings = {
@@ -85,8 +86,7 @@ export default function App() {
     const s = settingsRef.current;
 
     // Local date string (avoids UTC offset bug)
-    const now = new Date();
-    const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    const today = todayStr();
 
     if (completedMode === 'focus') {
       const taskId = activeTaskIdRef.current;
@@ -172,10 +172,6 @@ export default function App() {
     focusVariantRef.current = Math.random() < 0.5 ? 'focus' : 'focus2';
     breakVariantRef.current = Math.random() < 0.5 ? 'sleepy' : 'break';
   }, [mode]);
-
-  useEffect(() => {
-    settingsRef.current = settings;
-  }, [settings]);
 
   // Sync per-task timer settings when active task changes
   useEffect(() => {

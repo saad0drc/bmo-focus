@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Task, TaskSettings } from '../types';
+import { toDateStr, todayStr } from '../utils/date';
 
 export type { Task, TaskSettings };
 
@@ -35,15 +36,10 @@ function migrateTask(t: any): Task {
   };
 }
 
-function todayStr() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-}
-
 function yesterdayStr() {
   const d = new Date();
   d.setDate(d.getDate() - 1);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return toDateStr(d);
 }
 
 function loadTasks(): Task[] {

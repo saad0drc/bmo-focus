@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Session } from '../types';
+import { toDateStr, todayStr } from '../utils/date';
 
 const STORAGE_KEY = 'bmo_sessions';
 
@@ -10,14 +11,6 @@ function loadSessions(): Session[] {
   } catch {
     return [];
   }
-}
-
-function toDateStr(date: Date): string {
-  // Use local date to avoid UTC-offset mismatches
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
 }
 
 // ── Derived stat helpers ──────────────────────────────────────────────────────
@@ -35,7 +28,7 @@ export interface WeekStats {
 }
 
 export function computeTodayStats(sessions: Session[]): TodayStats {
-  const today = toDateStr(new Date());
+  const today = todayStr();
   const todaySessions = sessions.filter(s => s.completed && s.date === today);
   return {
     pomodoros: todaySessions.length,

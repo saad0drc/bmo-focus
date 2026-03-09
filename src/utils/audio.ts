@@ -1,9 +1,25 @@
 type NoteEvent = { freq: number; start: number; dur: number };
 
+// Single shared AudioContext — reused across all sounds to avoid memory leaks.
+let sharedCtx: AudioContext | null = null;
+
+function getCtx(): AudioContext | null {
+  try {
+    if (!sharedCtx || sharedCtx.state === 'closed') {
+      const Ctor = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext;
+      sharedCtx = new Ctor();
+    }
+    if (sharedCtx.state === 'suspended') sharedCtx.resume().catch(() => {});
+    return sharedCtx;
+  } catch {
+    return null;
+  }
+}
+
 /** Schedule a sequence of notes using the Web Audio API. */
 function playSequence(notes: NoteEvent[], type: OscillatorType = 'square', vol = 0.22) {
-  const Ctx = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext;
-  const ctx = new Ctx();
+  const ctx = getCtx();
+  if (!ctx) return;
 
   const master = ctx.createGain();
   master.gain.setValueAtTime(vol, ctx.currentTime);
@@ -22,9 +38,6 @@ function playSequence(notes: NoteEvent[], type: OscillatorType = 'square', vol =
     osc.start(ctx.currentTime + start);
     osc.stop(ctx.currentTime + start + dur + 0.05);
   });
-
-  const total = Math.max(...notes.map(n => n.start + n.dur)) + 0.2;
-  setTimeout(() => ctx.close().catch(() => {}), total * 1000);
 }
 
 // Note frequencies (Hz)
@@ -119,8 +132,8 @@ export const playSound = {
 
   /** Subtle clock tick — plays every second while timer is active */
   tick: () => {
-    const Ctx = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext;
-    const ctx = new Ctx();
+    const ctx = getCtx();
+    if (!ctx) return;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
@@ -131,7 +144,6 @@ export const playSound = {
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.022);
     osc.start();
     osc.stop(ctx.currentTime + 0.03);
-    setTimeout(() => ctx.close().catch(() => {}), 150);
   },
 
   /** Two-tone "swoosh" played when switching between modes */

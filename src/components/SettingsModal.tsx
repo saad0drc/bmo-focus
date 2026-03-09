@@ -65,8 +65,9 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdate, onResetAll 
                 <div className="relative">
                   <input
                     type="number"
+                    min={1} max={180}
                     value={localSettings.focus}
-                    onChange={(e) => setLocalSettings({ ...localSettings, focus: parseInt(e.target.value) || 1 })}
+                    onChange={(e) => setLocalSettings({ ...localSettings, focus: Math.max(1, Math.min(180, parseInt(e.target.value) || 1)) })}
                     className="w-full px-4 py-3 rounded-xl bg-[#63C5DA]/10 border-[3px] border-[#1F4E5A]/10 text-[#1F4E5A] font-pixel text-2xl focus:outline-none focus:border-[#1F4E5A] focus:bg-white transition-all"
                   />
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1F4E5A]/30 font-pixel text-sm">MIN</div>
@@ -83,8 +84,9 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdate, onResetAll 
                   <div className="relative">
                     <input
                       type="number"
+                      min={1} max={60}
                       value={localSettings.shortBreak}
-                      onChange={(e) => setLocalSettings({ ...localSettings, shortBreak: parseInt(e.target.value) || 1 })}
+                      onChange={(e) => setLocalSettings({ ...localSettings, shortBreak: Math.max(1, Math.min(60, parseInt(e.target.value) || 1)) })}
                       className="w-full px-4 py-3 rounded-xl bg-[#63C5DA]/10 border-[3px] border-[#1F4E5A]/10 text-[#1F4E5A] font-pixel text-2xl focus:outline-none focus:border-[#1F4E5A] focus:bg-white transition-all"
                     />
                   </div>
@@ -97,8 +99,9 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdate, onResetAll 
                   <div className="relative">
                     <input
                       type="number"
+                      min={1} max={120}
                       value={localSettings.longBreak}
-                      onChange={(e) => setLocalSettings({ ...localSettings, longBreak: parseInt(e.target.value) || 1 })}
+                      onChange={(e) => setLocalSettings({ ...localSettings, longBreak: Math.max(1, Math.min(120, parseInt(e.target.value) || 1)) })}
                       className="w-full px-4 py-3 rounded-xl bg-[#63C5DA]/10 border-[3px] border-[#1F4E5A]/10 text-[#1F4E5A] font-pixel text-2xl focus:outline-none focus:border-[#1F4E5A] focus:bg-white transition-all"
                     />
                   </div>

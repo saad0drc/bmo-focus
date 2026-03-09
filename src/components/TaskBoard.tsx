@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Task } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { Trash2, Check, Plus, Clock, Settings, Pin, PinOff, Repeat2 } from 'lucide-react';
@@ -27,19 +27,19 @@ export function TaskBoard({
 }: TaskBoardProps) {
 
   // Sort: pinned first → incomplete before complete → newest first within each group
-  const sortedTasks = [...tasks].sort((a, b) => {
+  const sortedTasks = useMemo(() => [...tasks].sort((a, b) => {
     if ((a.pinned ? 1 : 0) !== (b.pinned ? 1 : 0)) return a.pinned ? -1 : 1;
     if ((a.completed ? 1 : 0) !== (b.completed ? 1 : 0)) return a.completed ? 1 : -1;
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-  });
+  }), [tasks]);
 
   return (
-    <div className="w-full h-full flex flex-col p-5 bg-[#F5F5F0]">
+    <div className="w-full h-full flex flex-col p-3 lg:p-5 bg-[#F5F5F0]">
       {/* Header */}
-      <div className="flex justify-between items-center mb-4 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-3 h-3 rounded-full bg-[#4D96FF] shadow-sm animate-pulse" />
-          <h3 className="font-mono text-xl text-[#1F4E5A] tracking-widest font-bold">MISSION LOG</h3>
+      <div className="flex justify-between items-center mb-3 shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="w-2.5 h-2.5 rounded-full bg-[#4D96FF] shadow-sm animate-pulse" />
+          <h3 className="font-mono text-sm lg:text-xl text-[#1F4E5A] tracking-widest font-bold">MISSION LOG</h3>
         </div>
         <button
           onClick={onOpenAdd}
@@ -51,8 +51,7 @@ export function TaskBoard({
 
       {/* Task list — scrollable, bounded by parent height */}
       <div
-        className="task-list flex-1 overflow-y-auto pr-1 custom-scrollbar space-y-3"
-        style={{ maxHeight: '70vh' }}
+        className="task-list flex-1 overflow-y-auto pr-1 custom-scrollbar space-y-3 min-h-0"
       >
         <AnimatePresence initial={false}>
           {tasks.length === 0 && (

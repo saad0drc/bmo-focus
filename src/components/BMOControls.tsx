@@ -45,7 +45,7 @@ export function BMOControls({
   };
 
   return (
-    <div className="flex items-center justify-between w-full max-w-[340px] px-3 gap-2">
+    <div className="flex items-center justify-between w-full max-w-[340px] px-2 sm:px-3 gap-2">
 
       {/* Left: D-Pad mode switcher */}
       <div className="flex flex-col items-center gap-2">
