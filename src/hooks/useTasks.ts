@@ -188,5 +188,9 @@ export function useTasks() {
     [tasks, save],
   );
 
-  return { tasks, addTask, updateTask, toggleTask, deleteTask, incrementPomodoro, completeRound };
+  const clearAllTasks = useCallback(() => {
+    save([]);
+  }, [save]);
+
+  return { tasks, addTask, updateTask, toggleTask, deleteTask, incrementPomodoro, completeRound, clearAllTasks };
 }

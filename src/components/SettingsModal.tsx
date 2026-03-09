@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Save } from 'lucide-react';
+import { X, Save, Trash2 } from 'lucide-react';
 import { TimerSettings } from '../hooks/useTimer';
 
 interface SettingsModalProps {
@@ -8,10 +8,12 @@ interface SettingsModalProps {
   onClose: () => void;
   settings: TimerSettings;
   onUpdate: (settings: TimerSettings) => void;
+  onResetAll?: () => void;
 }
 
-export function SettingsModal({ isOpen, onClose, settings, onUpdate }: SettingsModalProps) {
+export function SettingsModal({ isOpen, onClose, settings, onUpdate, onResetAll }: SettingsModalProps) {
   const [localSettings, setLocalSettings] = useState(settings);
+  const [confirmReset, setConfirmReset] = useState(false);
 
   const handleSave = () => {
     onUpdate(localSettings);
@@ -103,7 +105,7 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdate }: SettingsM
                 </div>
               </div>
 
-              <div className="pt-2">
+              <div className="pt-2 space-y-3">
                 <button
                   onClick={handleSave}
                   className="w-full py-4 bg-[#1F4E5A] rounded-xl border-b-4 border-[#14363F] text-[#DCF6E6] font-bold uppercase tracking-widest hover:brightness-110 active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center gap-3 shadow-lg group"
@@ -111,6 +113,39 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdate }: SettingsM
                   <Save size={20} className="group-hover:scale-110 transition-transform" />
                   Save Changes
                 </button>
+
+                {onResetAll && (
+                  confirmReset ? (
+                    <div className="space-y-2">
+                      <p className="text-center text-xs font-bold text-[#FF5E5E] uppercase tracking-wide">
+                        ⚠️ This will erase ALL tasks, sessions & settings!
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => setConfirmReset(false)}
+                          className="py-3 bg-[#1F4E5A]/20 rounded-xl border-b-4 border-[#1F4E5A]/30 text-[#1F4E5A] font-bold uppercase tracking-widest hover:brightness-110 active:border-b-0 active:translate-y-1 transition-all text-sm"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={onResetAll}
+                          className="py-3 bg-[#FF5E5E] rounded-xl border-b-4 border-[#CC3D3D] text-white font-bold uppercase tracking-widest hover:brightness-110 active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center gap-2 text-sm group"
+                        >
+                          <Trash2 size={16} className="group-hover:scale-110 transition-transform" />
+                          Confirm
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmReset(true)}
+                      className="w-full py-3 bg-transparent rounded-xl border-2 border-[#FF5E5E]/50 text-[#FF5E5E] font-bold uppercase tracking-widest hover:bg-[#FF5E5E]/10 transition-all flex items-center justify-center gap-3 text-sm group"
+                    >
+                      <Trash2 size={16} className="group-hover:scale-110 transition-transform" />
+                      Reset All Data
+                    </button>
+                  )
+                )}
               </div>
             </div>
             

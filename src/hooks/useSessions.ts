@@ -110,5 +110,10 @@ export function useSessions() {
     });
   }, []);
 
-  return { sessions, addSession };
+  const clearAllSessions = useCallback(() => {
+    setSessions([]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
+  }, []);
+
+  return { sessions, addSession, clearAllSessions };
 }

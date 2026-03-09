@@ -19,6 +19,7 @@ import { Task, TaskSettings } from './types';
 import confetti from 'canvas-confetti';
 import { motion } from 'motion/react';
 import { playSound } from './utils/audio';
+import { ChevronUp, ChevronDown } from 'lucide-react';
 
 const DEFAULT_SETTINGS: TimerSettings = {
   focus: 25,
@@ -36,8 +37,19 @@ export default function App() {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
 
-  const { tasks, addTask, updateTask, toggleTask, deleteTask, incrementPomodoro, completeRound } = useTasks();
-  const { sessions, addSession } = useSessions();
+  const { tasks, addTask, updateTask, toggleTask, deleteTask, incrementPomodoro, completeRound, clearAllTasks } = useTasks();
+  const { sessions, addSession, clearAllSessions } = useSessions();
+
+  // Compact-mode scroll nav
+  const layoutRef = useRef<HTMLDivElement>(null);
+  const [atTop, setAtTop] = useState(true);
+  useEffect(() => {
+    const el = layoutRef.current;
+    if (!el) return;
+    const onScroll = () => setAtTop(el.scrollTop < 60);
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
 
   const handleOpenAdd = () => { setEditingTask(undefined); setIsTaskModalOpen(true); };
   const handleOpenEdit = (task: Task) => { setEditingTask(task); setIsTaskModalOpen(true); };
@@ -118,6 +130,16 @@ export default function App() {
   const { timeLeft, isActive, mode, startTimer, pauseTimer, resetTimer, setMode, settings, updateSettings } =
     useTimer(handleTimerComplete);
 
+  const handleResetAllData = useCallback(() => {
+    clearAllTasks();
+    clearAllSessions();
+    updateSettings(DEFAULT_SETTINGS);
+    resetTimer();
+    localStorage.removeItem('bmo_challenge');
+    localStorage.removeItem('bmo_challenge_completed');
+    setIsSettingsOpen(false);
+  }, [clearAllTasks, clearAllSessions, updateSettings, resetTimer]);
+
   // Keep settings ref in sync for use inside handleTimerComplete
   useEffect(() => { settingsRef.current = settings; }, [settings]);
 
@@ -186,7 +208,7 @@ export default function App() {
   const activeTask = tasks.find(t => t.id === activeTaskId) ?? null;
 
   return (
-    <div className="min-h-screen w-full flex flex-col p-4 relative bg-[#1a2332] overflow-y-auto font-sans selection:bg-[#4ECDC4] selection:text-[#1F4E5A]">
+    <div className="h-screen w-full flex flex-col p-3 relative bg-[#1a2332] overflow-hidden font-sans selection:bg-[#4ECDC4] selection:text-[#1F4E5A]">
       {/* Background grid */}
       <div
         className="absolute inset-0 opacity-[0.04] pointer-events-none"
@@ -207,6 +229,7 @@ export default function App() {
         onClose={() => setIsSettingsOpen(false)}
         settings={settings}
         onUpdate={updateSettings}
+        onResetAll={handleResetAllData}
       />
       <TaskModal
         isOpen={isTaskModalOpen}
@@ -215,42 +238,26 @@ export default function App() {
         initialTask={editingTask}
       />
 
-      {/* Main 3-column grid */}
-      <div className="flex-1 w-full max-w-[96rem] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-5 items-start justify-center relative z-10 px-4 pt-3 pb-4">
+      {/*
+        Layout:
+        < lg  : two full-viewport snap-scroll sections
+                  Page 1 — BMO centered (full screen)
+                  Page 2 — Mission Log + Data Center side-by-side (full screen)
+                Side nav buttons jump between pages.
+        ≥ lg  : classic 3-column grid, unchanged.
+      */}
+      <div
+        ref={layoutRef}
+        className="flex-1 min-h-0 w-full max-w-[96rem] mx-auto relative z-10
+                   flex flex-col lg:grid lg:grid-cols-12 lg:gap-4 lg:items-start lg:px-4 lg:pt-3 lg:pb-4
+                   overflow-y-auto lg:overflow-hidden
+                   snap-y snap-mandatory lg:snap-none"
+      >
 
-        {/* Left — Mission Log */}
-        <div className="lg:col-span-3 h-[560px] lg:h-[620px] flex flex-col mt-0">
-          <motion.div
-            initial={{ x: -50, opacity: 0, y: 0 }}
-            animate={{ x: 0, opacity: 1, y: [0, -8, 0] }}
-            transition={{
-              x: { duration: 0.5, delay: 0.2 },
-              opacity: { duration: 0.5, delay: 0.2 },
-              y: { duration: 4.1, repeat: Infinity, ease: 'easeInOut', delay: 0.9 },
-            }}
-            className="bg-[#F5F5F0] p-2 rounded-[1.5rem] border-[4px] border-[#1a2332] shadow-[6px_6px_0px_rgba(0,0,0,0.35),0_15px_40px_rgba(0,0,0,0.25)] h-full flex flex-col relative overflow-hidden"
-          >
-            <div className="absolute top-0 left-0 right-0 h-8 bg-[#1a2332] flex items-center justify-center">
-              <div className="w-16 h-1.5 bg-[#4ECDC4]/30 rounded-full" />
-            </div>
-            <div className="mt-6 relative z-20 h-full flex flex-col bg-[#DCF6E6] rounded-xl border-2 border-[#1F4E5A]/10 overflow-hidden">
-              <TaskBoard
-                tasks={tasks}
-                activeTaskId={activeTaskId}
-                onAdd={addTask}
-                onUpdate={updateTask}
-                onToggle={handleTaskToggle}
-                onDelete={deleteTask}
-                onSelectActive={setActiveTaskId}
-                onOpenAdd={handleOpenAdd}
-                onOpenEdit={handleOpenEdit}
-              />
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Center — BMO */}
-        <div className="lg:col-span-6 flex justify-center items-start h-full pt-0">
+        {/* ── PAGE 1 : BMO ──────────────────────────────────────────────── */}
+        <div className="snap-start min-h-screen lg:min-h-0
+                        lg:col-span-6 lg:order-2
+                        flex items-center justify-center p-4 lg:p-0">
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 0 }}
             animate={{ scale: 1, opacity: 1, y: [0, -10, 0] }}
@@ -259,13 +266,13 @@ export default function App() {
               opacity: { duration: 0.5 },
               y: { duration: 3.2, repeat: Infinity, ease: 'easeInOut', delay: 0.7 },
             }}
-            className="relative bg-gradient-to-b from-[#5ADCD5] via-[#4ECDC4] to-[#36B8AF] p-6 rounded-[4rem] border-[8px] border-[#1a4a52] shadow-[0_35px_100px_rgba(0,0,0,0.55),0_10px_25px_rgba(0,0,0,0.3),inset_-8px_-14px_28px_rgba(0,0,0,0.18),inset_8px_8px_20px_rgba(255,255,255,0.28)] w-full max-w-[560px] flex flex-col items-center gap-4 z-20"
+            className="relative bg-gradient-to-b from-[#5ADCD5] via-[#4ECDC4] to-[#36B8AF] p-5 sm:p-6 rounded-[3rem] lg:rounded-[4rem] border-[8px] border-[#1a4a52] shadow-[0_35px_100px_rgba(0,0,0,0.55),0_10px_25px_rgba(0,0,0,0.3),inset_-8px_-14px_28px_rgba(0,0,0,0.18),inset_8px_8px_20px_rgba(255,255,255,0.28)] w-full max-w-[460px] sm:max-w-[500px] lg:max-w-[560px] flex flex-col items-center gap-4 z-20"
           >
             {/* Side grips */}
-            <div className="absolute top-1/2 -left-3 -translate-y-1/2 w-5 h-52 flex flex-col justify-between py-3 opacity-30">
+            <div className="absolute top-1/2 -left-3 -translate-y-1/2 w-5 h-44 sm:h-48 lg:h-52 flex flex-col justify-between py-3 opacity-30">
               {[...Array(10)].map((_, i) => <div key={i} className="w-full h-2 rounded-r-full bg-[#1a4a52]" />)}
             </div>
-            <div className="absolute top-1/2 -right-3 -translate-y-1/2 w-5 h-52 flex flex-col justify-between py-3 opacity-30">
+            <div className="absolute top-1/2 -right-3 -translate-y-1/2 w-5 h-44 sm:h-48 lg:h-52 flex flex-col justify-between py-3 opacity-30">
               {[...Array(10)].map((_, i) => <div key={i} className="w-full h-2 rounded-l-full bg-[#1a4a52]" />)}
             </div>
 
@@ -315,30 +322,106 @@ export default function App() {
           </motion.div>
         </div>
 
-        {/* Right — Data Center */}
-        <div className="lg:col-span-3 h-[560px] lg:h-[620px] flex flex-col mt-0">
-          <motion.div
-            initial={{ x: 50, opacity: 0, y: 0 }}
-            animate={{ x: 0, opacity: 1, y: [0, -8, 0] }}
-            transition={{
-              x: { duration: 0.5, delay: 0.2 },
-              opacity: { duration: 0.5, delay: 0.2 },
-              y: { duration: 3.8, repeat: Infinity, ease: 'easeInOut', delay: 1.2 },
-            }}
-            className="bg-[#F5F5F0] p-2 rounded-[1.5rem] border-[4px] border-[#1a2332] shadow-[6px_6px_0px_rgba(0,0,0,0.35),0_15px_40px_rgba(0,0,0,0.25)] h-full flex flex-col relative overflow-hidden"
-          >
-            <div className="absolute top-0 left-0 right-0 h-8 bg-[#1a2332] flex items-center justify-center">
-              <div className="w-16 h-1.5 bg-[#4ECDC4]/30 rounded-full" />
-            </div>
-            <div className="mt-6 relative z-10 h-full flex flex-col bg-[#F5F5F0] rounded-xl border-2 border-[#1F4E5A]/10 overflow-hidden">
-              <StatsBoard sessions={sessions} tasks={tasks} />
-            </div>
-          </motion.div>
-        </div>
+        {/* ── PAGE 2 : Panels ───────────────────────────────────────────── */}
+        {/* `lg:contents` dissolves this wrapper so panels join the CSS grid at desktop */}
+        <div className="snap-start min-h-screen lg:min-h-0 lg:contents
+                        grid grid-cols-1 sm:grid-cols-2 gap-3 px-3 pb-3 pt-2 pr-14 sm:pr-14 lg:pr-4 lg:pt-3 lg:pb-4 lg:pl-4 lg:gap-4">
+
+          {/* Mission Log */}
+          <div className="min-h-[520px] sm:h-[calc(100vh-1.25rem)] flex flex-col
+                          lg:col-span-3 lg:order-1 lg:h-[calc(100vh-4rem)] lg:max-h-[720px]">
+            <motion.div
+              initial={{ x: -50, opacity: 0, y: 0 }}
+              animate={{ x: 0, opacity: 1, y: [0, -8, 0] }}
+              transition={{
+                x: { duration: 0.5, delay: 0.2 },
+                opacity: { duration: 0.5, delay: 0.2 },
+                y: { duration: 4.1, repeat: Infinity, ease: 'easeInOut', delay: 0.9 },
+              }}
+              className="bg-[#F5F5F0] p-2 rounded-[1.5rem] border-[4px] border-[#1a2332] shadow-[6px_6px_0px_rgba(0,0,0,0.35),0_15px_40px_rgba(0,0,0,0.25)] h-full flex flex-col relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 right-0 h-8 bg-[#1a2332] flex items-center justify-center">
+                <div className="w-16 h-1.5 bg-[#4ECDC4]/30 rounded-full" />
+              </div>
+              <div className="mt-6 relative z-20 flex-1 flex flex-col bg-[#DCF6E6] rounded-xl border-2 border-[#1F4E5A]/10 overflow-hidden">
+                <TaskBoard
+                  tasks={tasks}
+                  activeTaskId={activeTaskId}
+                  onAdd={addTask}
+                  onUpdate={updateTask}
+                  onToggle={handleTaskToggle}
+                  onDelete={deleteTask}
+                  onSelectActive={setActiveTaskId}
+                  onOpenAdd={handleOpenAdd}
+                  onOpenEdit={handleOpenEdit}
+                />
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Data Center */}
+          <div className="min-h-[520px] sm:h-[calc(100vh-1.25rem)] flex flex-col
+                          lg:col-span-3 lg:order-3 lg:h-[calc(100vh-4rem)] lg:max-h-[720px]">
+            <motion.div
+              initial={{ x: 50, opacity: 0, y: 0 }}
+              animate={{ x: 0, opacity: 1, y: [0, -8, 0] }}
+              transition={{
+                x: { duration: 0.5, delay: 0.2 },
+                opacity: { duration: 0.5, delay: 0.2 },
+                y: { duration: 3.8, repeat: Infinity, ease: 'easeInOut', delay: 1.2 },
+              }}
+              className="bg-[#F5F5F0] p-2 rounded-[1.5rem] border-[4px] border-[#1a2332] shadow-[6px_6px_0px_rgba(0,0,0,0.35),0_15px_40px_rgba(0,0,0,0.25)] h-full flex flex-col relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 right-0 h-8 bg-[#1a2332] flex items-center justify-center">
+                <div className="w-16 h-1.5 bg-[#4ECDC4]/30 rounded-full" />
+              </div>
+              <div className="mt-6 relative z-10 flex-1 flex flex-col bg-[#F5F5F0] rounded-xl border-2 border-[#1F4E5A]/10 overflow-hidden">
+                <StatsBoard sessions={sessions} tasks={tasks} />
+              </div>
+            </motion.div>
+          </div>
+
+        </div>{/* end panels page */}
 
       </div>
 
-      <div className="absolute bottom-4 left-0 right-0 text-center text-[#DCF6E6]/40 text-[10px] font-bold tracking-[0.2em] pointer-events-none uppercase">
+      {/* BMO-styled scroll nav — only visible on compact screens (< lg) */}
+      <div className="fixed right-3 top-1/2 -translate-y-1/2 lg:hidden z-50 flex flex-col items-center select-none">
+        {/* Casing — same teal body as BMO */}
+        <div className="bg-gradient-to-b from-[#5ADCD5] to-[#4ECDC4] rounded-2xl border-[3px] border-[#1a4a52] p-2 flex flex-col items-center gap-2 shadow-[3px_4px_0_rgba(0,0,0,0.35),0_8px_24px_rgba(0,0,0,0.25),inset_2px_2px_6px_rgba(255,255,255,0.25)]">
+
+          {/* Up — scroll to BMO */}
+          <motion.button
+            whileTap={{ scale: 0.88 }}
+            onClick={() => layoutRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+            title="Scroll up"
+            className="w-9 h-9 bg-[#FFD93D] rounded-xl border-[2px] border-[#1a4a52] flex items-center justify-center shadow-[0_3px_0_#9A7D00] active:shadow-none active:translate-y-0.5 transition-all hover:brightness-105"
+          >
+            <ChevronUp size={17} className="text-[#1a4a52]" strokeWidth={3.5} />
+          </motion.button>
+
+          {/* Section indicator dots */}
+          <div className="flex flex-col items-center gap-1.5 py-0.5">
+            <div className={`w-2 h-2 rounded-full border-[1.5px] border-[#1a4a52] transition-all duration-300 ${atTop ? 'bg-[#1a4a52] scale-110' : 'bg-transparent'}`} />
+            <div className={`w-2 h-2 rounded-full border-[1.5px] border-[#1a4a52] transition-all duration-300 ${!atTop ? 'bg-[#1a4a52] scale-110' : 'bg-transparent'}`} />
+          </div>
+
+          {/* Down — scroll to panels */}
+          <motion.button
+            whileTap={{ scale: 0.88 }}
+            onClick={() => layoutRef.current?.scrollTo({ top: layoutRef.current.scrollHeight, behavior: 'smooth' })}
+            title="Scroll down"
+            className="w-9 h-9 bg-[#FFD93D] rounded-xl border-[2px] border-[#1a4a52] flex items-center justify-center shadow-[0_3px_0_#9A7D00] active:shadow-none active:translate-y-0.5 transition-all hover:brightness-105"
+          >
+            <ChevronDown size={17} className="text-[#1a4a52]" strokeWidth={3.5} />
+          </motion.button>
+
+          {/* Label */}
+          <span className="text-[6px] font-black text-[#1a4a52]/60 uppercase tracking-widest">nav</span>
+        </div>
+      </div>
+
+      <div className="hidden lg:block absolute bottom-4 left-0 right-0 text-center text-[#DCF6E6]/40 text-[10px] font-bold tracking-[0.2em] pointer-events-none uppercase">
         BMO OS v4.0 • Adventure Time
       </div>
     </div>
