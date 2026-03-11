@@ -29,3 +29,16 @@ export interface Session {
   completed: boolean;
   date: string; // YYYY-MM-DD
 }
+
+export interface Challenge {
+  id: string;
+  date: string;               // YYYY-MM-DD
+  dayLabel: string;           // e.g. "Wednesday"
+  goalMinutes: number;
+  pomodorosNeeded: number;
+  pomodorosCompleted: number;
+  focusMinutesLogged: number;
+  completed: boolean;
+  completedAt?: string;       // ISO timestamp
+  abandoned?: boolean;
+}

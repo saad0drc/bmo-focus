@@ -8,12 +8,15 @@ import { useBMOState } from './hooks/useBMOState';
 import { useTimer, TimerMode, TimerSettings } from './hooks/useTimer';
 import { useTasks } from './hooks/useTasks';
 import { useSessions } from './hooks/useSessions';
+import { useChallenge } from './hooks/useChallenge';
 import { BMOFace } from './components/BMOFace';
 import { BMOControls } from './components/BMOControls';
 import { TaskBoard } from './components/TaskBoard';
 import { TaskModal } from './components/TaskModal';
 import { StatsBoard } from './components/StatsBoard';
 import { SettingsModal } from './components/SettingsModal';
+import { ChallengeCard } from './components/ChallengeCard';
+import { ChallengeHistoryModal } from './components/ChallengeHistoryModal';
 import { Session } from './types';
 import { Task, TaskSettings } from './types';
 import confetti from 'canvas-confetti';
@@ -40,6 +43,18 @@ export default function App() {
 
   const { tasks, addTask, updateTask, toggleTask, deleteTask, incrementPomodoro, completeRound, clearAllTasks } = useTasks();
   const { sessions, addSession, clearAllSessions } = useSessions();
+  const {
+    challenges,
+    activeChallenge,
+    todayCompleted: todayCompletedChallenge,
+    completedCount: challengeCompletedCount,
+    createChallenge,
+    logPomodoro: logChallengePomodoro,
+    abandonChallenge,
+    clearAllChallenges,
+  } = useChallenge();
+
+  const [isChallengeHistoryOpen, setIsChallengeHistoryOpen] = useState(false);
 
   // Compact-mode scroll nav
   const layoutRef = useRef<HTMLDivElement>(null);
@@ -93,6 +108,7 @@ export default function App() {
       const duration = s.focus;
 
       addSession({ id: crypto.randomUUID(), taskId, duration, completed: true, date: today });
+      logChallengePomodoro(duration);
 
       if (taskId) {
         const task = tasksRef.current.find(t => t.id === taskId);
@@ -125,7 +141,7 @@ export default function App() {
 
     // Play transition sound after the completion fanfare, right before BMO switches modes
     setTimeout(() => playSound.transition(), 2800);
-  }, [addSession, incrementPomodoro, completeRound, flashEmotion]);
+  }, [addSession, incrementPomodoro, completeRound, flashEmotion, logChallengePomodoro]);
 
   const { timeLeft, isActive, mode, startTimer, pauseTimer, resetTimer, setMode, settings, updateSettings } =
     useTimer(handleTimerComplete);
@@ -133,12 +149,11 @@ export default function App() {
   const handleResetAllData = useCallback(() => {
     clearAllTasks();
     clearAllSessions();
+    clearAllChallenges();
     updateSettings(DEFAULT_SETTINGS);
     resetTimer();
-    localStorage.removeItem('bmo_challenge');
-    localStorage.removeItem('bmo_challenge_completed');
     setIsSettingsOpen(false);
-  }, [clearAllTasks, clearAllSessions, updateSettings, resetTimer]);
+  }, [clearAllTasks, clearAllSessions, clearAllChallenges, updateSettings, resetTimer]);
 
   // Keep settings ref in sync for use inside handleTimerComplete
   useEffect(() => { settingsRef.current = settings; }, [settings]);
@@ -233,6 +248,11 @@ export default function App() {
         onSave={handleModalSave}
         initialTask={editingTask}
       />
+      <ChallengeHistoryModal
+        isOpen={isChallengeHistoryOpen}
+        onClose={() => setIsChallengeHistoryOpen(false)}
+        challenges={challenges}
+      />
 
       {/*
         Layout:
@@ -253,7 +273,7 @@ export default function App() {
         {/* ── PAGE 1 : BMO ──────────────────────────────────────────────── */}
         <div className="snap-start min-h-screen lg:min-h-0
                         lg:col-span-6 lg:order-2
-                        flex items-center justify-center p-4 lg:p-0">
+                        flex flex-col items-center justify-center gap-4 p-4 lg:p-0">
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 0 }}
             animate={{ scale: 1, opacity: 1, y: [0, -10, 0] }}
@@ -316,6 +336,15 @@ export default function App() {
 
             <div className="absolute bottom-5 left-1/2 -translate-x-1/2 text-[#1a4a52]/40 font-black tracking-[0.4em] text-sm">BMO</div>
           </motion.div>
+
+          {/* Challenge card — sits below BMO body */}
+          <ChallengeCard
+            activeChallenge={activeChallenge}
+            todayCompleted={todayCompletedChallenge}
+            focusDuration={settings.focus}
+            onStart={createChallenge}
+            onAbandon={abandonChallenge}
+          />
         </div>
 
         {/* ── PAGE 2 : Panels ───────────────────────────────────────────── */}
@@ -372,7 +401,12 @@ export default function App() {
                 <div className="w-16 h-1.5 bg-[#4ECDC4]/30 rounded-full" />
               </div>
               <div className="mt-6 relative z-10 flex-1 flex flex-col bg-[#F5F5F0] rounded-xl border-2 border-[#1F4E5A]/10 overflow-hidden">
-                <StatsBoard sessions={sessions} tasks={tasks} />
+                <StatsBoard
+                  sessions={sessions}
+                  tasks={tasks}
+                  challengeCount={challengeCompletedCount}
+                  onOpenChallengeHistory={() => setIsChallengeHistoryOpen(true)}
+                />
               </div>
             </motion.div>
           </div>
