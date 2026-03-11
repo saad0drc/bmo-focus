@@ -11,22 +11,24 @@ import { useSessions } from './hooks/useSessions';
 import { useChallenge } from './hooks/useChallenge';
 import { BMOFace } from './components/BMOFace';
 import { BMOControls } from './components/BMOControls';
-import { TaskBoard } from './components/TaskBoard';
-import { StatsBoard } from './components/StatsBoard';
 import { ChallengeCard } from './components/ChallengeCard';
 import { Session } from './types';
 import { Task, TaskSettings } from './types';
-import confetti from 'canvas-confetti';
 import { motion } from 'motion/react';
-import { playSound } from './utils/audio';
 import { todayStr } from './utils/date';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 
-// Lazy-load modals — they're never needed on initial paint
+// Lazy-load everything not needed for first paint
+const TaskBoard             = lazy(() => import('./components/TaskBoard').then(m => ({ default: m.TaskBoard })));
+const StatsBoard            = lazy(() => import('./components/StatsBoard').then(m => ({ default: m.StatsBoard })));
 const TaskModal             = lazy(() => import('./components/TaskModal').then(m => ({ default: m.TaskModal })));
 const SettingsModal         = lazy(() => import('./components/SettingsModal').then(m => ({ default: m.SettingsModal })));
 const ChallengeHistoryModal = lazy(() => import('./components/ChallengeHistoryModal').then(m => ({ default: m.ChallengeHistoryModal })));
 const ChallengePlannerModal = lazy(() => import('./components/ChallengePlannerModal').then(m => ({ default: m.ChallengePlannerModal })));
+
+// Dynamic imports for side-effect-only modules (loaded only when first needed)
+const getSounds  = () => import('./utils/audio').then(m => m.playSound);
+const getConfetti = () => import('canvas-confetti').then(m => m.default);
 
 const DEFAULT_SETTINGS: TimerSettings = {
   focus: 25,
@@ -92,12 +94,12 @@ export default function App() {
   // Confetti on success
   useEffect(() => {
     if (emotion === 'success') {
-      confetti({
+      getConfetti().then(confetti => confetti({
         particleCount: 100,
         spread: 70,
         origin: { y: 0.6 },
         colors: ['#63C5DA', '#FF5E5E', '#FFD93D', '#6BCB77'],
-      });
+      }));
     }
   }, [emotion]);
 
@@ -107,44 +109,46 @@ export default function App() {
     // Local date string (avoids UTC offset bug)
     const today = todayStr();
 
-    if (completedMode === 'focus') {
-      const taskId = activeTaskIdRef.current;
-      const duration = s.focus;
+    getSounds().then(playSound => {
+      if (completedMode === 'focus') {
+        const taskId = activeTaskIdRef.current;
+        const duration = s.focus;
 
-      addSession({ id: crypto.randomUUID(), taskId, duration, completed: true, date: today });
-      logChallengePomodoro(duration);
+        addSession({ id: crypto.randomUUID(), taskId, duration, completed: true, date: today });
+        logChallengePomodoro(duration);
 
-      if (taskId) {
-        const task = tasksRef.current.find(t => t.id === taskId);
-        const newCount = (task?.completedPomodoros ?? 0) + 1;
-        const target   = task?.settings?.sessionsPerRound ?? 4;
+        if (taskId) {
+          const task = tasksRef.current.find(t => t.id === taskId);
+          const newCount = (task?.completedPomodoros ?? 0) + 1;
+          const target   = task?.settings?.sessionsPerRound ?? 4;
 
-        if (newCount >= target) {
-          completeRound(taskId, duration);
-          playSound.roundComplete();
-          flashEmotion('success', 9000);
+          if (newCount >= target) {
+            completeRound(taskId, duration);
+            playSound.roundComplete();
+            flashEmotion('success', 9000);
+          } else {
+            incrementPomodoro(taskId, duration);
+            playSound.focusComplete();
+            flashEmotion('success');
+          }
         } else {
-          incrementPomodoro(taskId, duration);
           playSound.focusComplete();
           flashEmotion('success');
         }
+
+      } else if (completedMode === 'shortBreak') {
+        playSound.breakComplete();
+        flashEmotion('idle');
+
       } else {
-        playSound.focusComplete();
-        flashEmotion('success');
+        // longBreak
+        playSound.longBreakComplete();
+        flashEmotion('idle');
       }
 
-    } else if (completedMode === 'shortBreak') {
-      playSound.breakComplete();
-      flashEmotion('idle');
-
-    } else {
-      // longBreak
-      playSound.longBreakComplete();
-      flashEmotion('idle');
-    }
-
-    // Play transition sound after the completion fanfare, right before BMO switches modes
-    setTimeout(() => playSound.transition(), 2800);
+      // Play transition sound after the completion fanfare
+      setTimeout(() => playSound.transition(), 2800);
+    });
   }, [addSession, incrementPomodoro, completeRound, flashEmotion, logChallengePomodoro]);
 
   const { timeLeft, isActive, mode, startTimer, pauseTimer, resetTimer, setMode, settings, updateSettings } =
@@ -164,9 +168,8 @@ export default function App() {
 
   // Tick sound — only during breaks (not focus, so you can actually focus 😄)
   useEffect(() => {
-    if (!isActive || timeLeft <= 0) return;
-    if (mode === 'focus') return;
-    playSound.tick();
+    if (!isActive || timeLeft <= 0 || mode === 'focus') return;
+    getSounds().then(playSound => playSound.tick());
   }, [timeLeft, isActive, mode]);
 
   // Keep the browser tab title in sync — visible from the tab bar at a glance
@@ -380,17 +383,19 @@ export default function App() {
                 <div className="w-16 h-1.5 bg-[#4ECDC4]/30 rounded-full" />
               </div>
               <div className="mt-6 relative z-20 flex-1 flex flex-col bg-[#DCF6E6] rounded-xl border-2 border-[#1F4E5A]/10 overflow-hidden">
-                <TaskBoard
-                  tasks={tasks}
-                  activeTaskId={activeTaskId}
-                  onAdd={addTask}
-                  onUpdate={updateTask}
-                  onToggle={handleTaskToggle}
-                  onDelete={deleteTask}
-                  onSelectActive={setActiveTaskId}
-                  onOpenAdd={handleOpenAdd}
-                  onOpenEdit={handleOpenEdit}
-                />
+                <Suspense fallback={<div className="flex-1 flex items-center justify-center text-[#1F4E5A]/30 text-xs font-pixel tracking-widest">LOADING...</div>}>
+                  <TaskBoard
+                    tasks={tasks}
+                    activeTaskId={activeTaskId}
+                    onAdd={addTask}
+                    onUpdate={updateTask}
+                    onToggle={handleTaskToggle}
+                    onDelete={deleteTask}
+                    onSelectActive={setActiveTaskId}
+                    onOpenAdd={handleOpenAdd}
+                    onOpenEdit={handleOpenEdit}
+                  />
+                </Suspense>
               </div>
             </motion.div>
           </div>
@@ -412,12 +417,14 @@ export default function App() {
                 <div className="w-16 h-1.5 bg-[#4ECDC4]/30 rounded-full" />
               </div>
               <div className="mt-6 relative z-10 flex-1 flex flex-col bg-[#F5F5F0] rounded-xl border-2 border-[#1F4E5A]/10 overflow-hidden">
-                <StatsBoard
-                  sessions={sessions}
-                  tasks={tasks}
-                  challengeCount={challengeCompletedCount}
-                  onOpenChallengeHistory={() => setIsChallengeHistoryOpen(true)}
-                />
+                <Suspense fallback={<div className="flex-1 flex items-center justify-center text-[#1F4E5A]/30 text-xs font-pixel tracking-widest">LOADING...</div>}>
+                  <StatsBoard
+                    sessions={sessions}
+                    tasks={tasks}
+                    challengeCount={challengeCompletedCount}
+                    onOpenChallengeHistory={() => setIsChallengeHistoryOpen(true)}
+                  />
+                </Suspense>
               </div>
             </motion.div>
           </div>

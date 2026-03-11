@@ -22,17 +22,18 @@ export default defineConfig(({mode}) => {
       rollupOptions: {
         output: {
           manualChunks(id) {
-            // Vendor splits — each cached independently by the browser
             if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/'))
               return 'vendor-react';
             if (id.includes('node_modules/motion') || id.includes('node_modules/framer-motion'))
               return 'vendor-motion';
+            if (id.includes('node_modules/recharts') || id.includes('node_modules/d3-') || id.includes('node_modules/victory-'))
+              return 'vendor-charts';
             if (id.includes('node_modules/lucide-react'))
               return 'vendor-icons';
             if (id.includes('node_modules/canvas-confetti'))
               return 'vendor-confetti';
             if (id.includes('node_modules/@google'))
-              return 'vendor-ai'; // future AI features, isolated
+              return 'vendor-ai';
           },
         },
       },
