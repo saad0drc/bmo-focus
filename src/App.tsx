@@ -17,6 +17,7 @@ import { StatsBoard } from './components/StatsBoard';
 import { SettingsModal } from './components/SettingsModal';
 import { ChallengeCard } from './components/ChallengeCard';
 import { ChallengeHistoryModal } from './components/ChallengeHistoryModal';
+import { ChallengePlannerModal } from './components/ChallengePlannerModal';
 import { Session } from './types';
 import { Task, TaskSettings } from './types';
 import confetti from 'canvas-confetti';
@@ -55,6 +56,7 @@ export default function App() {
   } = useChallenge();
 
   const [isChallengeHistoryOpen, setIsChallengeHistoryOpen] = useState(false);
+  const [isChallengePlannerOpen, setIsChallengePlannerOpen] = useState(false);
 
   // Compact-mode scroll nav
   const layoutRef = useRef<HTMLDivElement>(null);
@@ -253,6 +255,12 @@ export default function App() {
         onClose={() => setIsChallengeHistoryOpen(false)}
         challenges={challenges}
       />
+      <ChallengePlannerModal
+        isOpen={isChallengePlannerOpen}
+        focusDuration={settings.focus}
+        onClose={() => setIsChallengePlannerOpen(false)}
+        onStart={createChallenge}
+      />
 
       {/*
         Layout:
@@ -341,8 +349,7 @@ export default function App() {
           <ChallengeCard
             activeChallenge={activeChallenge}
             todayCompleted={todayCompletedChallenge}
-            focusDuration={settings.focus}
-            onStart={createChallenge}
+            onOpenPlanner={() => setIsChallengePlannerOpen(true)}
             onAbandon={abandonChallenge}
           />
         </div>
