@@ -132,22 +132,20 @@ export function ChallengeCard({ activeChallenge, todayCompleted, onOpenPlanner, 
       key="idle"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-[460px] sm:max-w-[500px] lg:max-w-[560px] bg-[#DCF6E6] rounded-2xl border-[4px] border-[#1F4E5A] px-5 py-4 shadow-[4px_4px_0px_rgba(0,0,0,0.3)]"
+      className="w-full max-w-[460px] sm:max-w-[500px] lg:max-w-[560px] bg-[#DCF6E6] rounded-2xl border-[4px] border-[#1F4E5A] px-4 py-3 shadow-[4px_4px_0px_rgba(0,0,0,0.3)]"
     >
-      {/* BMO speech bubble header */}
-      <div className="flex items-start gap-3 mb-3">
-        <span className="text-2xl leading-none mt-0.5 shrink-0">{q.emoji}</span>
-        <p className="flex-1 font-pixel text-base leading-snug tracking-wide text-[#1F4E5A]">
+      <div className="flex items-center gap-3">
+        <span className="text-xl shrink-0">{q.emoji}</span>
+        <p className="flex-1 font-pixel text-sm font-bold leading-snug tracking-wide text-[#1F4E5A]">
           {q.text}
         </p>
+        <button
+          onClick={onOpenPlanner}
+          className="shrink-0 px-3 py-2 bg-[#4ECDC4] rounded-xl border-b-[3px] border-[#1F4E5A]/30 text-[#1F4E5A] font-black uppercase tracking-widest text-[11px] hover:brightness-105 active:border-b-0 active:translate-y-0.5 transition-all whitespace-nowrap shadow-sm"
+        >
+          ACCEPT!
+        </button>
       </div>
-      {/* Accept button — full width, impossible to miss */}
-      <button
-        onClick={onOpenPlanner}
-        className="w-full py-2.5 bg-[#4ECDC4] rounded-xl border-b-[4px] border-[#1F4E5A]/30 text-[#1F4E5A] font-black uppercase tracking-widest text-sm hover:brightness-105 active:border-b-0 active:translate-y-0.5 transition-all shadow-sm"
-      >
-        🎮 ACCEPT CHALLENGE!
-      </button>
     </motion.div>
   );
 }

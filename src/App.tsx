@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useEffect, useCallback, useState, useRef } from 'react';
+import { useEffect, useCallback, useState, useRef, lazy, Suspense } from 'react';
 import { useBMOState } from './hooks/useBMOState';
 import { useTimer, TimerMode, TimerSettings } from './hooks/useTimer';
 import { useTasks } from './hooks/useTasks';
@@ -12,12 +12,8 @@ import { useChallenge } from './hooks/useChallenge';
 import { BMOFace } from './components/BMOFace';
 import { BMOControls } from './components/BMOControls';
 import { TaskBoard } from './components/TaskBoard';
-import { TaskModal } from './components/TaskModal';
 import { StatsBoard } from './components/StatsBoard';
-import { SettingsModal } from './components/SettingsModal';
 import { ChallengeCard } from './components/ChallengeCard';
-import { ChallengeHistoryModal } from './components/ChallengeHistoryModal';
-import { ChallengePlannerModal } from './components/ChallengePlannerModal';
 import { Session } from './types';
 import { Task, TaskSettings } from './types';
 import confetti from 'canvas-confetti';
@@ -25,6 +21,12 @@ import { motion } from 'motion/react';
 import { playSound } from './utils/audio';
 import { todayStr } from './utils/date';
 import { ChevronUp, ChevronDown } from 'lucide-react';
+
+// Lazy-load modals — they're never needed on initial paint
+const TaskModal             = lazy(() => import('./components/TaskModal').then(m => ({ default: m.TaskModal })));
+const SettingsModal         = lazy(() => import('./components/SettingsModal').then(m => ({ default: m.SettingsModal })));
+const ChallengeHistoryModal = lazy(() => import('./components/ChallengeHistoryModal').then(m => ({ default: m.ChallengeHistoryModal })));
+const ChallengePlannerModal = lazy(() => import('./components/ChallengePlannerModal').then(m => ({ default: m.ChallengePlannerModal })));
 
 const DEFAULT_SETTINGS: TimerSettings = {
   focus: 25,
@@ -236,31 +238,33 @@ export default function App() {
       />
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)]" />
 
-      {/* Modals — rendered at root level, outside any CSS-transformed parents */}
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        settings={settings}
-        onUpdate={updateSettings}
-        onResetAll={handleResetAllData}
-      />
-      <TaskModal
-        isOpen={isTaskModalOpen}
-        onClose={() => setIsTaskModalOpen(false)}
-        onSave={handleModalSave}
-        initialTask={editingTask}
-      />
-      <ChallengeHistoryModal
-        isOpen={isChallengeHistoryOpen}
-        onClose={() => setIsChallengeHistoryOpen(false)}
-        challenges={challenges}
-      />
-      <ChallengePlannerModal
-        isOpen={isChallengePlannerOpen}
-        focusDuration={settings.focus}
-        onClose={() => setIsChallengePlannerOpen(false)}
-        onStart={createChallenge}
-      />
+      {/* Modals — lazy-loaded, rendered at root level outside any CSS-transformed parents */}
+      <Suspense fallback={null}>
+        <SettingsModal
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          settings={settings}
+          onUpdate={updateSettings}
+          onResetAll={handleResetAllData}
+        />
+        <TaskModal
+          isOpen={isTaskModalOpen}
+          onClose={() => setIsTaskModalOpen(false)}
+          onSave={handleModalSave}
+          initialTask={editingTask}
+        />
+        <ChallengeHistoryModal
+          isOpen={isChallengeHistoryOpen}
+          onClose={() => setIsChallengeHistoryOpen(false)}
+          challenges={challenges}
+        />
+        <ChallengePlannerModal
+          isOpen={isChallengePlannerOpen}
+          focusDuration={settings.focus}
+          onClose={() => setIsChallengePlannerOpen(false)}
+          onStart={createChallenge}
+        />
+      </Suspense>
 
       {/*
         Layout:
