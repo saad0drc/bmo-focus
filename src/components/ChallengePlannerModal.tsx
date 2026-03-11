@@ -77,7 +77,7 @@ export function ChallengePlannerModal({ isOpen, focusDuration, onClose, onStart 
 
             {/* BMO quote */}
             <div className="bg-[#DCF6E6] px-5 pt-4 pb-3 border-b border-[#1F4E5A]/10">
-              <p className="font-pixel text-sm text-[#1F4E5A] leading-snug tracking-wide text-center">
+              <p className="font-pixel text-base text-[#1F4E5A] leading-snug tracking-wide text-center">
                 🎮 &quot;{BMO_LINES[lineIdx]}&quot;
               </p>
             </div>
@@ -85,14 +85,14 @@ export function ChallengePlannerModal({ isOpen, focusDuration, onClose, onStart 
             {/* Body */}
             <div className="p-5 space-y-5 bg-[#F0F4F8]">
               {/* Label */}
-              <p className="text-[10px] font-black uppercase tracking-widest text-[#1F4E5A]/40 text-center">
+              <p className="text-xs font-black uppercase tracking-widest text-[#1F4E5A]/40 text-center">
                 How long do you want to focus today?
               </p>
 
               {/* Time inputs */}
               <div className="flex items-end gap-3">
                 <div className="flex-1 space-y-1.5">
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-[#1F4E5A]/40 text-center">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-[#1F4E5A]/40 text-center">
                     Hours
                   </label>
                   <input
@@ -107,7 +107,7 @@ export function ChallengePlannerModal({ isOpen, focusDuration, onClose, onStart 
                 </div>
                 <div className="font-pixel text-3xl text-[#1F4E5A]/30 pb-3">:</div>
                 <div className="flex-1 space-y-1.5">
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-[#1F4E5A]/40 text-center">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-[#1F4E5A]/40 text-center">
                     Minutes
                   </label>
                   <input

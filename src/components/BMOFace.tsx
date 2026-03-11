@@ -15,107 +15,193 @@ export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle }: 
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const faceRef = useRef<HTMLDivElement>(null);
 
-  // Track mouse for eye movement
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!faceRef.current) return;
-      
-      const rect = faceRef.current.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      
-      // Calculate normalized position (-1 to 1)
-      const x = (e.clientX - centerX) / (window.innerWidth / 2);
-      const y = (e.clientY - centerY) / (window.innerHeight / 2);
-      
-      setMousePos({ x, y });
-    };
+  // ── Internal idle sub-emotion (only overrides when truly idle & not active) ──
+  const [idleEmotion, setIdleEmotion] = useState<Emotion>('idle');
+  const isActiveRef = useRef(isActive);
+  const emotionRef = useRef(emotion);
+  const isOverFaceRef = useRef(false);
+  const prevMouse = useRef({ x: 0, y: 0, t: Date.now() });
+  const speedTimer = useRef<ReturnType<typeof setTimeout>>();
+  const randomIdleTimer = useRef<ReturnType<typeof setTimeout>>();
 
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+  useEffect(() => { isActiveRef.current = isActive; }, [isActive]);
+  useEffect(() => { emotionRef.current = emotion; }, [emotion]);
+
+  // When timer activates or emotion changes externally, reset idle sub-emotion
+  useEffect(() => {
+    if (isActive || emotion !== 'idle') setIdleEmotion(emotion);
+    else setIdleEmotion(isOverFaceRef.current ? 'shy' : 'idle');
+  }, [isActive, emotion]);
+
+  // Random idle drifting: occasionally show bored or curious
+  useEffect(() => {
+    const schedule = () => {
+      const delay = Math.random() * 12000 + 8000; // 8–20s
+      randomIdleTimer.current = setTimeout(() => {
+        if (!isActiveRef.current && emotionRef.current === 'idle' && !isOverFaceRef.current) {
+          const pick: Emotion[] = ['bored', 'curious', 'idle', 'idle'];
+          setIdleEmotion(pick[Math.floor(Math.random() * pick.length)]);
+          // Revert after 3s
+          setTimeout(() => {
+            if (!isActiveRef.current && emotionRef.current === 'idle')
+              setIdleEmotion(isOverFaceRef.current ? 'shy' : 'idle');
+          }, 3000);
+        }
+        schedule();
+      }, delay);
+    };
+    schedule();
+    return () => clearTimeout(randomIdleTimer.current);
   }, []);
 
-  // Eye movement limits - Reduced for subtler movement
-  const eyeX = mousePos.x * 6;
-  const eyeY = mousePos.y * 5;
+  // Mouse tracking — speed → surprised, position for eyes
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (!faceRef.current) return;
+      const rect = faceRef.current.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      setMousePos({
+        x: (e.clientX - cx) / (window.innerWidth / 2),
+        y: (e.clientY - cy) / (window.innerHeight / 2),
+      });
 
-  // Mouth paths for different emotions
+      // Speed detection — only when idle & not active
+      if (!isActiveRef.current && emotionRef.current === 'idle') {
+        const now = Date.now();
+        const dt = Math.max(now - prevMouse.current.t, 1);
+        const dx = e.clientX - prevMouse.current.x;
+        const dy = e.clientY - prevMouse.current.y;
+        const speed = Math.sqrt(dx * dx + dy * dy) / dt;
+
+        if (speed > 1.8) {
+          setIdleEmotion('surprised');
+          clearTimeout(speedTimer.current);
+          speedTimer.current = setTimeout(() => {
+            if (!isActiveRef.current && emotionRef.current === 'idle')
+              setIdleEmotion(isOverFaceRef.current ? 'shy' : 'idle');
+          }, 750);
+        }
+        prevMouse.current = { x: e.clientX, y: e.clientY, t: now };
+      }
+    };
+    window.addEventListener('mousemove', onMove);
+    return () => window.removeEventListener('mousemove', onMove);
+  }, []);
+
+  // Face hover → shy
+  const handleMouseEnter = () => {
+    isOverFaceRef.current = true;
+    if (!isActiveRef.current && emotionRef.current === 'idle')
+      setIdleEmotion('shy');
+  };
+  const handleMouseLeave = () => {
+    isOverFaceRef.current = false;
+    if (!isActiveRef.current && emotionRef.current === 'idle')
+      setIdleEmotion('idle');
+  };
+
+  // Effective emotion used for rendering
+  const eff: Emotion = (!isActive && emotion === 'idle') ? idleEmotion : emotion;
+
+  // ── Mouth paths ──────────────────────────────────────────────────────────────
   const mouthPaths: Record<Emotion, string> = {
-    idle:     "M 30 50 Q 50 60 70 50",      // Gentle smile
-    focus:    "M 40 55 Q 50 55 60 55",      // Small concentration mouth
-    focus2:   "M 38 52 L 62 52",            // Dead-straight line — intense
-    success:  "M 30 45 Q 50 75 70 45",      // Big open smile
-    sleepy:   "M 38 56 Q 50 56 62 56",      // Relaxed flat
-    break:    "M 28 50 Q 50 70 72 50",      // Wide happy arc
-    confused: "M 35 55 Q 50 45 65 55",      // Wobbly
-    excited:  "M 30 45 Q 50 80 70 45",      // Huge open smile
-    tired:    "M 35 60 Q 50 55 65 60",      // Frown
+    idle:      "M 30 50 Q 50 60 70 50",
+    focus:     "M 40 55 Q 50 55 60 55",
+    focus2:    "M 38 52 L 62 52",
+    success:   "M 30 45 Q 50 75 70 45",
+    sleepy:    "M 38 56 Q 50 56 62 56",
+    break:     "M 28 50 Q 50 70 72 50",
+    confused:  "M 35 55 Q 50 45 65 55",
+    excited:   "M 30 45 Q 50 80 70 45",
+    tired:     "M 35 60 Q 50 55 65 60",
+    // New faces
+    shy:       "M 41 53 Q 50 59 59 53",    // small tight smile, mouth almost hidden
+    surprised: "M 36 47 Q 50 70 64 47",    // wide open arc — "O" mouth
+    curious:   "M 33 51 Q 50 63 67 50",    // asymmetric smile, curious
+    bored:     "M 36 57 Q 50 53 64 57",    // slight frown / flat
   };
 
-  // Eye variants
-  const eyeVariants: Record<Emotion, { scaleY: number; height: number; width: number; borderRadius: string }> = {
-    idle:     { scaleY: 1,    height: 12, width: 12, borderRadius: "100%" },
-    focus:    { scaleY: 0.55, height: 12, width: 12, borderRadius: "100%" }, // Squint
-    focus2:   { scaleY: 0.25, height: 12, width: 14, borderRadius: "30%" }, // Intense rectangle squint
-    success:  { scaleY: 1.2,  height: 14, width: 12, borderRadius: "100%" }, // Wide eyes
-    sleepy:   { scaleY: 0.1,  height: 12, width: 12, borderRadius: "100%" }, // Almost closed
-    break:    { scaleY: 1.3,  height: 14, width: 14, borderRadius: "100%" }, // Wide happy eyes
-    confused: { scaleY: 1,    height: 12, width: 12, borderRadius: "100%" }, // One big one small in render
-    excited:  { scaleY: 1,    height: 16, width: 16, borderRadius: "20%" }, // Star-like
-    tired:    { scaleY: 0.5,  height: 12, width: 12, borderRadius: "100%" }, // Droopy
+  // ── Eye shape variants ───────────────────────────────────────────────────────
+  const eyeVariants: Record<Emotion, { scaleY: number; h: number; w: number; r: string }> = {
+    idle:      { scaleY: 1,    h: 12, w: 12, r: "100%" },
+    focus:     { scaleY: 0.55, h: 12, w: 12, r: "100%" },
+    focus2:    { scaleY: 0.25, h: 12, w: 14, r: "30%"  },
+    success:   { scaleY: 1.2,  h: 14, w: 12, r: "100%" },
+    sleepy:    { scaleY: 0.1,  h: 12, w: 12, r: "100%" },
+    break:     { scaleY: 1.3,  h: 14, w: 14, r: "100%" },
+    confused:  { scaleY: 1,    h: 12, w: 12, r: "100%" },
+    excited:   { scaleY: 1,    h: 16, w: 16, r: "20%"  },
+    tired:     { scaleY: 0.5,  h: 12, w: 12, r: "100%" },
+    // New faces
+    shy:       { scaleY: 0.45, h: 11, w: 12, r: "100%" }, // squinting down
+    surprised: { scaleY: 1.5,  h: 16, w: 15, r: "100%" }, // very wide O eyes
+    curious:   { scaleY: 1.1,  h: 13, w: 12, r: "100%" }, // slightly wide
+    bored:     { scaleY: 0.38, h: 12, w: 13, r: "40%"  }, // heavy-lidded
   };
 
+  const ev = eyeVariants[eff] ?? eyeVariants.idle;
+
+  // Eye movement — per-emotion overrides
+  const eyeX = eff === 'shy'
+    ? -mousePos.x * 3       // look slightly away
+    : eff === 'surprised'
+    ? mousePos.x * 9        // very reactive
+    : mousePos.x * 6;
+  const eyeY = eff === 'shy'
+    ? 4                     // always look slightly downward
+    : eff === 'surprised'
+    ? mousePos.y * 8
+    : mousePos.y * 5;
+
+  const eyeSpring = { type: "spring", stiffness: 120, damping: 15, mass: 0.8 } as const;
+
+  // ── Mode label ───────────────────────────────────────────────────────────────
   const modeLabel: Record<TimerMode, { text: string; emoji: string; color: string; dot: string }> = {
-    focus:      { text: 'FOCUS',      emoji: '🍅', color: 'bg-[#1F4E5A]/90 text-[#DCF6E6]',    dot: 'bg-[#FF5E5E]' },
-    shortBreak: { text: 'BREAK',      emoji: '☕', color: 'bg-[#6BCB77]/90 text-[#1F4E5A]',    dot: 'bg-[#6BCB77]' },
-    longBreak:  { text: 'LONG BREAK', emoji: '⭐', color: 'bg-[#FFD93D]/90 text-[#1F4E5A]',    dot: 'bg-[#FFD93D]' },
+    focus:      { text: 'FOCUS',      emoji: '🍅', color: 'bg-[#1F4E5A]/90 text-[#DCF6E6]', dot: 'bg-[#FF5E5E]' },
+    shortBreak: { text: 'BREAK',      emoji: '☕', color: 'bg-[#6BCB77]/90 text-[#1F4E5A]', dot: 'bg-[#6BCB77]' },
+    longBreak:  { text: 'LONG BREAK', emoji: '⭐', color: 'bg-[#FFD93D]/90 text-[#1F4E5A]', dot: 'bg-[#FFD93D]' },
   };
 
-  // Blinking logic
+  // ── Blinking ─────────────────────────────────────────────────────────────────
   const [isBlinking, setIsBlinking] = useState(false);
   useEffect(() => {
     const blinkLoop = () => {
       setIsBlinking(true);
       setTimeout(() => setIsBlinking(false), 150);
-      
-      const nextBlink = Math.random() * 4000 + 2000; // 2-6 seconds
-      setTimeout(blinkLoop, nextBlink);
+      setTimeout(blinkLoop, Math.random() * 4000 + 2000);
     };
-    
-    const timeout = setTimeout(blinkLoop, 3000);
-    return () => clearTimeout(timeout);
+    const t = setTimeout(blinkLoop, 3000);
+    return () => clearTimeout(t);
   }, []);
 
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  };
+  const formatTime = (s: number) =>
+    `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
 
-  // Eye transition config for smooth movement
-  const eyeTransition = {
-    type: "spring",
-    stiffness: 120,
-    damping: 15,
-    mass: 0.8
-  };
+  const faceShift = isActive ? 'translateY(-24px)' : 'none';
+
+  // Show blush for these emotions
+  const showBlush = eff === 'success' || eff === 'excited' || eff === 'break' || eff === 'shy';
 
   return (
-    <div 
+    <div
       ref={faceRef}
       className="relative w-full h-full flex flex-col items-center justify-center overflow-hidden bg-[#E8F5E9]"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
-      {/* CRT Scanlines */}
-      <div className="absolute inset-0 pointer-events-none z-10 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.02)_50%),linear-gradient(90deg,rgba(255,0,0,0.01),rgba(0,255,0,0.01),rgba(0,0,255,0.01))]" style={{ backgroundSize: "100% 3px, 3px 100%" }} />
-      
-      {/* Subtle Screen Flicker */}
-      <motion.div 
+      {/* CRT scanlines */}
+      <div
+        className="absolute inset-0 pointer-events-none z-10 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.02)_50%),linear-gradient(90deg,rgba(255,0,0,0.01),rgba(0,255,0,0.01),rgba(0,0,255,0.01))]"
+        style={{ backgroundSize: "100% 3px, 3px 100%" }}
+      />
+      <motion.div
         animate={{ opacity: [0.01, 0.03, 0.01] }}
         transition={{ duration: 0.2, repeat: Infinity, repeatType: "reverse", ease: "linear" }}
         className="absolute inset-0 bg-white pointer-events-none z-20 mix-blend-overlay"
       />
 
-      {/* Active mode badge + task name */}
+      {/* Mode badge */}
       <AnimatePresence>
         {isActive && mode && (
           <motion.div
@@ -139,97 +225,118 @@ export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle }: 
         )}
       </AnimatePresence>
 
-      {/* Eyes Container */}
-      <div className="flex justify-between w-40 mb-8 transition-all duration-500" style={{ transform: isActive ? 'translateY(-24px)' : 'none' }}>
-        {/* Left Eye */}
+      {/* Eyes */}
+      <div
+        className="flex justify-between w-40 mb-8 transition-all duration-500"
+        style={{ transform: faceShift }}
+      >
+        {/* Left eye */}
         <motion.div
           animate={{
             x: eyeX,
             y: eyeY,
-            scaleY: isBlinking ? 0.1 : eyeVariants[emotion].scaleY,
-            height: eyeVariants[emotion].height,
-            width: emotion === 'confused' ? 16 : emotion === 'focus2' ? 14 : eyeVariants[emotion].width,
-            borderRadius: eyeVariants[emotion].borderRadius
+            scaleY: isBlinking ? 0.1 : ev.scaleY,
+            height: ev.h,
+            width: eff === 'confused' ? 16 : eff === 'focus2' ? 14 : ev.w,
+            borderRadius: ev.r,
           }}
-          transition={{
-            x: eyeTransition,
-            y: eyeTransition,
-            scaleY: { duration: 0.1 }
-          }}
+          transition={{ x: eyeSpring, y: eyeSpring, scaleY: { duration: 0.1 } }}
           className="bg-[#1F4E5A] shadow-sm"
         />
-        
-        {/* Right Eye */}
+        {/* Right eye — some emotions make it asymmetric */}
         <motion.div
           animate={{
             x: eyeX,
             y: eyeY,
-            scaleY: isBlinking ? 0.1 : emotion === 'focus2' ? eyeVariants[emotion].scaleY * 1.6 : eyeVariants[emotion].scaleY,
-            height: eyeVariants[emotion].height,
-            width: emotion === 'confused' ? 8 : emotion === 'focus2' ? 10 : eyeVariants[emotion].width,
-            borderRadius: eyeVariants[emotion].borderRadius
+            scaleY: isBlinking ? 0.1
+              : eff === 'focus2'   ? ev.scaleY * 1.6
+              : eff === 'curious'  ? ev.scaleY * 1.25   // one eye raised = curious
+              : ev.scaleY,
+            height: ev.h,
+            width: eff === 'confused' ? 8 : eff === 'focus2' ? 10 : ev.w,
+            borderRadius: ev.r,
           }}
-          transition={{
-            x: eyeTransition,
-            y: eyeTransition,
-            scaleY: { duration: 0.1 }
-          }}
+          transition={{ x: eyeSpring, y: eyeSpring, scaleY: { duration: 0.1 } }}
           className="bg-[#1F4E5A] shadow-sm"
         />
       </div>
 
       {/* Mouth */}
-      <svg 
-        width="100" 
-        height="80" 
-        viewBox="0 0 100 80" 
+      <svg
+        width="100" height="80" viewBox="0 0 100 80"
         className="absolute top-1/2 -mt-2 transition-all duration-500"
-        style={{ transform: isActive ? 'translateY(-24px)' : 'none' }}
+        style={{ transform: faceShift }}
       >
         <motion.path
-          d={mouthPaths[emotion] || mouthPaths.idle}
+          d={mouthPaths[eff] ?? mouthPaths.idle}
           fill="transparent"
           stroke="#1F4E5A"
           strokeWidth="3.5"
           strokeLinecap="round"
           initial={false}
-          animate={{ d: mouthPaths[emotion] || mouthPaths.idle }}
+          animate={{ d: mouthPaths[eff] ?? mouthPaths.idle }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
         />
       </svg>
 
-      {/* Blush for success/excited/break */}
-      {(emotion === 'success' || emotion === 'excited' || emotion === 'break') && (
+      {/* Blush */}
+      {showBlush && (
         <>
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 0.3 }}
-            className="absolute top-1/2 left-14 w-5 h-2.5 bg-[#FF9AA2] rounded-full blur-md transition-all duration-500"
-            style={{ transform: isActive ? 'translateY(-24px)' : 'none' }}
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: eff === 'shy' ? 0.45 : 0.3 }}
+            className="absolute top-1/2 left-14 w-5 h-2.5 bg-[#FF9AA2] rounded-full blur-md"
+            style={{ transform: faceShift }}
           />
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 0.3 }}
-            className="absolute top-1/2 right-14 w-5 h-2.5 bg-[#FF9AA2] rounded-full blur-md transition-all duration-500"
-            style={{ transform: isActive ? 'translateY(-24px)' : 'none' }}
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: eff === 'shy' ? 0.45 : 0.3 }}
+            className="absolute top-1/2 right-14 w-5 h-2.5 bg-[#FF9AA2] rounded-full blur-md"
+            style={{ transform: faceShift }}
           />
         </>
       )}
 
       {/* Zzz for sleepy */}
-      {emotion === 'sleepy' && (
+      {eff === 'sleepy' && (
         <motion.div
           initial={{ opacity: 0, y: 0 }}
           animate={{ opacity: [0, 0.7, 0], y: -18 }}
           transition={{ duration: 2.5, repeat: Infinity, ease: "easeOut" }}
           className="absolute top-[38%] right-[28%] text-[#1F4E5A]/60 font-black text-xs pointer-events-none z-30"
-          style={{ transform: isActive ? 'translateY(-24px)' : 'none' }}
+          style={{ transform: faceShift }}
         >
           z z z
         </motion.div>
       )}
 
+      {/* Sweat drop for surprised */}
+      {eff === 'surprised' && (
+        <motion.div
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: [0, 0.8, 0], y: [0, 10, 10] }}
+          transition={{ duration: 0.8, ease: "easeIn" }}
+          className="absolute top-[30%] right-[22%] text-[#4D96FF] font-black text-sm pointer-events-none z-30"
+          style={{ transform: faceShift }}
+        >
+          💧
+        </motion.div>
+      )}
+
+      {/* Question mark for curious */}
+      {eff === 'curious' && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: [0, 0.7, 0.5], scale: 1 }}
+          transition={{ duration: 0.4 }}
+          className="absolute top-[22%] right-[20%] text-[#1F4E5A]/50 font-black text-base pointer-events-none z-30"
+          style={{ transform: faceShift }}
+        >
+          ?
+        </motion.div>
+      )}
+
       {/* Timer */}
       {timeLeft !== undefined && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className={`absolute bottom-6 font-pixel tracking-widest transition-all duration-500 ${

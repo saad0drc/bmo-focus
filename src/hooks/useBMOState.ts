@@ -1,6 +1,19 @@
 import { useState, useCallback } from 'react';
 
-export type Emotion = 'idle' | 'focus' | 'focus2' | 'success' | 'sleepy' | 'break' | 'confused' | 'excited' | 'tired';
+export type Emotion =
+  | 'idle'
+  | 'focus'
+  | 'focus2'
+  | 'success'
+  | 'sleepy'
+  | 'break'
+  | 'confused'
+  | 'excited'
+  | 'tired'
+  | 'shy'
+  | 'surprised'
+  | 'curious'
+  | 'bored';
 
 export function useBMOState() {
   const [emotion, setEmotionRaw] = useState<Emotion>('idle');

@@ -41,7 +41,7 @@ export function ChallengeCard({ activeChallenge, todayCompleted, onOpenPlanner, 
             <p className="font-pixel text-sm text-[#1F4E5A] tracking-widest leading-tight">
               CHALLENGE COMPLETE!!
             </p>
-            <p className="text-[10px] text-[#1F4E5A]/55 font-bold mt-1">
+            <p className="text-xs text-[#1F4E5A]/55 font-bold mt-1">
               {fmtTime(todayCompleted.goalMinutes)} goal &bull;{' '}
               {todayCompleted.pomodorosCompleted} 🍅 &bull; Mathematical!
             </p>
@@ -64,13 +64,13 @@ export function ChallengeCard({ activeChallenge, todayCompleted, onOpenPlanner, 
         {/* Header row */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-1.5">
-            <Zap size={13} className="text-[#FFD93D]" fill="#FFD93D" />
-            <span className="font-pixel text-xs text-[#1F4E5A] tracking-widest">
+            <Zap size={14} className="text-[#FFD93D]" fill="#FFD93D" />
+            <span className="font-pixel text-sm text-[#1F4E5A] tracking-widest">
               {activeChallenge.dayLabel.toUpperCase()} CHALLENGE
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="font-pixel text-xs text-[#1F4E5A]/40">{fmtTime(activeChallenge.goalMinutes)}</span>
+            <span className="font-pixel text-sm text-[#1F4E5A]/40">{fmtTime(activeChallenge.goalMinutes)}</span>
             <button
               onClick={onAbandon}
               title="Give up"
@@ -110,11 +110,11 @@ export function ChallengeCard({ activeChallenge, todayCompleted, onOpenPlanner, 
           />
         </div>
         <div className="flex justify-between mt-1.5">
-          <span className="font-pixel text-[10px] text-[#1F4E5A]/40">
+          <span className="font-pixel text-xs text-[#1F4E5A]/40">
             {activeChallenge.pomodorosCompleted}/{activeChallenge.pomodorosNeeded} 🍅
           </span>
-          <span className="font-pixel text-[10px] text-[#4ECDC4]">{pct}%</span>
-          <span className="font-pixel text-[10px] text-[#1F4E5A]/40">
+          <span className="font-pixel text-xs text-[#4ECDC4]">{pct}%</span>
+          <span className="font-pixel text-xs text-[#1F4E5A]/40">
             {fmtTime(activeChallenge.focusMinutesLogged)}/{fmtTime(activeChallenge.goalMinutes)}
           </span>
         </div>
@@ -132,12 +132,12 @@ export function ChallengeCard({ activeChallenge, todayCompleted, onOpenPlanner, 
     >
       <div className="flex items-center gap-3">
         <span className="text-xl shrink-0">🎮</span>
-        <p className="flex-1 font-pixel text-xs text-[#1F4E5A]/75 leading-snug tracking-wide">
+        <p className="flex-1 font-pixel text-sm text-[#1F4E5A]/75 leading-snug tracking-wide">
           {IDLE_QUOTES[quoteIdx]}
         </p>
         <button
           onClick={onOpenPlanner}
-          className="shrink-0 px-3 py-2 bg-[#4ECDC4] rounded-xl border-b-[3px] border-[#1F4E5A]/30 text-[#1F4E5A] font-black uppercase tracking-widest text-[9px] hover:brightness-105 active:border-b-0 active:translate-y-0.5 transition-all whitespace-nowrap shadow-sm"
+          className="shrink-0 px-3 py-2 bg-[#4ECDC4] rounded-xl border-b-[3px] border-[#1F4E5A]/30 text-[#1F4E5A] font-black uppercase tracking-widest text-[10px] hover:brightness-105 active:border-b-0 active:translate-y-0.5 transition-all whitespace-nowrap shadow-sm"
         >
           ACCEPT!
         </button>
