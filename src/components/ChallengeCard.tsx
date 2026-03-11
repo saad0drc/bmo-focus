@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion } from 'motion/react';
 import { Zap, X, Trophy } from 'lucide-react';
 import { Challenge } from '../types';
@@ -10,9 +11,11 @@ interface ChallengeCardProps {
 }
 
 const IDLE_QUOTES = [
-  'Wanna go on a FOCUS ADVENTURE today?! 🎮',
-  'Wanna challenge yourself today? I will cheer you on! ⭐',
-  'Do you wanna do a FOCUS CHALLENGE?? SO fun!! 🌟',
+  { emoji: '🎮', text: 'HEY!! Wanna go on a FOCUS ADVENTURE?! I have a whole plan!!' },
+  { emoji: '⭐', text: "OH! OH! Let's do a CHALLENGE today! You can totally do it!!" },
+  { emoji: '🌟', text: 'Do you wanna do a FOCUS CHALLENGE?? SO fun!! Let me help you!!' },
+  { emoji: '🕹️', text: "PSST! I know how to WIN at studying. Wanna try my FOCUS GAME?!" },
+  { emoji: '🏆', text: 'Are you ready to FOCUS?? I believe in you! Let\'s make a plan!!' },
 ];
 
 function fmtTime(minutes: number): string {
@@ -24,7 +27,7 @@ function fmtTime(minutes: number): string {
 }
 
 export function ChallengeCard({ activeChallenge, todayCompleted, onOpenPlanner, onAbandon }: ChallengeCardProps) {
-  const quoteIdx = Math.floor(Math.random() * IDLE_QUOTES.length);
+  const [quoteIdx] = useState(() => Math.floor(Math.random() * IDLE_QUOTES.length));
 
   // ── COMPLETED ────────────────────────────────────────────────────────────────
   if (todayCompleted && !activeChallenge) {
@@ -123,25 +126,28 @@ export function ChallengeCard({ activeChallenge, todayCompleted, onOpenPlanner, 
   }
 
   // ── IDLE ─────────────────────────────────────────────────────────────────────
+  const q = IDLE_QUOTES[quoteIdx];
   return (
     <motion.div
       key="idle"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-[460px] sm:max-w-[500px] lg:max-w-[560px] bg-[#DCF6E6] rounded-2xl border-[4px] border-[#1F4E5A] px-4 py-3 shadow-[4px_4px_0px_rgba(0,0,0,0.3)]"
+      className="w-full max-w-[460px] sm:max-w-[500px] lg:max-w-[560px] bg-[#DCF6E6] rounded-2xl border-[4px] border-[#1F4E5A] px-5 py-4 shadow-[4px_4px_0px_rgba(0,0,0,0.3)]"
     >
-      <div className="flex items-center gap-3">
-        <span className="text-xl shrink-0">🎮</span>
-        <p className="flex-1 font-pixel text-sm text-[#1F4E5A]/75 leading-snug tracking-wide">
-          {IDLE_QUOTES[quoteIdx]}
+      {/* BMO speech bubble header */}
+      <div className="flex items-start gap-3 mb-3">
+        <span className="text-2xl leading-none mt-0.5 shrink-0">{q.emoji}</span>
+        <p className="flex-1 font-pixel text-base leading-snug tracking-wide text-[#1F4E5A]">
+          {q.text}
         </p>
-        <button
-          onClick={onOpenPlanner}
-          className="shrink-0 px-3 py-2 bg-[#4ECDC4] rounded-xl border-b-[3px] border-[#1F4E5A]/30 text-[#1F4E5A] font-black uppercase tracking-widest text-[10px] hover:brightness-105 active:border-b-0 active:translate-y-0.5 transition-all whitespace-nowrap shadow-sm"
-        >
-          ACCEPT!
-        </button>
       </div>
+      {/* Accept button — full width, impossible to miss */}
+      <button
+        onClick={onOpenPlanner}
+        className="w-full py-2.5 bg-[#4ECDC4] rounded-xl border-b-[4px] border-[#1F4E5A]/30 text-[#1F4E5A] font-black uppercase tracking-widest text-sm hover:brightness-105 active:border-b-0 active:translate-y-0.5 transition-all shadow-sm"
+      >
+        🎮 ACCEPT CHALLENGE!
+      </button>
     </motion.div>
   );
 }
