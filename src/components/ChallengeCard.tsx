@@ -173,7 +173,14 @@ export function ChallengeCard({ activeChallenge, todayCompleted, onOpenPlanner, 
           >
             {q.emoji}
           </motion.span>
-          <p className="font-pixel text-sm text-[#1F4E5A] font-black leading-tight tracking-wider drop-shadow-sm">
+          <p 
+            className="font-pixel text-sm text-[#1F4E5A] font-black leading-tight tracking-wider drop-shadow-lg"
+            style={{
+              textShadow: '0 2px 4px rgba(31, 78, 90, 0.5), 0 0 8px rgba(107, 203, 119, 0.3)',
+              WebkitTextStroke: '0.5px rgba(31, 78, 90, 0.2)',
+              letterSpacing: '0.05em'
+            }}
+          >
             {q.text}
           </p>
         </div>
