@@ -363,16 +363,15 @@ export default function App() {
       */}
       <div
         ref={layoutRef}
-        className="flex-1 min-h-0 w-full max-w-full mx-auto relative z-10
+        className="flex-1 min-h-0 w-full max-w-[96rem] lg:max-w-[96rem] xl:max-w-[1400px] 2xl:max-w-[1800px] mx-auto relative z-10
                    flex flex-col lg:grid lg:grid-cols-12 lg:gap-4 lg:items-start lg:px-4 lg:pt-3 lg:pb-4
-                   xl:max-w-[1400px] 2xl:max-w-[1800px]
                    overflow-y-auto lg:overflow-hidden
                    snap-y snap-mandatory lg:snap-none"
       >
 
         {/* ── PAGE 1 : BMO ──────────────────────────────────────────────── */}
         <div className="snap-start min-h-screen lg:min-h-0
-                        lg:col-span-6 xl:col-span-5 2xl:col-span-5 lg:order-2
+                        lg:col-span-6 lg:order-2
                         flex flex-col items-center justify-center gap-4 p-4 lg:p-0">
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 0 }}
@@ -458,7 +457,7 @@ export default function App() {
 
           {/* Mission Log */}
           <div className="min-h-[520px] sm:h-[calc(100vh-1.25rem)] flex flex-col
-                          lg:col-span-3 xl:col-span-3 2xl:col-span-3 lg:order-1 lg:h-[calc(100vh-4rem)] lg:max-h-[780px] xl:max-h-[900px] 2xl:max-h-[1000px]">
+                          lg:col-span-3 lg:order-1 lg:h-[calc(100vh-4rem)] lg:max-h-[720px] xl:max-h-[900px] 2xl:max-h-[1000px]">
             <motion.div
               initial={{ x: -50, opacity: 0, y: 0 }}
               animate={{ x: 0, opacity: 1, y: [0, -8, 0] }}
@@ -492,7 +491,7 @@ export default function App() {
 
           {/* Data Center */}
           <div className="min-h-[520px] sm:h-[calc(100vh-1.25rem)] flex flex-col
-                          lg:col-span-3 xl:col-span-3 2xl:col-span-3 lg:order-3 lg:h-[calc(100vh-4rem)] lg:max-h-[780px] xl:max-h-[900px] 2xl:max-h-[1000px]">
+                          lg:col-span-3 lg:order-3 lg:h-[calc(100vh-4rem)] lg:max-h-[720px] xl:max-h-[900px] 2xl:max-h-[1000px]">
             <motion.div
               initial={{ x: 50, opacity: 0, y: 0 }}
               animate={{ x: 0, opacity: 1, y: [0, -8, 0] }}
