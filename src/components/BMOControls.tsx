@@ -12,6 +12,7 @@ interface BMOControlsProps {
   onReset: () => void;
   onModeChange: (mode: TimerMode) => void;
   onSettings: () => void;
+  soundEnabled: boolean;
 }
 
 export function BMOControls({ 
@@ -21,11 +22,12 @@ export function BMOControls({
   onPause, 
   onReset,
   onModeChange,
-  onSettings
+  onSettings,
+  soundEnabled,
 }: BMOControlsProps) {
   
   const handleModeCycle = (direction: 'up' | 'down') => {
-    playSound.modeChange();
+    if (soundEnabled) playSound.modeChange();
     const modes: TimerMode[] = ['focus', 'shortBreak', 'longBreak'];
     const currentIndex = modes.indexOf(mode);
     const newIndex = direction === 'up'
@@ -34,9 +36,18 @@ export function BMOControls({
     onModeChange(modes[newIndex]);
   };
 
-  const handleStart = () => { playSound.start(); onStart(); };
-  const handlePause = () => { playSound.pause(); onPause(); };
-  const handleReset = () => { playSound.reset(); onReset(); };
+  const handleStart = () => {
+    if (soundEnabled) playSound.start();
+    onStart();
+  };
+  const handlePause = () => {
+    if (soundEnabled) playSound.pause();
+    onPause();
+  };
+  const handleReset = () => {
+    if (soundEnabled) playSound.reset();
+    onReset();
+  };
 
   const modeMeta = {
     focus:      { label: 'Focus',      color: 'bg-[#FF5E5E]/20 text-[#c0392b]' },

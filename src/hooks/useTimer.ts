@@ -7,6 +7,11 @@ export interface TimerSettings {
   shortBreak: number;
   longBreak: number;
   sessionsPerRound?: number;
+  soundEnabled?: boolean;
+  challengeEnabled?: boolean;
+  soundVolume?: number; // 0-100
+  autoStart?: boolean; // auto-start timer on tab load
+  notificationsEnabled?: boolean; // desktop notifications
 }
 
 const DEFAULT_SETTINGS: TimerSettings = {
@@ -14,6 +19,11 @@ const DEFAULT_SETTINGS: TimerSettings = {
   shortBreak: 5,
   longBreak: 15,
   sessionsPerRound: 4,
+  soundEnabled: true,
+  challengeEnabled: true,
+  soundVolume: 70,
+  autoStart: false,
+  notificationsEnabled: true,
 };
 
 const STORAGE_KEY = 'bmo_timer_state';
@@ -46,6 +56,10 @@ const DEFAULT_BG_STATE: BgTimerState = {
   lastCompletedAt: null,
   lastCompletedMode: null,
 };
+
+function normalizeSettings(input?: TimerSettings): TimerSettings {
+  return { ...DEFAULT_SETTINGS, ...(input ?? {}) };
+}
 
 function sendBgMessage(type: string, payload: object = {}): void {
   try {
@@ -95,7 +109,8 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void): TimerS
   // ── Sync local state from a background storage snapshot ──────────────────
   const applyBgState = useCallback((s: BgTimerState) => {
     setModeState(s.mode);
-    setSettings(s.settings);
+    const normalized = normalizeSettings(s.settings);
+    setSettings(normalized);
     setSessionCount(s.sessionCount);
 
     if (s.isActive && s.endTime) {
@@ -107,7 +122,7 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void): TimerS
       setIsActive(false);
       const tl = s.pausedTimeLeft != null
         ? Math.ceil(s.pausedTimeLeft / 1000)
-        : s.settings[s.mode] * 60;
+        : normalized[s.mode] * 60;
       setTimeLeft(tl);
     }
   }, []);
@@ -118,7 +133,7 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void): TimerS
       // Dev mode: restore settings from localStorage
       try {
         const raw = localStorage.getItem(LEGACY_SETTINGS_KEY);
-        if (raw) setSettings(JSON.parse(raw));
+        if (raw) setSettings(normalizeSettings(JSON.parse(raw)));
       } catch { /* ignore */ }
       return;
     }
@@ -235,12 +250,13 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void): TimerS
   }, []);
 
   const updateSettings = useCallback((newSettings: TimerSettings) => {
-    setSettings(newSettings);
+    const normalized = normalizeSettings(newSettings);
+    setSettings(normalized);
     if (!isActiveRef.current) {
-      setTimeLeft(newSettings[modeRef.current] * 60);
+      setTimeLeft(normalized[modeRef.current] * 60);
     }
-    if (isChromeExt) sendBgMessage('UPDATE_SETTINGS', { settings: newSettings });
-    else localStorage.setItem(LEGACY_SETTINGS_KEY, JSON.stringify(newSettings));
+    if (isChromeExt) sendBgMessage('UPDATE_SETTINGS', { settings: normalized });
+    else localStorage.setItem(LEGACY_SETTINGS_KEY, JSON.stringify(normalized));
   }, []);
 
   // ── Derived values ────────────────────────────────────────────────────────

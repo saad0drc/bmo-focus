@@ -14,6 +14,7 @@ interface StatsBoardProps {
   sessions: Session[];
   tasks: Task[];
   challengeCount: number;
+  challengeEnabled: boolean;
   onOpenChallengeHistory: () => void;
 }
 
@@ -36,7 +37,7 @@ function MiniStat({ label, value, icon, bg }: MiniStatProps) {
   );
 }
 
-export const StatsBoard = memo(function StatsBoard({ sessions, tasks, challengeCount, onOpenChallengeHistory }: StatsBoardProps) {
+export const StatsBoard = memo(function StatsBoard({ sessions, tasks, challengeCount, challengeEnabled, onOpenChallengeHistory }: StatsBoardProps) {
   const today    = useMemo(() => computeTodayStats(sessions), [sessions]);
   const week     = useMemo(() => computeWeekStats(sessions),  [sessions]);
   const streak   = useMemo(() => computeStreak(sessions),     [sessions]);
@@ -210,19 +211,21 @@ export const StatsBoard = memo(function StatsBoard({ sessions, tasks, challengeC
       )}
 
       {/* CHALLENGES — clickable row that opens history modal */}
-      <button
-        onClick={onOpenChallengeHistory}
-        className="shrink-0 bg-white rounded-xl p-3 shadow-sm w-full flex items-center justify-between hover:bg-[#DCF6E6] transition-colors group"
-      >
-        <div className="flex items-center gap-1.5">
-          <Trophy size={12} className="text-[#FFD93D]" />
-          <span className="text-[9px] font-bold uppercase tracking-widest text-[#1F4E5A]/40">Challenges</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="font-pixel text-lg text-[#1F4E5A]">{challengeCount}</span>
-          <span className="text-[9px] text-[#1F4E5A]/25 font-bold group-hover:text-[#4ECDC4] transition-colors">→</span>
-        </div>
-      </button>
+      {challengeEnabled && (
+        <button
+          onClick={onOpenChallengeHistory}
+          className="shrink-0 bg-white rounded-xl p-3 shadow-sm w-full flex items-center justify-between hover:bg-[#DCF6E6] transition-colors group"
+        >
+          <div className="flex items-center gap-1.5">
+            <Trophy size={12} className="text-[#FFD93D]" />
+            <span className="text-[9px] font-bold uppercase tracking-widest text-[#1F4E5A]/40">Challenges</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="font-pixel text-lg text-[#1F4E5A]">{challengeCount}</span>
+            <span className="text-[9px] text-[#1F4E5A]/25 font-bold group-hover:text-[#4ECDC4] transition-colors">→</span>
+          </div>
+        </button>
+      )}
 
     </div>
   );

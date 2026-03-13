@@ -36,3 +36,56 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(31, 78, 90, 0.4);
 }
+
+/* Range slider styling */
+.slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 8px;
+  background: linear-gradient(to right, #1F4E5A/10, #4ECDC4/20);
+  outline: none;
+  position: relative;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4ECDC4 0%, #2a9b9f 100%);
+  cursor: pointer;
+  border: 2px solid #1F4E5A;
+  box-shadow: 0 2px 8px rgba(78, 205, 196, 0.4);
+  transition: all 0.2s ease;
+}
+
+.slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 4px 12px rgba(78, 205, 196, 0.6);
+}
+
+.slider::-webkit-slider-thumb:active {
+  transform: scale(0.95);
+}
+
+.slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4ECDC4 0%, #2a9b9f 100%);
+  cursor: pointer;
+  border: 2px solid #1F4E5A;
+  box-shadow: 0 2px 8px rgba(78, 205, 196, 0.4);
+  transition: all 0.2s ease;
+}
+
+.slider::-moz-range-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 4px 12px rgba(78, 205, 196, 0.6);
+}
+
+.slider::-moz-range-thumb:active {
+  transform: scale(0.95);
+}

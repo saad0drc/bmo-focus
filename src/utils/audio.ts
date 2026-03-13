@@ -1,42 +1,83 @@
 type NoteEvent = { freq: number; start: number; dur: number };
 
-// Single shared AudioContext — reused across all sounds to avoid memory leaks.
+// Lazy-initialized shared AudioContext — created once, reused forever
 let sharedCtx: AudioContext | null = null;
+let ctxResumed = false;
 
-function getCtx(): AudioContext | null {
+function getAudioContext(): AudioContext | null {
+  if (sharedCtx) return sharedCtx;
+  
   try {
-    if (!sharedCtx || sharedCtx.state === 'closed') {
-      const Ctor = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext;
-      sharedCtx = new Ctor();
-    }
-    if (sharedCtx.state === 'suspended') sharedCtx.resume().catch(() => {});
+    const Ctor = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext;
+    sharedCtx = new Ctor();
     return sharedCtx;
   } catch {
     return null;
   }
 }
 
-/** Schedule a sequence of notes using the Web Audio API. */
-function playSequence(notes: NoteEvent[], type: OscillatorType = 'square', vol = 0.22) {
-  const ctx = getCtx();
+function withCtx(run: (ctx: AudioContext) => number | void) {
+  const ctx = getAudioContext();
   if (!ctx) return;
 
-  const master = ctx.createGain();
-  master.gain.setValueAtTime(vol, ctx.currentTime);
-  master.connect(ctx.destination);
+  // Ensure context is running (user interaction will have triggered this, but make sure)
+  const resume = () => {
+    if (ctxResumed || ctx.state === 'running') {
+      ctxResumed = true;
+      try {
+        run(ctx);
+      } catch (e) {
+        console.error('Audio scheduling error:', e);
+      }
+      return;
+    }
+    
+    if (ctx.state === 'suspended') {
+      ctx.resume().then(() => {
+        ctxResumed = true;
+        try {
+          run(ctx);
+        } catch (e) {
+          console.error('Audio scheduling error:', e);
+        }
+      }).catch(() => {
+        console.error('Failed to resume AudioContext');
+      });
+    }
+  };
 
-  notes.forEach(({ freq, start, dur }) => {
-    const osc = ctx.createOscillator();
-    const env = ctx.createGain();
-    osc.connect(env);
-    env.connect(master);
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
-    env.gain.setValueAtTime(0, ctx.currentTime + start);
-    env.gain.linearRampToValueAtTime(1, ctx.currentTime + start + 0.01);
-    env.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
-    osc.start(ctx.currentTime + start);
-    osc.stop(ctx.currentTime + start + dur + 0.05);
+  resume();
+}
+
+// Global volume multiplier (0.0 = silent, 1.0 = full)
+export let globalSoundVolume = 0.7; // Default 70%
+
+export function setSoundVolume(percent: number) {
+  globalSoundVolume = Math.max(0, Math.min(100, percent)) / 100;
+}
+
+/** Schedule a sequence of notes using the Web Audio API. */
+function playSequence(notes: NoteEvent[], type: OscillatorType = 'square', vol = 0.22) {
+  withCtx((ctx) => {
+    const master = ctx.createGain();
+    master.gain.setValueAtTime(vol * globalSoundVolume, ctx.currentTime);
+    master.connect(ctx.destination);
+
+    notes.forEach(({ freq, start, dur }) => {
+      const osc = ctx.createOscillator();
+      const env = ctx.createGain();
+      osc.connect(env);
+      env.connect(master);
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
+      env.gain.setValueAtTime(0, ctx.currentTime + start);
+      env.gain.linearRampToValueAtTime(1, ctx.currentTime + start + 0.01);
+      env.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
+      osc.start(ctx.currentTime + start);
+      osc.stop(ctx.currentTime + start + dur + 0.05);
+    });
+
+    return Math.max(...notes.map(n => n.start + n.dur), 0.2) + 0.1;
   });
 }
 
@@ -132,18 +173,19 @@ export const playSound = {
 
   /** Subtle clock tick — plays every second while timer is active */
   tick: () => {
-    const ctx = getCtx();
-    if (!ctx) return;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(1100, ctx.currentTime);
-    gain.gain.setValueAtTime(0.028, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.022);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.03);
+    withCtx((ctx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1100, ctx.currentTime);
+      gain.gain.setValueAtTime(0.028 * globalSoundVolume, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001 * globalSoundVolume, ctx.currentTime + 0.022);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.03);
+      return 0.12;
+    });
   },
 
   /** Two-tone "swoosh" played when switching between modes */
@@ -157,4 +199,3 @@ export const playSound = {
   /** Kept for backwards compatibility */
   complete: () => playSound.focusComplete(),
 };
-

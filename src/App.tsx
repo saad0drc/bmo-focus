@@ -17,6 +17,7 @@ import { Task, TaskSettings } from './types';
 import { motion } from 'motion/react';
 import { todayStr } from './utils/date';
 import { ChevronUp, ChevronDown } from 'lucide-react';
+import { playSound, setSoundVolume } from './utils/audio';
 
 // Lazy-load everything not needed for first paint
 const TaskBoard             = lazy(() => import('./components/TaskBoard').then(m => ({ default: m.TaskBoard })));
@@ -27,14 +28,18 @@ const ChallengeHistoryModal = lazy(() => import('./components/ChallengeHistoryMo
 const ChallengePlannerModal = lazy(() => import('./components/ChallengePlannerModal').then(m => ({ default: m.ChallengePlannerModal })));
 
 // Dynamic imports for side-effect-only modules (loaded only when first needed)
-const getSounds  = () => import('./utils/audio').then(m => m.playSound);
 const getConfetti = () => import('canvas-confetti').then(m => m.default);
 
 const DEFAULT_SETTINGS: TimerSettings = {
   focus: 25,
   shortBreak: 5,
   longBreak: 15,
+  sessionsPerRound: 4,
+  soundEnabled: true,
+  challengeEnabled: true,
+  soundVolume: 70,
 };
+const SOUND_REPAIR_FLAG_KEY = 'bmo_sound_repair_applied_v1';
 
 export default function App() {
   const { emotion, setEmotion, flashEmotion } = useBMOState();
@@ -103,56 +108,113 @@ export default function App() {
     }
   }, [emotion]);
 
+  // Helper to show desktop notification
+  const showNotification = (title: string, options?: NotificationOptions) => {
+    const s = settingsRef.current;
+    if (!(s.notificationsEnabled ?? true)) return;
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'granted') {
+      new Notification(title, options);
+    } else if (Notification.permission !== 'denied') {
+      Notification.requestPermission().then(perm => {
+        if (perm === 'granted') new Notification(title, options);
+      });
+    }
+  };
+
   const handleTimerComplete = useCallback((completedMode: TimerMode) => {
     const s = settingsRef.current;
+    const soundEnabled = s.soundEnabled ?? true;
+    const challengeEnabled = s.challengeEnabled ?? true;
 
     // Local date string (avoids UTC offset bug)
     const today = todayStr();
 
-    getSounds().then(playSound => {
-      if (completedMode === 'focus') {
-        const taskId = activeTaskIdRef.current;
-        const duration = s.focus;
+    let completionSound: 'focusComplete' | 'roundComplete' | 'breakComplete' | 'longBreakComplete';
 
-        addSession({ id: crypto.randomUUID(), taskId, duration, completed: true, date: today });
-        logChallengePomodoro(duration);
+    if (completedMode === 'focus') {
+      const taskId = activeTaskIdRef.current;
+      const duration = s.focus;
 
-        if (taskId) {
-          const task = tasksRef.current.find(t => t.id === taskId);
-          const newCount = (task?.completedPomodoros ?? 0) + 1;
-          const target   = task?.settings?.sessionsPerRound ?? 4;
+      addSession({ id: crypto.randomUUID(), taskId, duration, completed: true, date: today });
+      if (challengeEnabled) logChallengePomodoro(duration);
 
-          if (newCount >= target) {
-            completeRound(taskId, duration);
-            playSound.roundComplete();
-            flashEmotion('success', 9000);
-          } else {
-            incrementPomodoro(taskId, duration);
-            playSound.focusComplete();
-            flashEmotion('success');
-          }
+      if (taskId) {
+        const task = tasksRef.current.find(t => t.id === taskId);
+        const newCount = (task?.completedPomodoros ?? 0) + 1;
+        const target   = task?.settings?.sessionsPerRound ?? 4;
+
+        if (newCount >= target) {
+          completeRound(taskId, duration);
+          completionSound = 'roundComplete';
+          flashEmotion('success', 9000);
+          showNotification('🎉 Round Complete!', { body: `Completed all ${target} focus sessions!` });
         } else {
-          playSound.focusComplete();
+          incrementPomodoro(taskId, duration);
+          completionSound = 'focusComplete';
           flashEmotion('success');
+          showNotification('✅ Focus Complete!', { body: `${newCount}/${target} sessions done` });
         }
-
-      } else if (completedMode === 'shortBreak') {
-        playSound.breakComplete();
-        flashEmotion('idle');
-
       } else {
-        // longBreak
-        playSound.longBreakComplete();
-        flashEmotion('idle');
+        completionSound = 'focusComplete';
+        flashEmotion('success');
+        showNotification('✅ Focus Complete!', { body: 'Time for a break!' });
       }
+    } else if (completedMode === 'shortBreak') {
+      completionSound = 'breakComplete';
+      flashEmotion('idle');
+      showNotification('☕ Break Over!', { body: 'Ready to focus again?' });
+    } else {
+      // longBreak
+      completionSound = 'longBreakComplete';
+      flashEmotion('idle');
+      showNotification('⭐ Long Break Over!', { body: 'Refreshed and ready!' });
+    }
 
-      // Play transition sound after the completion fanfare
-      setTimeout(() => playSound.transition(), 2800);
-    });
+    if (!soundEnabled) return;
+
+    if (completionSound === 'roundComplete') {
+      playSound.roundComplete();
+    } else if (completionSound === 'focusComplete') {
+      playSound.focusComplete();
+    } else if (completionSound === 'breakComplete') {
+      playSound.breakComplete();
+    } else {
+      playSound.longBreakComplete();
+    }
+
+    // Play transition sound after the completion fanfare
+    setTimeout(() => playSound.transition(), 2800);
   }, [addSession, incrementPomodoro, completeRound, flashEmotion, logChallengePomodoro]);
 
   const { timeLeft, isActive, mode, startTimer, pauseTimer, resetTimer, setMode, settings, updateSettings } =
     useTimer(handleTimerComplete);
+
+  useEffect(() => {
+    if (settings.challengeEnabled ?? true) return;
+    setIsChallengeHistoryOpen(false);
+    setIsChallengePlannerOpen(false);
+  }, [settings.challengeEnabled]);
+
+  const challengeEnabled = settings.challengeEnabled ?? true;
+  const soundEnabled = settings.soundEnabled ?? true;
+
+  // One-time repair: some users got stuck with muted sound after settings schema changes.
+  useEffect(() => {
+    if (settings.soundEnabled !== false) return;
+    try {
+      const repaired = localStorage.getItem(SOUND_REPAIR_FLAG_KEY) === '1';
+      if (repaired) return;
+      localStorage.setItem(SOUND_REPAIR_FLAG_KEY, '1');
+      updateSettings({
+        ...settings,
+        soundEnabled: true,
+        challengeEnabled: settings.challengeEnabled ?? true,
+      });
+    } catch {
+      // If localStorage is unavailable, keep current behavior.
+    }
+  }, [settings, updateSettings]);
 
   const handleResetAllData = useCallback(() => {
     clearAllTasks();
@@ -166,11 +228,27 @@ export default function App() {
   // Keep settings ref in sync for use inside handleTimerComplete
   useEffect(() => { settingsRef.current = settings; }, [settings]);
 
+  // Load sound volume setting on app load
+  useEffect(() => {
+    setSoundVolume(settings.soundVolume ?? 70);
+  }, [settings.soundVolume]);
+
+  // Auto-start timer on tab load (only once per session)
+  useEffect(() => {
+    const autoStart = settings.autoStart ?? false;
+    if (!autoStart || isActive) return;
+    const hasStarted = sessionStorage.getItem('bmo_auto_start_done');
+    if (!hasStarted) {
+      sessionStorage.setItem('bmo_auto_start_done', '1');
+      setTimeout(() => startTimer(), 500);
+    }
+  }, [settings.autoStart, isActive, startTimer]);
+
   // Tick sound — only during breaks (not focus, so you can actually focus 😄)
   useEffect(() => {
-    if (!isActive || timeLeft <= 0 || mode === 'focus') return;
-    getSounds().then(playSound => playSound.tick());
-  }, [timeLeft, isActive, mode]);
+    if (!soundEnabled || !isActive || timeLeft <= 0 || mode === 'focus') return;
+    playSound.tick();
+  }, [timeLeft, isActive, mode, soundEnabled]);
 
   // Keep the browser tab title in sync — visible from the tab bar at a glance
   useEffect(() => {
@@ -205,9 +283,11 @@ export default function App() {
         shortBreak: task.settings.shortBreakDuration,
         longBreak: task.settings.longBreakDuration,
         sessionsPerRound: task.settings.sessionsPerRound,
+        soundEnabled,
+        challengeEnabled,
       });
     }
-  }, [activeTaskId, tasks, updateSettings]);
+  }, [activeTaskId, tasks, updateSettings, soundEnabled, challengeEnabled]);
 
   // Sync BMO emotion with timer state
   useEffect(() => {
@@ -256,17 +336,21 @@ export default function App() {
           onSave={handleModalSave}
           initialTask={editingTask}
         />
-        <ChallengeHistoryModal
-          isOpen={isChallengeHistoryOpen}
-          onClose={() => setIsChallengeHistoryOpen(false)}
-          challenges={challenges}
-        />
-        <ChallengePlannerModal
-          isOpen={isChallengePlannerOpen}
-          focusDuration={settings.focus}
-          onClose={() => setIsChallengePlannerOpen(false)}
-          onStart={createChallenge}
-        />
+        {challengeEnabled && (
+          <>
+            <ChallengeHistoryModal
+              isOpen={isChallengeHistoryOpen}
+              onClose={() => setIsChallengeHistoryOpen(false)}
+              challenges={challenges}
+            />
+            <ChallengePlannerModal
+              isOpen={isChallengePlannerOpen}
+              focusDuration={settings.focus}
+              onClose={() => setIsChallengePlannerOpen(false)}
+              onStart={createChallenge}
+            />
+          </>
+        )}
       </Suspense>
 
       {/*
@@ -333,6 +417,7 @@ export default function App() {
                 onReset={resetTimer}
                 onModeChange={setMode}
                 onSettings={() => setIsSettingsOpen(true)}
+                soundEnabled={soundEnabled}
               />
             </div>
 
@@ -353,12 +438,16 @@ export default function App() {
           </motion.div>
 
           {/* Challenge card — sits below BMO body */}
-          <ChallengeCard
-            activeChallenge={activeChallenge}
-            todayCompleted={todayCompletedChallenge}
-            onOpenPlanner={() => setIsChallengePlannerOpen(true)}
-            onAbandon={abandonChallenge}
-          />
+          {challengeEnabled && (
+            <div className="w-full px-4 pb-12 sm:pb-16">
+              <ChallengeCard
+                activeChallenge={activeChallenge}
+                todayCompleted={todayCompletedChallenge}
+                onOpenPlanner={() => setIsChallengePlannerOpen(true)}
+                onAbandon={abandonChallenge}
+              />
+            </div>
+          )}
         </div>
 
         {/* ── PAGE 2 : Panels ───────────────────────────────────────────── */}
@@ -421,7 +510,8 @@ export default function App() {
                   <StatsBoard
                     sessions={sessions}
                     tasks={tasks}
-                    challengeCount={challengeCompletedCount}
+                    challengeCount={challengeEnabled ? challengeCompletedCount : 0}
+                    challengeEnabled={challengeEnabled}
                     onOpenChallengeHistory={() => setIsChallengeHistoryOpen(true)}
                   />
                 </Suspense>
