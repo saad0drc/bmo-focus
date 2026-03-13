@@ -15,6 +15,12 @@ const BMO_LINES = [
   "I believe in you!! Just tell me your goal today!",
 ];
 
+const DIFFICULTY_PRESETS = [
+  { label: 'EASY 🟢', hours: 1, mins: 0, emoji: '🌱' },
+  { label: 'MEDIUM 🟡', hours: 2, mins: 0, emoji: '🔥' },
+  { label: 'HARD 🔴', hours: 4, mins: 0, emoji: '⚡' },
+];
+
 export function ChallengePlannerModal({ isOpen, focusDuration, onClose, onStart }: Props) {
   const [hours, setHours] = useState(1);
   const [mins, setMins] = useState(0);
@@ -86,39 +92,67 @@ export function ChallengePlannerModal({ isOpen, focusDuration, onClose, onStart 
             <div className="p-5 space-y-5 bg-[#F0F4F8]">
               {/* Label */}
               <p className="text-xs font-black uppercase tracking-widest text-[#1F4E5A]/40 text-center">
-                How long do you want to focus today?
+                Pick your challenge level or set custom time
               </p>
 
-              {/* Time inputs */}
-              <div className="flex items-end gap-3">
-                <div className="flex-1 space-y-1.5">
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-[#1F4E5A]/40 text-center">
-                    Hours
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={12}
-                    value={hours}
-                    onChange={e => setHours(Math.max(0, Math.min(12, parseInt(e.target.value) || 0)))}
-                    className="w-full px-2 py-3 rounded-xl bg-white border-[3px] border-[#1F4E5A]/15 text-[#1F4E5A] font-pixel text-3xl text-center focus:outline-none focus:border-[#4ECDC4] transition-all shadow-sm"
-                    autoFocus
-                  />
-                </div>
-                <div className="font-pixel text-3xl text-[#1F4E5A]/30 pb-3">:</div>
-                <div className="flex-1 space-y-1.5">
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-[#1F4E5A]/40 text-center">
-                    Minutes
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={59}
-                    step={5}
-                    value={mins}
-                    onChange={e => setMins(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
-                    className="w-full px-2 py-3 rounded-xl bg-white border-[3px] border-[#1F4E5A]/15 text-[#1F4E5A] font-pixel text-3xl text-center focus:outline-none focus:border-[#4ECDC4] transition-all shadow-sm"
-                  />
+              {/* Difficulty presets */}
+              <div className="grid grid-cols-3 gap-2">
+                {DIFFICULTY_PRESETS.map((preset) => (
+                  <motion.button
+                    key={preset.label}
+                    onClick={() => {
+                      setHours(preset.hours);
+                      setMins(preset.mins);
+                    }}
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.95, y: 0 }}
+                    className={`py-3 px-2 rounded-xl font-pixel text-center uppercase tracking-widest text-xs font-black border-3 transition-all ${
+                      hours === preset.hours && mins === preset.mins
+                        ? 'border-[#FFD93D] bg-[#FFD93D]/20 text-[#1F4E5A] shadow-[0_4px_12px_rgba(255,217,61,0.3)]'
+                        : 'border-[#1F4E5A]/20 bg-white text-[#1F4E5A]/70 hover:border-[#4ECDC4] hover:text-[#1F4E5A]'
+                    }`}
+                  >
+                    <div className="text-lg mb-1">{preset.emoji}</div>
+                    {preset.label}
+                  </motion.button>
+                ))}
+              </div>
+
+              {/* Manual time inputs */}
+              <div className="space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#1F4E5A]/40 text-center">
+                  Or enter custom time
+                </p>
+                <div className="flex items-end gap-3">
+                  <div className="flex-1 space-y-1.5">
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-[#1F4E5A]/40 text-center">
+                      Hours
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={12}
+                      value={hours}
+                      onChange={e => setHours(Math.max(0, Math.min(12, parseInt(e.target.value) || 0)))}
+                      className="w-full px-2 py-3 rounded-xl bg-white border-[3px] border-[#1F4E5A]/15 text-[#1F4E5A] font-pixel text-3xl text-center focus:outline-none focus:border-[#4ECDC4] transition-all shadow-sm"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="font-pixel text-3xl text-[#1F4E5A]/30 pb-3">:</div>
+                  <div className="flex-1 space-y-1.5">
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-[#1F4E5A]/40 text-center">
+                      Minutes
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={59}
+                      step={5}
+                      value={mins}
+                      onChange={e => setMins(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
+                      className="w-full px-2 py-3 rounded-xl bg-white border-[3px] border-[#1F4E5A]/15 text-[#1F4E5A] font-pixel text-3xl text-center focus:outline-none focus:border-[#4ECDC4] transition-all shadow-sm"
+                    />
+                  </div>
                 </div>
               </div>
 
