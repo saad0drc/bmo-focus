@@ -8,6 +8,42 @@ A beautiful **Pomodoro focus timer and task manager** that replaces your Chrome 
 
 ---
 
+## 📚 Table of Contents
+
+Quick links to navigate this guide:
+
+- [🤖 What is BMO?](#-what-is-bmo)
+- [✨ Features](#-features)
+  - [🍅 Pomodoro Timer](#-pomodoro-timer-with-three-modes)
+  - [🎵 Unique Sounds](#-unique-sounds-for-every-event)
+  - [🤖 BMO Face & Emotions](#-bmo-face--emotions)
+  - [✅ Task Manager](#-task-manager-mission-log)
+  - [⚡ Challenge System](#-challenge-system)
+  - [📊 Data Center](#-data-center-stats-dashboard)
+  - [🎨 Customizable Config](#-customizable-system-config)
+- [🚀 Getting Started](#-getting-started-step-by-step)
+  - [Prerequisites](#prerequisites)
+  - [Step 1: Clone Repository](#step-1-clone-the-repository)
+  - [Step 2: Install Dependencies](#step-2-install-dependencies)
+  - [Step 3: Build Extension](#step-3-build-the-extension)
+  - [Step 4: Load into Chrome](#step-4-load-bmo-into-chrome)
+  - [Step 5: Open New Tab](#step-5-open-a-new-tab)
+- [🎮 How to Use](#-how-to-use-bmo-focus)
+  - [Adding Tasks](#adding-your-first-task)
+  - [Starting Sessions](#starting-a-focus-session)
+  - [Tracking Progress](#tracking-progress)
+  - [Using Challenges](#using-the-challenge-system)
+- [🛠 Development Commands](#-development-commands)
+- [📱 Device Support](#-using-on-different-devices)
+- [🧰 Tech Stack](#-tech-stack)
+- [📁 Project Structure](#-project-structure)
+- [🎨 Customization Guide](#-customization)
+- [🐛 Troubleshooting](#-troubleshooting)
+- [📄 License](#-license)
+- [🙏 Credits](#-credits)
+
+---
+
 ## 🎮 What is BMO?
 
 BMO is a character from the TV show *Adventure Time*. In the show, BMO is a sentient video game console and the most adorable character you'll ever meet. BMO has a simple goal: *"I will always be here for you."*
