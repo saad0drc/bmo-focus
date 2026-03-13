@@ -160,7 +160,7 @@ export function ChallengeCard({ activeChallenge, todayCompleted, onOpenPlanner, 
       key="idle"
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full bg-gradient-to-b from-[#4ECDC4] via-[#63C5DA] to-[#4ECDC4] rounded-2xl border-[4px] border-[#1F4E5A] px-6 py-4 shadow-[0_12px_30px_rgba(78,205,196,0.4)] ring-2 ring-[#DCF6E6]/20"
+      className="w-full bg-gradient-to-b from-[#4ECDC4] via-[#63C5DA] to-[#4ECDC4] rounded-2xl border-[4px] border-[#1F4E5A] px-6 py-5 shadow-[0_12px_30px_rgba(78,205,196,0.4)] ring-2 ring-[#DCF6E6]/20"
     >
       {/* ALL IN ONE ROW: emoji + text on left, button on right */}
       <div className="flex items-center gap-4 justify-between">
@@ -174,7 +174,7 @@ export function ChallengeCard({ activeChallenge, todayCompleted, onOpenPlanner, 
             {q.emoji}
           </motion.span>
           <p 
-            className="font-pixel text-sm text-[#1F4E5A] font-black leading-tight tracking-wider drop-shadow-lg"
+            className="font-pixel text-base text-[#1F4E5A] font-black leading-snug tracking-wider drop-shadow-lg"
             style={{
               textShadow: '0 2px 4px rgba(31, 78, 90, 0.5), 0 0 8px rgba(107, 203, 119, 0.3)',
               WebkitTextStroke: '0.5px rgba(31, 78, 90, 0.2)',
