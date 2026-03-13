@@ -149,7 +149,9 @@ Still in the `bmo-focus` folder, run:
 npm install
 ```
 
-This installs all the required libraries and tools. It may take a minute or two. You'll see npm downloading packages and creating a `node_modules` folder.
+This installs all the required libraries and tools. It may take a minute or two. You'll see npm downloading packages and creating a `node_modules` folder **locally on your machine**.
+
+**Note:** The `node_modules` folder is **not included in the repository** (it's in `.gitignore` for good reason — it's huge!). Running `npm install` downloads everything you need automatically.
 
 ### Step 3: Build the Extension
 
