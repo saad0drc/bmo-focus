@@ -9,6 +9,7 @@ import { useTimer, TimerMode, TimerSettings } from './hooks/useTimer';
 import { useTasks } from './hooks/useTasks';
 import { useSessions } from './hooks/useSessions';
 import { useChallenge } from './hooks/useChallenge';
+import { useScreenLayout } from './hooks/useScreenLayout';
 import { BMOFace } from './components/BMOFace';
 import { BMOControls } from './components/BMOControls';
 import { ChallengeCard } from './components/ChallengeCard';
@@ -43,6 +44,7 @@ const SOUND_REPAIR_FLAG_KEY = 'bmo_sound_repair_applied_v1';
 
 export default function App() {
   const { emotion, setEmotion, flashEmotion } = useBMOState();
+  const { screenSize, layoutConfig } = useScreenLayout();
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
@@ -363,10 +365,11 @@ export default function App() {
       */}
       <div
         ref={layoutRef}
-        className="flex-1 min-h-0 w-full max-w-[96rem] lg:max-w-[96rem] xl:max-w-[1400px] 2xl:max-w-[1800px] mx-auto relative z-10
+        style={{ maxWidth: layoutConfig.containerMaxWidth }}
+        className="flex-1 min-h-0 w-full mx-auto relative z-10
                    flex flex-col lg:grid lg:grid-cols-12 lg:gap-4 lg:items-start lg:px-4 lg:pt-3 lg:pb-4
                    overflow-y-auto lg:overflow-hidden
-                   snap-y snap-mandatory lg:snap-none"
+                   snap-y snap-mandatory lg:snap-none transition-all duration-300"
       >
 
         {/* ── PAGE 1 : BMO ──────────────────────────────────────────────── */}
@@ -381,7 +384,8 @@ export default function App() {
               opacity: { duration: 0.5 },
               y: { duration: 3.2, repeat: Infinity, ease: 'easeInOut', delay: 0.7 },
             }}
-            className="relative bg-gradient-to-b from-[#5ADCD5] via-[#4ECDC4] to-[#36B8AF] p-5 sm:p-6 rounded-[3rem] lg:rounded-[4rem] border-[8px] border-[#1a4a52] shadow-[0_35px_100px_rgba(0,0,0,0.55),0_10px_25px_rgba(0,0,0,0.3),inset_-8px_-14px_28px_rgba(0,0,0,0.18),inset_8px_8px_20px_rgba(255,255,255,0.28)] w-full max-w-[460px] sm:max-w-[500px] lg:max-w-[560px] xl:max-w-[620px] 2xl:max-w-[700px] flex flex-col items-center gap-4 z-20"
+            style={{ maxWidth: layoutConfig.bmoMaxWidth }}
+            className="relative bg-gradient-to-b from-[#5ADCD5] via-[#4ECDC4] to-[#36B8AF] p-5 sm:p-6 rounded-[3rem] lg:rounded-[4rem] border-[8px] border-[#1a4a52] shadow-[0_35px_100px_rgba(0,0,0,0.55),0_10px_25px_rgba(0,0,0,0.3),inset_-8px_-14px_28px_rgba(0,0,0,0.18),inset_8px_8px_20px_rgba(255,255,255,0.28)] w-full flex flex-col items-center gap-4 z-20 transition-all duration-300"
           >
             {/* Side grips */}
             <div className="absolute top-1/2 -left-3 -translate-y-1/2 w-5 h-44 sm:h-48 lg:h-52 flex flex-col justify-between py-3 opacity-30">
@@ -456,8 +460,10 @@ export default function App() {
                         grid grid-cols-1 sm:grid-cols-2 gap-3 px-3 pb-3 pt-2 pr-14 sm:pr-14 lg:pr-4 lg:pt-3 lg:pb-4 lg:pl-4 lg:gap-4">
 
           {/* Mission Log */}
-          <div className="min-h-[520px] sm:h-[calc(100vh-1.25rem)] flex flex-col
-                          lg:col-span-3 lg:order-1 lg:h-[calc(100vh-4rem)] lg:max-h-[720px] xl:max-h-[900px] 2xl:max-h-[1000px]">
+          <div 
+            style={{ maxHeight: layoutConfig.panelMaxHeight }}
+            className="min-h-[520px] sm:h-[calc(100vh-1.25rem)] flex flex-col
+                            lg:col-span-3 lg:order-1 lg:h-[calc(100vh-4rem)] transition-all duration-300">
             <motion.div
               initial={{ x: -50, opacity: 0, y: 0 }}
               animate={{ x: 0, opacity: 1, y: [0, -8, 0] }}
@@ -490,8 +496,10 @@ export default function App() {
           </div>
 
           {/* Data Center */}
-          <div className="min-h-[520px] sm:h-[calc(100vh-1.25rem)] flex flex-col
-                          lg:col-span-3 lg:order-3 lg:h-[calc(100vh-4rem)] lg:max-h-[720px] xl:max-h-[900px] 2xl:max-h-[1000px]">
+          <div 
+            style={{ maxHeight: layoutConfig.panelMaxHeight }}
+            className="min-h-[520px] sm:h-[calc(100vh-1.25rem)] flex flex-col
+                            lg:col-span-3 lg:order-3 lg:h-[calc(100vh-4rem)] transition-all duration-300">
             <motion.div
               initial={{ x: 50, opacity: 0, y: 0 }}
               animate={{ x: 0, opacity: 1, y: [0, -8, 0] }}
