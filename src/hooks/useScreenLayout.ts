@@ -59,7 +59,7 @@ export function useScreenLayout() {
         };
       case 'laptop': // YOUR SCREEN - KEEP PERFECT
         return {
-          bmoMaxWidth: '560px',
+          bmoMaxWidth: '630px',
           containerMaxWidth: '96rem',
           panelMaxHeight: '720px',
           gap: '4px',

@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useMemo, memo } from 'react';
 import { motion } from 'motion/react';
-import { Flame, Target, Clock, BarChart2, TrendingUp, CheckCircle2, Timer, Trophy } from 'lucide-react';
+import { Flame, Target, Clock, BarChart2, TrendingUp, CheckCircle2, Timer } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Session, Task } from '../types';
 import {
@@ -13,9 +13,6 @@ import {
 interface StatsBoardProps {
   sessions: Session[];
   tasks: Task[];
-  challengeCount: number;
-  challengeEnabled: boolean;
-  onOpenChallengeHistory: () => void;
 }
 
 interface MiniStatProps {
@@ -37,7 +34,180 @@ function MiniStat({ label, value, icon, bg }: MiniStatProps) {
   );
 }
 
-export const StatsBoard = memo(function StatsBoard({ sessions, tasks, challengeCount, challengeEnabled, onOpenChallengeHistory }: StatsBoardProps) {
+interface DayHistoryItem {
+  date: string;
+  label: string;
+  pomodoros: number;
+  focusHours: number;
+  tasksCompleted: number;
+}
+
+function SevenDayHistory({ sessions, tasks }: { sessions: Session[]; tasks: Task[] }) {
+  const historyData = useMemo(() => {
+    const today = new Date();
+    const data: DayHistoryItem[] = [];
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toLocaleDateString('en-CA'); // YYYY-MM-DD
+      const label = d.toLocaleDateString('en-US', { weekday: 'short' });
+
+      const daySessions = sessions.filter(s => s.completed && s.date === dateStr);
+      const pomodoros = daySessions.length;
+      const focusMinutes = daySessions.reduce((sum, s) => sum + s.duration, 0);
+      const focusHours = Math.round((focusMinutes / 60) * 10) / 10;
+
+      // Count task completions on this day
+      const dayTasksCompleted = tasks.filter(t => {
+        if (!t.completed || !t.lastCompletedDate) return false;
+        return t.lastCompletedDate === dateStr;
+      }).length;
+
+      data.push({
+        date: dateStr,
+        label,
+        pomodoros,
+        focusHours,
+        tasksCompleted: dayTasksCompleted,
+      });
+    }
+    return data;
+  }, [sessions, tasks]);
+
+  return (
+    <div className="shrink-0 bg-gradient-to-br from-[#4ECDC4]/10 to-[#6BCB77]/5 rounded-xl p-4 border border-[#4ECDC4]/20 w-full">
+      <h3 className="text-xs font-black uppercase tracking-widest text-[#1F4E5A] mb-3 flex items-center gap-1.5">
+        <Clock size={12} className="text-[#6BCB77]" />
+        LAST 7 DAYS
+      </h3>
+
+      <div className="space-y-1.5">
+        {historyData.map((day, idx) => (
+          <motion.div
+            key={day.date}
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: idx * 0.03 }}
+            className="flex items-center justify-between bg-white/60 rounded-lg p-2.5 hover:bg-white transition-colors"
+          >
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <span className="text-[10px] font-bold text-[#1F4E5A] w-9 shrink-0 tracking-wider">{day.label}</span>
+              <div className="flex-1 flex gap-1.5">
+                {day.pomodoros > 0 && (
+                  <div className="text-[10px] px-2 py-0.5 rounded bg-[#FF5E5E]/15 text-[#FF5E5E] font-bold">
+                    {day.pomodoros}🍅
+                  </div>
+                )}
+                {day.focusHours > 0 && (
+                  <div className="text-[10px] px-2 py-0.5 rounded bg-[#FFD93D]/20 text-[#1F4E5A] font-bold">
+                    {day.focusHours}h
+                  </div>
+                )}
+                {day.tasksCompleted > 0 && (
+                  <div className="text-[10px] px-2 py-0.5 rounded bg-[#6BCB77]/20 text-[#6BCB77] font-bold">
+                    {day.tasksCompleted}✓
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AllTimeHistory({ sessions, tasks }: { sessions: Session[]; tasks: Task[] }) {
+  const allDaysData = useMemo(() => {
+    const dateMap = new Map<string, DayHistoryItem>();
+
+    // Collect all dates from sessions and tasks
+    sessions.forEach(s => {
+      if (!dateMap.has(s.date)) {
+        dateMap.set(s.date, { date: s.date, label: '', pomodoros: 0, focusHours: 0, tasksCompleted: 0 });
+      }
+    });
+
+    tasks.forEach(t => {
+      if (t.lastCompletedDate) {
+        const dateStr = t.lastCompletedDate;
+        if (!dateMap.has(dateStr)) {
+          dateMap.set(dateStr, { date: dateStr, label: '', pomodoros: 0, focusHours: 0, tasksCompleted: 0 });
+        }
+      }
+    });
+
+    // Populate data
+    const data = Array.from(dateMap.values()).map(item => {
+      const d = new Date(item.date + 'T00:00:00');
+      const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+      const daySessions = sessions.filter(s => s.completed && s.date === item.date);
+      const pomodoros = daySessions.length;
+      const focusMinutes = daySessions.reduce((sum, s) => sum + s.duration, 0);
+      const focusHours = Math.round((focusMinutes / 60) * 10) / 10;
+
+      const dayTasksCompleted = tasks.filter(t => {
+        if (!t.completed || !t.lastCompletedDate) return false;
+        return t.lastCompletedDate === item.date;
+      }).length;
+
+      return { ...item, label, pomodoros, focusHours, tasksCompleted: dayTasksCompleted };
+    });
+
+    // Sort by date descending (newest first)
+    return data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [sessions, tasks]);
+
+  return (
+    <div className="shrink-0 bg-gradient-to-br from-[#6BCB77]/10 to-[#4ECDC4]/5 rounded-xl p-4 border border-[#6BCB77]/20 w-full">
+      <h3 className="text-xs font-black uppercase tracking-widest text-[#1F4E5A] mb-3 flex items-center gap-1.5">
+        <TrendingUp size={12} className="text-[#FF5E5E]" />
+        ALL-TIME HISTORY
+      </h3>
+
+      <div className="max-h-48 overflow-y-auto space-y-1 custom-scrollbar pr-1">
+        {allDaysData.length === 0 ? (
+          <div className="text-center py-6">
+            <p className="text-[10px] text-[#1F4E5A]/40 font-bold tracking-wider">NO HISTORY YET</p>
+          </div>
+        ) : (
+          allDaysData.map((day, idx) => (
+            <motion.div
+              key={day.date}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: idx * 0.02 }}
+              className="flex items-center justify-between bg-white/70 rounded-lg p-2 hover:bg-white transition-colors text-[9px]"
+            >
+              <span className="text-[#1F4E5A] font-bold min-w-fit">{day.label}</span>
+              <div className="flex-1 flex gap-1 justify-end ml-2">
+                {day.pomodoros > 0 && (
+                  <div className="px-1.5 py-0.5 rounded bg-[#FF5E5E]/15 text-[#FF5E5E] font-bold whitespace-nowrap">
+                    {day.pomodoros}🍅
+                  </div>
+                )}
+                {day.focusHours > 0 && (
+                  <div className="px-1.5 py-0.5 rounded bg-[#FFD93D]/20 text-[#1F4E5A] font-bold whitespace-nowrap">
+                    {day.focusHours}h
+                  </div>
+                )}
+                {day.tasksCompleted > 0 && (
+                  <div className="px-1.5 py-0.5 rounded bg-[#6BCB77]/20 text-[#6BCB77] font-bold whitespace-nowrap">
+                    {day.tasksCompleted}✓
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+export const StatsBoard = memo(function StatsBoard({ sessions, tasks }: StatsBoardProps) {
   const today    = useMemo(() => computeTodayStats(sessions), [sessions]);
   const week     = useMemo(() => computeWeekStats(sessions),  [sessions]);
   const streak   = useMemo(() => computeStreak(sessions),     [sessions]);
@@ -210,22 +380,11 @@ export const StatsBoard = memo(function StatsBoard({ sessions, tasks, challengeC
         </div>
       )}
 
-      {/* CHALLENGES — clickable row that opens history modal */}
-      {challengeEnabled && (
-        <button
-          onClick={onOpenChallengeHistory}
-          className="shrink-0 bg-white rounded-xl p-3 shadow-sm w-full flex items-center justify-between hover:bg-[#DCF6E6] transition-colors group"
-        >
-          <div className="flex items-center gap-1.5">
-            <Trophy size={12} className="text-[#FFD93D]" />
-            <span className="text-[9px] font-bold uppercase tracking-widest text-[#1F4E5A]/40">Challenges</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="font-pixel text-lg text-[#1F4E5A]">{challengeCount}</span>
-            <span className="text-[9px] text-[#1F4E5A]/25 font-bold group-hover:text-[#4ECDC4] transition-colors">→</span>
-          </div>
-        </button>
-      )}
+      {/* 7-DAY HISTORY */}
+      <SevenDayHistory sessions={sessions} tasks={tasks} />
+
+      {/* ALL-TIME HISTORY */}
+      <AllTimeHistory sessions={sessions} tasks={tasks} />
 
     </div>
   );

@@ -8,11 +8,9 @@ import { useBMOState } from './hooks/useBMOState';
 import { useTimer, TimerMode, TimerSettings } from './hooks/useTimer';
 import { useTasks } from './hooks/useTasks';
 import { useSessions } from './hooks/useSessions';
-import { useChallenge } from './hooks/useChallenge';
 import { useScreenLayout } from './hooks/useScreenLayout';
 import { BMOFace } from './components/BMOFace';
 import { BMOControls } from './components/BMOControls';
-import { ChallengeCard } from './components/ChallengeCard';
 import { Session } from './types';
 import { Task, TaskSettings } from './types';
 import { motion } from 'motion/react';
@@ -21,12 +19,10 @@ import { ChevronUp, ChevronDown } from 'lucide-react';
 import { playSound, setSoundVolume } from './utils/audio';
 
 // Lazy-load everything not needed for first paint
-const TaskBoard             = lazy(() => import('./components/TaskBoard').then(m => ({ default: m.TaskBoard })));
-const StatsBoard            = lazy(() => import('./components/StatsBoard').then(m => ({ default: m.StatsBoard })));
-const TaskModal             = lazy(() => import('./components/TaskModal').then(m => ({ default: m.TaskModal })));
-const SettingsModal         = lazy(() => import('./components/SettingsModal').then(m => ({ default: m.SettingsModal })));
-const ChallengeHistoryModal = lazy(() => import('./components/ChallengeHistoryModal').then(m => ({ default: m.ChallengeHistoryModal })));
-const ChallengePlannerModal = lazy(() => import('./components/ChallengePlannerModal').then(m => ({ default: m.ChallengePlannerModal })));
+const TaskBoard     = lazy(() => import('./components/TaskBoard').then(m => ({ default: m.TaskBoard })));
+const StatsBoard    = lazy(() => import('./components/StatsBoard').then(m => ({ default: m.StatsBoard })));
+const TaskModal     = lazy(() => import('./components/TaskModal').then(m => ({ default: m.TaskModal })));
+const SettingsModal = lazy(() => import('./components/SettingsModal').then(m => ({ default: m.SettingsModal })));
 
 // Dynamic imports for side-effect-only modules (loaded only when first needed)
 const getConfetti = () => import('canvas-confetti').then(m => m.default);
@@ -37,7 +33,6 @@ const DEFAULT_SETTINGS: TimerSettings = {
   longBreak: 15,
   sessionsPerRound: 4,
   soundEnabled: true,
-  challengeEnabled: true,
   soundVolume: 70,
 };
 const SOUND_REPAIR_FLAG_KEY = 'bmo_sound_repair_applied_v1';
@@ -55,19 +50,6 @@ export default function App() {
 
   const { tasks, addTask, updateTask, toggleTask, deleteTask, incrementPomodoro, completeRound, clearAllTasks } = useTasks();
   const { sessions, addSession, clearAllSessions } = useSessions();
-  const {
-    challenges,
-    activeChallenge,
-    todayCompleted: todayCompletedChallenge,
-    completedCount: challengeCompletedCount,
-    createChallenge,
-    logPomodoro: logChallengePomodoro,
-    abandonChallenge,
-    clearAllChallenges,
-  } = useChallenge();
-
-  const [isChallengeHistoryOpen, setIsChallengeHistoryOpen] = useState(false);
-  const [isChallengePlannerOpen, setIsChallengePlannerOpen] = useState(false);
 
   // Compact-mode scroll nav
   const layoutRef = useRef<HTMLDivElement>(null);
@@ -127,7 +109,6 @@ export default function App() {
   const handleTimerComplete = useCallback((completedMode: TimerMode) => {
     const s = settingsRef.current;
     const soundEnabled = s.soundEnabled ?? true;
-    const challengeEnabled = s.challengeEnabled ?? true;
 
     // Local date string (avoids UTC offset bug)
     const today = todayStr();
@@ -139,7 +120,6 @@ export default function App() {
       const duration = s.focus;
 
       addSession({ id: crypto.randomUUID(), taskId, duration, completed: true, date: today });
-      if (challengeEnabled) logChallengePomodoro(duration);
 
       if (taskId) {
         const task = tasksRef.current.find(t => t.id === taskId);
@@ -187,18 +167,11 @@ export default function App() {
 
     // Play transition sound after the completion fanfare
     setTimeout(() => playSound.transition(), 2800);
-  }, [addSession, incrementPomodoro, completeRound, flashEmotion, logChallengePomodoro]);
+  }, [addSession, incrementPomodoro, completeRound, flashEmotion]);
 
   const { timeLeft, isActive, mode, startTimer, pauseTimer, resetTimer, setMode, settings, updateSettings } =
     useTimer(handleTimerComplete);
 
-  useEffect(() => {
-    if (settings.challengeEnabled ?? true) return;
-    setIsChallengeHistoryOpen(false);
-    setIsChallengePlannerOpen(false);
-  }, [settings.challengeEnabled]);
-
-  const challengeEnabled = settings.challengeEnabled ?? true;
   const soundEnabled = settings.soundEnabled ?? true;
 
   // One-time repair: some users got stuck with muted sound after settings schema changes.
@@ -211,7 +184,6 @@ export default function App() {
       updateSettings({
         ...settings,
         soundEnabled: true,
-        challengeEnabled: settings.challengeEnabled ?? true,
       });
     } catch {
       // If localStorage is unavailable, keep current behavior.
@@ -221,11 +193,10 @@ export default function App() {
   const handleResetAllData = useCallback(() => {
     clearAllTasks();
     clearAllSessions();
-    clearAllChallenges();
     updateSettings(DEFAULT_SETTINGS);
     resetTimer();
     setIsSettingsOpen(false);
-  }, [clearAllTasks, clearAllSessions, clearAllChallenges, updateSettings, resetTimer]);
+  }, [clearAllTasks, clearAllSessions, updateSettings, resetTimer]);
 
   // Keep settings ref in sync for use inside handleTimerComplete
   useEffect(() => { settingsRef.current = settings; }, [settings]);
@@ -286,10 +257,9 @@ export default function App() {
         longBreak: task.settings.longBreakDuration,
         sessionsPerRound: task.settings.sessionsPerRound,
         soundEnabled,
-        challengeEnabled,
       });
     }
-  }, [activeTaskId, tasks, updateSettings, soundEnabled, challengeEnabled]);
+  }, [activeTaskId, tasks, updateSettings, soundEnabled]);
 
   // Sync BMO emotion with timer state
   useEffect(() => {
@@ -338,21 +308,6 @@ export default function App() {
           onSave={handleModalSave}
           initialTask={editingTask}
         />
-        {challengeEnabled && (
-          <>
-            <ChallengeHistoryModal
-              isOpen={isChallengeHistoryOpen}
-              onClose={() => setIsChallengeHistoryOpen(false)}
-              challenges={challenges}
-            />
-            <ChallengePlannerModal
-              isOpen={isChallengePlannerOpen}
-              focusDuration={settings.focus}
-              onClose={() => setIsChallengePlannerOpen(false)}
-              onStart={createChallenge}
-            />
-          </>
-        )}
       </Suspense>
 
       {/*
@@ -408,6 +363,7 @@ export default function App() {
                 isActive={isActive}
                 mode={mode}
                 activeTaskTitle={activeTask?.title ?? null}
+                scale={parseInt(layoutConfig.bmoMaxWidth) / 560}
               />
             </div>
 
@@ -440,18 +396,6 @@ export default function App() {
 
             <div className="absolute bottom-5 left-1/2 -translate-x-1/2 text-[#1a4a52]/40 font-black tracking-[0.4em] text-sm">BMO</div>
           </motion.div>
-
-          {/* Challenge card — sits below BMO body */}
-          {challengeEnabled && (
-            <div className="w-full px-4 pb-12 sm:pb-16">
-              <ChallengeCard
-                activeChallenge={activeChallenge}
-                todayCompleted={todayCompletedChallenge}
-                onOpenPlanner={() => setIsChallengePlannerOpen(true)}
-                onAbandon={abandonChallenge}
-              />
-            </div>
-          )}
         </div>
 
         {/* ── PAGE 2 : Panels ───────────────────────────────────────────── */}
@@ -518,9 +462,6 @@ export default function App() {
                   <StatsBoard
                     sessions={sessions}
                     tasks={tasks}
-                    challengeCount={challengeEnabled ? challengeCompletedCount : 0}
-                    challengeEnabled={challengeEnabled}
-                    onOpenChallengeHistory={() => setIsChallengeHistoryOpen(true)}
                   />
                 </Suspense>
               </div>

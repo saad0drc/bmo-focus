@@ -8,7 +8,6 @@ export interface TimerSettings {
   longBreak: number;
   sessionsPerRound?: number;
   soundEnabled?: boolean;
-  challengeEnabled?: boolean;
   soundVolume?: number; // 0-100
   autoStart?: boolean; // auto-start timer on tab load
   notificationsEnabled?: boolean; // desktop notifications
@@ -20,7 +19,6 @@ const DEFAULT_SETTINGS: TimerSettings = {
   longBreak: 15,
   sessionsPerRound: 4,
   soundEnabled: true,
-  challengeEnabled: true,
   soundVolume: 70,
   autoStart: false,
   notificationsEnabled: true,

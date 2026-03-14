@@ -9,9 +9,10 @@ interface BMOFaceProps {
   isActive?: boolean;
   mode?: TimerMode;
   activeTaskTitle?: string | null;
+  scale?: number;
 }
 
-export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle }: BMOFaceProps) {
+export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle, scale = 1 }: BMOFaceProps) {
   const faceRef = useRef<HTMLDivElement>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
@@ -180,14 +181,15 @@ export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle }: 
             key="badge"
             initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.3 }}
-            className="absolute top-5 left-0 right-0 flex flex-col items-center gap-1.5 z-30 px-4"
+            className="absolute left-0 right-0 flex flex-col items-center gap-1.5 z-30 px-4"
+            style={{ top: `${20 * scale}px` }}
           >
-            <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm ${modeLabel[mode].color}`}>
-              <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${modeLabel[mode].dot}`} />
+            <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm ${modeLabel[mode].color}`} style={{ fontSize: `${9 * scale}px` }}>
+              <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${modeLabel[mode].dot}`} style={{ width: `${6 * scale}px`, height: `${6 * scale}px` }} />
               {modeLabel[mode].emoji} {modeLabel[mode].text}
             </div>
             {activeTaskTitle && (
-              <div className="text-[10px] font-bold text-[#1F4E5A]/60 truncate max-w-[85%] text-center font-mono tracking-wide">
+              <div className="font-bold text-[#1F4E5A]/60 truncate max-w-[85%] text-center font-mono tracking-wide" style={{ fontSize: `${10 * scale}px` }}>
                 {activeTaskTitle}
               </div>
             )}
@@ -196,14 +198,14 @@ export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle }: 
       </AnimatePresence>
 
       {/* ── Eyes ─────────────────────────────────────────────────────────────── */}
-      <div className="flex justify-between w-40 mb-8 transition-all duration-500" style={{ transform: shifted }}>
+      <div className="flex justify-between transition-all duration-500" style={{ width: `${160 * scale}px`, marginBottom: `${32 * scale}px`, transform: shifted }}>
         {/* Left eye */}
         <motion.div
           animate={{
             x: eyeX, y: eyeY,
             scaleY: isBlinking ? 0.08 : ev.scaleY,
-            height: ev.h,
-            width: eff === 'confused' ? 16 : eff === 'focus2' ? 14 : ev.w,
+            height: ev.h * scale,
+            width: (eff === 'confused' ? 16 : eff === 'focus2' ? 14 : ev.w) * scale,
             borderRadius: ev.r,
           }}
           transition={{ x: spring, y: spring, scaleY: { duration: 0.1 } }}
@@ -218,8 +220,8 @@ export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle }: 
               : eff === 'confused' ? ev.scaleY * 0.5   // one big one small
               : eff === 'curious'  ? ev.scaleY * 1.3   // one slightly raised
               : ev.scaleY,
-            height: ev.h,
-            width: eff === 'confused' ? 8 : eff === 'focus2' ? 10 : ev.w,
+            height: ev.h * scale,
+            width: (eff === 'confused' ? 8 : eff === 'focus2' ? 10 : ev.w) * scale,
             borderRadius: ev.r,
           }}
           transition={{ x: spring, y: spring, scaleY: { duration: 0.1 } }}
@@ -229,7 +231,7 @@ export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle }: 
 
       {/* ── Mouth ────────────────────────────────────────────────────────────── */}
       <svg
-        width="100" height="80" viewBox="0 0 100 80"
+        width={100 * scale} height={80 * scale} viewBox="0 0 100 80"
         className="absolute top-1/2 -mt-2 transition-all duration-500"
         style={{ transform: shifted }}
       >
@@ -237,7 +239,7 @@ export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle }: 
           d={mouths[eff] ?? mouths.idle}
           fill="transparent"
           stroke="#1F4E5A"
-          strokeWidth="3.5"
+          strokeWidth={3.5 * scale}
           strokeLinecap="round"
           initial={false}
           animate={{ d: mouths[eff] ?? mouths.idle }}
@@ -252,14 +254,24 @@ export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle }: 
             <motion.div
               key="blush-l"
               initial={{ opacity: 0 }} animate={{ opacity: eff === 'shy' ? 0.5 : 0.28 }} exit={{ opacity: 0 }}
-              className="absolute top-1/2 left-14 w-6 h-3 bg-[#FF9AA2] rounded-full blur-md pointer-events-none"
-              style={{ transform: shifted }}
+              className="absolute top-1/2 bg-[#FF9AA2] rounded-full blur-md pointer-events-none"
+              style={{ 
+                transform: shifted,
+                left: `${56 * scale}px`,
+                width: `${24 * scale}px`,
+                height: `${12 * scale}px`
+              }}
             />
             <motion.div
               key="blush-r"
               initial={{ opacity: 0 }} animate={{ opacity: eff === 'shy' ? 0.5 : 0.28 }} exit={{ opacity: 0 }}
-              className="absolute top-1/2 right-14 w-6 h-3 bg-[#FF9AA2] rounded-full blur-md pointer-events-none"
-              style={{ transform: shifted }}
+              className="absolute top-1/2 bg-[#FF9AA2] rounded-full blur-md pointer-events-none"
+              style={{ 
+                transform: shifted,
+                right: `${56 * scale}px`,
+                width: `${24 * scale}px`,
+                height: `${12 * scale}px`
+              }}
             />
           </>
         )}
@@ -271,10 +283,13 @@ export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle }: 
           <motion.div
             key="zzz"
             initial={{ opacity: 0, y: 0 }}
-            animate={{ opacity: [0, 0.65, 0], y: -18 }}
+            animate={{ opacity: [0, 0.65, 0], y: -18 * scale }}
             transition={{ duration: 2.5, repeat: Infinity, ease: 'easeOut' }}
-            className="absolute top-[38%] right-[26%] text-[#1F4E5A]/55 font-black text-xs pointer-events-none z-30"
-            style={{ transform: shifted }}
+            className="absolute top-[38%] right-[26%] text-[#1F4E5A]/55 font-black pointer-events-none z-30"
+            style={{ 
+              transform: shifted,
+              fontSize: `${12 * scale}px`
+            }}
           >
             z z z
           </motion.div>
@@ -290,8 +305,11 @@ export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle }: 
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="absolute top-[24%] right-[21%] text-sm pointer-events-none z-30"
-            style={{ transform: shifted }}
+            className="absolute top-[24%] right-[21%] pointer-events-none z-30"
+            style={{ 
+              transform: shifted,
+              fontSize: `${16 * scale}px`
+            }}
           >
             💧
           </motion.div>
@@ -306,6 +324,10 @@ export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle }: 
           className={`absolute bottom-6 font-pixel tracking-widest transition-all duration-500 ${
             isActive ? 'text-[#1F4E5A] scale-110 text-5xl' : 'text-[#1F4E5A]/45 text-4xl'
           }`}
+          style={{ 
+            fontSize: isActive ? `${56 * scale}px` : `${48 * scale}px`,
+            bottom: `${24 * scale}px`
+          }}
         >
           {formatTime(timeLeft)}
         </motion.div>

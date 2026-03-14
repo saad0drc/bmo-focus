@@ -213,19 +213,6 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdate, onResetAll 
                     {(localSettings.notificationsEnabled ?? true) ? 'ON' : 'OFF'}
                   </span>
                 </button>
-
-                <button
-                  onClick={() => setLocalSettings({ ...localSettings, challengeEnabled: !(localSettings.challengeEnabled ?? true) })}
-                  className="w-full rounded-xl border-[3px] px-4 py-3 flex items-center justify-between bg-white border-[#4ECDC4]/50 text-[#1F4E5A] hover:bg-[#4ECDC4]/10 hover:border-[#4ECDC4] active:scale-95 transition-all font-bold uppercase text-xs tracking-wider group"
-                >
-                  <span className="flex items-center gap-2">
-                    <span className="text-sm group-hover:scale-110 transition-transform">⚡</span>
-                    Challenge System
-                  </span>
-                  <span className={`font-pixel text-xs px-3 py-1 rounded-lg ${(localSettings.challengeEnabled ?? true) ? 'bg-[#6BCB77]/20 text-[#4A9D5A]' : 'bg-[#FF5E5E]/20 text-[#CC3D3D]'}`}>
-                    {(localSettings.challengeEnabled ?? true) ? 'ON' : 'OFF'}
-                  </span>
-                </button>
               </div>
 
               {/* Action Buttons */}
