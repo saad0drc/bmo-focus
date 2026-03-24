@@ -51,6 +51,20 @@ export default function App() {
   const { tasks, addTask, updateTask, toggleTask, deleteTask, incrementPomodoro, completeRound, clearAllTasks } = useTasks();
   const { sessions, addSession, clearAllSessions } = useSessions();
 
+  // Persist activeTaskId to localStorage so timer callbacks work after tab reopens
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('bmo_activeTaskId');
+      if (saved) setActiveTaskId(saved);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('bmo_activeTaskId', activeTaskId || '');
+  }, [activeTaskId]);
+
   // Compact-mode scroll nav
   const layoutRef = useRef<HTMLDivElement>(null);
   const [atTop, setAtTop] = useState(true);
