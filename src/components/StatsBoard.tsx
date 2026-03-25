@@ -13,6 +13,7 @@ import {
 interface StatsBoardProps {
   sessions: Session[];
   tasks: Task[];
+  onOpenHistory?: () => void;
 }
 
 interface MiniStatProps {
@@ -207,7 +208,7 @@ function AllTimeHistory({ sessions, tasks }: { sessions: Session[]; tasks: Task[
   );
 }
 
-export const StatsBoard = memo(function StatsBoard({ sessions, tasks }: StatsBoardProps) {
+export const StatsBoard = memo(function StatsBoard({ sessions, tasks, onOpenHistory }: StatsBoardProps) {
   const today    = useMemo(() => computeTodayStats(sessions), [sessions]);
   const week     = useMemo(() => computeWeekStats(sessions),  [sessions]);
   const streak   = useMemo(() => computeStreak(sessions),     [sessions]);
@@ -245,6 +246,14 @@ export const StatsBoard = memo(function StatsBoard({ sessions, tasks }: StatsBoa
           <div className="w-2.5 h-2.5 rounded-full bg-[#6BCB77]" />
         </div>
         <h3 className="font-mono text-sm lg:text-base text-[#1F4E5A] tracking-widest font-bold">DATA CENTER</h3>
+        {onOpenHistory && (
+          <button
+            onClick={onOpenHistory}
+            className="px-3 py-1 rounded-lg bg-[#4ECDC4]/15 hover:bg-[#4ECDC4]/25 text-[#4ECDC4] text-xs font-bold uppercase transition-colors"
+          >
+            📅 History
+          </button>
+        )}
       </div>
 
       {/* TODAY — 2×2 compact grid */}

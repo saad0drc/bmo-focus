@@ -27,6 +27,14 @@ export interface WeekStats {
   bestDay: number;
 }
 
+export interface DailyStat {
+  date: string;
+  dayLabel: string;
+  pomodoros: number;
+  focusMinutes: number;
+  tasksCompleted: number;
+}
+
 export function computeTodayStats(sessions: Session[]): TodayStats {
   const today = todayStr();
   const todaySessions = sessions.filter(s => s.completed && s.date === today);
@@ -65,7 +73,8 @@ export function computeStreak(sessions: Session[]): number {
   );
   let streak = 0;
   const today = new Date();
-  for (let i = 0; i < 365; i++) {
+  // Start from yesterday (i=1) to avoid breaking streak if today has no sessions yet
+  for (let i = 1; i < 365; i++) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
     if (datesWithPomodoros.has(toDateStr(d))) {
@@ -88,6 +97,30 @@ export function computeChartData(sessions: Session[]) {
     const count = sessions.filter(s => s.completed && s.date === date).length;
     return { date, label, count };
   });
+}
+
+/** Compute daily stats for all dates with sessions — sorted newest to oldest */
+export function computeAllDailyStats(sessions: Session[]): DailyStat[] {
+  const dailyMap: Record<string, DailyStat> = {};
+  
+  sessions
+    .filter(s => s.completed)
+    .forEach(s => {
+      if (!dailyMap[s.date]) {
+        const d = new Date(s.date + 'T00:00:00');
+        dailyMap[s.date] = {
+          date: s.date,
+          dayLabel: d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+          pomodoros: 0,
+          focusMinutes: 0,
+          tasksCompleted: 0,
+        };
+      }
+      dailyMap[s.date].pomodoros++;
+      dailyMap[s.date].focusMinutes += s.duration;
+    });
+
+  return Object.values(dailyMap).sort((a, b) => b.date.localeCompare(a.date));
 }
 
 // ── Hook ─────────────────────────────────────────────────────────────────────

@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useEffect, useCallback, useState, useRef, lazy, Suspense } from 'react';
+import { useEffect, useCallback, useState, useRef, lazy, Suspense, useMemo } from 'react';
 import { useBMOState } from './hooks/useBMOState';
 import { useTimer, TimerMode, TimerSettings } from './hooks/useTimer';
 import { useTasks } from './hooks/useTasks';
-import { useSessions } from './hooks/useSessions';
+import { useSessions, computeAllDailyStats } from './hooks/useSessions';
 import { useScreenLayout } from './hooks/useScreenLayout';
 import { BMOFace } from './components/BMOFace';
 import { BMOControls } from './components/BMOControls';
@@ -23,6 +23,7 @@ const TaskBoard     = lazy(() => import('./components/TaskBoard').then(m => ({ d
 const StatsBoard    = lazy(() => import('./components/StatsBoard').then(m => ({ default: m.StatsBoard })));
 const TaskModal     = lazy(() => import('./components/TaskModal').then(m => ({ default: m.TaskModal })));
 const SettingsModal = lazy(() => import('./components/SettingsModal').then(m => ({ default: m.SettingsModal })));
+const HistoryModal  = lazy(() => import('./components/HistoryModal').then(m => ({ default: m.HistoryModal })));
 
 // Dynamic imports for side-effect-only modules (loaded only when first needed)
 const getConfetti = () => import('canvas-confetti').then(m => m.default);
@@ -42,6 +43,7 @@ export default function App() {
   const { screenSize, layoutConfig } = useScreenLayout();
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
 
   // Task modal state — lifted here so it's outside any CSS-transformed parent
@@ -50,6 +52,9 @@ export default function App() {
 
   const { tasks, addTask, updateTask, toggleTask, deleteTask, incrementPomodoro, completeRound, clearAllTasks } = useTasks();
   const { sessions, addSession, clearAllSessions } = useSessions();
+
+  // Compute daily stats for history modal
+  const dailyStats = useMemo(() => computeAllDailyStats(sessions), [sessions]);
 
   // Persist activeTaskId to localStorage so timer callbacks work after tab reopens
   useEffect(() => {
@@ -322,6 +327,11 @@ export default function App() {
           onSave={handleModalSave}
           initialTask={editingTask}
         />
+        <HistoryModal
+          isOpen={isHistoryOpen}
+          onClose={() => setIsHistoryOpen(false)}
+          dailyStats={dailyStats}
+        />
       </Suspense>
 
       {/*
@@ -476,6 +486,7 @@ export default function App() {
                   <StatsBoard
                     sessions={sessions}
                     tasks={tasks}
+                    onOpenHistory={() => setIsHistoryOpen(true)}
                   />
                 </Suspense>
               </div>
