@@ -189,7 +189,10 @@ export default function App() {
   }, [addSession, incrementPomodoro, completeRound, flashEmotion]);
 
   const { timeLeft, isActive, mode, startTimer, pauseTimer, resetTimer, setMode, settings, updateSettings } =
-    useTimer(handleTimerComplete);
+    useTimer(handleTimerComplete, activeTaskId ? { 
+      sessionCount: (tasks.find(t => t.id === activeTaskId)?.completedPomodoros ?? 0),
+      sessionsPerRound: (tasks.find(t => t.id === activeTaskId)?.settings.sessionsPerRound ?? 4)
+    } : undefined);
 
   const soundEnabled = settings.soundEnabled ?? true;
 

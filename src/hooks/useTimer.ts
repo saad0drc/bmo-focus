@@ -82,7 +82,7 @@ export interface TimerState {
   isExtension: boolean;
 }
 
-export function useTimer(onComplete: (completedMode: TimerMode) => void): TimerState {
+export function useTimer(onComplete: (completedMode: TimerMode) => void, activeTaskInfo?: { sessionCount: number; sessionsPerRound: number }): TimerState {
   // ── Core state (drives the UI directly in all cases) ──────────────────────
   const [mode, setModeState] = useState<TimerMode>('focus');
   const [settings, setSettings] = useState<TimerSettings>(DEFAULT_SETTINGS);
@@ -96,13 +96,24 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void): TimerS
   const isActiveRef  = useRef(false);
   const endTimeRef   = useRef<number | null>(null);           // absolute ms when session ends
   const lastCompletedAtRef   = useRef<number | null>(null);
-  const devSessionCountRef   = useRef(0);                    // dev-mode round counter
+  const devSessionCountRef   = useRef(0);                    // dev-mode round counter (local to active task)
+  const lastActiveTaskIdRef  = useRef<string | undefined>(undefined); // track task changes
   const onCompleteRef = useRef(onComplete);
+  const activeTaskInfoRef = useRef(activeTaskInfo);
 
   useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
   useEffect(() => { modeRef.current = mode; }, [mode]);
   useEffect(() => { settingsRef.current = settings; }, [settings]);
   useEffect(() => { isActiveRef.current = isActive; }, [isActive]);
+  useEffect(() => { 
+    // Reset dev counter if task changed
+    const currentTaskId = activeTaskInfo ? 'task' : undefined; // Simplified task ID tracking
+    if (currentTaskId !== lastActiveTaskIdRef.current) {
+      devSessionCountRef.current = 0;
+      lastActiveTaskIdRef.current = currentTaskId;
+    }
+    activeTaskInfoRef.current = activeTaskInfo;
+  }, [activeTaskInfo]);
 
   // ── Sync local state from a background storage snapshot ──────────────────
   const applyBgState = useCallback((s: BgTimerState) => {
@@ -178,14 +189,28 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void): TimerS
 
         const completedMode = modeRef.current;
         const s = settingsRef.current;
-        const sessionsPerRound = s.sessionsPerRound ?? 4;
-
-        devSessionCountRef.current++;
-        setSessionCount(devSessionCountRef.current);
-
-        const nextMode: TimerMode = completedMode !== 'focus'
-          ? 'focus'
-          : devSessionCountRef.current % sessionsPerRound === 0 ? 'longBreak' : 'shortBreak';
+        
+        // Use task-specific session tracking if available, otherwise global
+        let nextMode: TimerMode;
+        if (completedMode === 'focus') {
+          devSessionCountRef.current++;
+          setSessionCount(devSessionCountRef.current);
+          
+          // Check if we have task-specific info
+          const taskInfo = activeTaskInfoRef.current;
+          if (taskInfo) {
+            // For tasks: check if we reached the task's sessionsPerRound
+            const sessionCount = taskInfo.sessionCount + devSessionCountRef.current;
+            const sessionsPerRound = taskInfo.sessionsPerRound;
+            nextMode = sessionCount >= sessionsPerRound ? 'longBreak' : 'shortBreak';
+          } else {
+            // For no-task sessions: use global counter and global setting
+            const sessionsPerRound = s.sessionsPerRound ?? 4;
+            nextMode = devSessionCountRef.current % sessionsPerRound === 0 ? 'longBreak' : 'shortBreak';
+          }
+        } else {
+          nextMode = 'focus';
+        }
 
         onCompleteRef.current(completedMode);
 
