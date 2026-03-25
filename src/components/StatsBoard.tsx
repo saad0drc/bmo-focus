@@ -1,7 +1,7 @@
-import React, { useRef, useState, useEffect, useMemo, memo } from 'react';
+import React, { useMemo, memo } from 'react';
 import { motion } from 'motion/react';
 import { Flame, Target, Clock, BarChart2, TrendingUp, CheckCircle2, Timer } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { SimpleBarChart } from './SimpleBarChart';
 import { Session, Task } from '../types';
 import {
   computeTodayStats,
@@ -214,22 +214,6 @@ export const StatsBoard = memo(function StatsBoard({ sessions, tasks, onOpenHist
   const streak   = useMemo(() => computeStreak(sessions),     [sessions]);
   const chartData = useMemo(() => computeChartData(sessions), [sessions]);
 
-  // Only render the chart once the container has positive dimensions.
-  // In browser extension popups the layout isn't always computed before
-  // Recharts' ResponsiveContainer tries to measure, resulting in width/height = -1.
-  const chartContainerRef = useRef<HTMLDivElement>(null);
-  const [chartReady, setChartReady] = useState(false);
-  useEffect(() => {
-    const el = chartContainerRef.current;
-    if (!el) return;
-    const observer = new ResizeObserver(entries => {
-      const { width, height } = entries[0].contentRect;
-      if (width > 0 && height > 0) setChartReady(true);
-    });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
   const tasksCompleted = tasks.filter(t => t.completed).length;
   const totalTasks = tasks.length;
 
@@ -298,50 +282,11 @@ export const StatsBoard = memo(function StatsBoard({ sessions, tasks, onOpenHist
           </div>
           <span className="text-[9px] font-black text-[#4ECDC4]">{week.totalPomodoros} total</span>
         </div>
-        <div ref={chartContainerRef} className="h-24 lg:h-36 min-w-0">
-          {chartReady && (
-            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-              <BarChart data={chartData} barSize={20} margin={{ top: 4, right: 0, left: -28, bottom: 0 }}>
-                <XAxis
-                  dataKey="label"
-                  tick={{ fontSize: 9, fill: '#1F4E5A', fontWeight: 700 }}
-                  axisLine={false}
-                  tickLine={false}
-                  dy={4}
-                />
-                <YAxis
-                  allowDecimals={false}
-                  tick={{ fontSize: 8, fill: '#1F4E5A99' }}
-                  axisLine={false}
-                  tickLine={false}
-                  width={28}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#1F4E5A',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '11px',
-                    color: '#F5F5F0',
-                    padding: '6px 10px',
-                  }}
-                  formatter={(val: number) => [`${val} 🍅`, '']}
-                  labelStyle={{ color: '#DCF6E6', fontWeight: 700, fontSize: '10px' }}
-                  cursor={{ fill: '#1F4E5A', opacity: 0.06 }}
-                />
-                <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                  {chartData.map((entry, i) => (
-                    <Cell
-                      key={i}
-                      fill={entry.count === maxCount && entry.count > 0 ? '#FF5E5E' : '#4ECDC4'}
-                      fillOpacity={entry.count === 0 ? 0.25 : 1}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </div>
+        <SimpleBarChart
+          data={chartData}
+          maxCount={Math.max(...chartData.map(d => d.count), 1)}
+          height="h-24 lg:h-36"
+        />
       </div>
 
       {/* THIS WEEK summary row */}
