@@ -42,6 +42,7 @@ interface BgTimerState {
   settings: TimerSettings;
   lastCompletedAt: number | null;
   lastCompletedMode: TimerMode | null;
+  activeTaskSessionsPerRound?: number;  // Task-specific goal for notifications
 }
 
 const DEFAULT_BG_STATE: BgTimerState = {
@@ -53,6 +54,7 @@ const DEFAULT_BG_STATE: BgTimerState = {
   settings: DEFAULT_SETTINGS,
   lastCompletedAt: null,
   lastCompletedMode: null,
+  activeTaskSessionsPerRound: undefined,
 };
 
 function normalizeSettings(input?: TimerSettings): TimerSettings {

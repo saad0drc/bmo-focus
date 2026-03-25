@@ -46,12 +46,14 @@ function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function buildNotification(completedMode, nextMode, sessionCount, sessionsPerRound) {
+function buildNotification(completedMode, nextMode, sessionCount, sessionsPerRound, taskSessionsPerRound) {
   // ── Focus session finished ──────────────────────────────────────────────
   if (completedMode === 'focus') {
-    const isRoundComplete = sessionCount % sessionsPerRound === 0;
-    const sessionInRound  = sessionCount % sessionsPerRound || sessionsPerRound;
-    const remaining       = sessionsPerRound - (sessionCount % sessionsPerRound);
+    // Use task-specific sessionsPerRound if available (for mission notifications)
+    const effectiveSessionsPerRound = taskSessionsPerRound || sessionsPerRound;
+    const isRoundComplete = sessionCount % effectiveSessionsPerRound === 0;
+    const sessionInRound  = sessionCount % effectiveSessionsPerRound || effectiveSessionsPerRound;
+    const remaining       = effectiveSessionsPerRound - (sessionCount % effectiveSessionsPerRound);
 
     // Round complete → long break
     if (isRoundComplete) {
@@ -63,11 +65,11 @@ function buildNotification(completedMode, nextMode, sessionCount, sessionsPerRou
           '🏆 Champion! That\'s a Full Round!',
         ]),
         message: pick([
-          `${sessionsPerRound} sessions DONE! BMO is doing a little happy dance right now! 💃 Take your long break — you earned every second!`,
+          `${effectiveSessionsPerRound} sessions DONE! BMO is doing a little happy dance right now! 💃 Take your long break — you earned every second!`,
           `WOW WOW WOW! A full round complete! BMO's circuits are OVERLOADING with pride! 🌈 Enjoy your long break, legend!`,
-          `MATHEMATICAL! You finished all ${sessionsPerRound} sessions! BMO is so proud it could burst! 🎉 Rest well — you deserve it!`,
+          `MATHEMATICAL! You finished all ${effectiveSessionsPerRound} sessions! BMO is so proud it could burst! 🎉 Rest well — you deserve it!`,
           `BMO says: YOU. ARE. INCREDIBLE. Full round finished! Go rest, adventurer — BMO will keep the lights on! ⭐`,
-          `ALGEBRAIC! That's ${sessionsPerRound} focus sessions in a row! BMO is jumping on its charging pad! Take a long break! 🕹️`,
+          `ALGEBRAIC! That's ${effectiveSessionsPerRound} focus sessions in a row! BMO is jumping on its charging pad! Take a long break! 🕹️`,
         ]),
       };
     }
@@ -203,7 +205,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     const extensionUrl = chrome.runtime.getURL('index.html');
     const activeTabs = await chrome.tabs.query({ url: extensionUrl, active: true });
     if (activeTabs.length === 0) {
-      const { title, message } = buildNotification(completedMode, nextMode, newSessionCount, sessionsPerRound);
+      const { title, message } = buildNotification(completedMode, nextMode, newSessionCount, sessionsPerRound, state.activeTaskSessionsPerRound);
       chrome.notifications.create(ALARM_NAME, {
         type: 'basic',
         iconUrl: 'icon48.png',

@@ -223,6 +223,26 @@ export default function App() {
   // Keep settings ref in sync for use inside handleTimerComplete
   useEffect(() => { settingsRef.current = settings; }, [settings]);
 
+  // Sync active task info to chrome storage for background.js notifications
+  useEffect(() => {
+    const activeTask = tasks.find(t => t.id === activeTaskId);
+    if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+      try {
+        chrome.storage.local.get('bmo_timer_state', (result) => {
+          const state = result['bmo_timer_state'] || {};
+          chrome.storage.local.set({
+            bmo_timer_state: {
+              ...state,
+              activeTaskSessionsPerRound: activeTask?.settings.sessionsPerRound,
+            },
+          });
+        });
+      } catch {
+        // chrome.storage not available (dev mode)
+      }
+    }
+  }, [activeTaskId, tasks]);
+
   // Load sound volume setting on app load
   useEffect(() => {
     setSoundVolume(settings.soundVolume ?? 70);
