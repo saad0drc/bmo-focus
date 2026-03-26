@@ -181,7 +181,7 @@ export default function App() {
         shortBreakDuration: (tasks.find(t => t.id === activeTaskId)?.settings.shortBreakDuration ?? 5),
         longBreakDuration: (tasks.find(t => t.id === activeTaskId)?.settings.longBreakDuration ?? 15),
       } : undefined;
-      console.debug('[App] activeTaskInfo computed:', taskInfo);
+      console.log('[App] activeTaskInfo UPDATED:', taskInfo?.taskId, 'focusDuration=', taskInfo?.focusDuration);
       return taskInfo;
     }, [activeTaskId, tasks]));
 
