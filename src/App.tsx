@@ -172,7 +172,8 @@ export default function App() {
   const { timeLeft, isActive, mode, startTimer, pauseTimer, resetTimer, setMode, settings, updateSettings } =
     useTimer(handleTimerComplete, activeTaskId ? { 
       sessionCount: (tasks.find(t => t.id === activeTaskId)?.completedPomodoros ?? 0),
-      sessionsPerRound: (tasks.find(t => t.id === activeTaskId)?.settings.sessionsPerRound ?? 4)
+      sessionsPerRound: (tasks.find(t => t.id === activeTaskId)?.settings.sessionsPerRound ?? 4),
+      sessionInCurrentRound: (tasks.find(t => t.id === activeTaskId)?.sessionInCurrentRound ?? 0),
     } : undefined);
 
   const soundEnabled = settings.soundEnabled ?? true;

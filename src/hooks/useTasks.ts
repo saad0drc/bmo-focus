@@ -15,6 +15,10 @@ const STORAGE_KEY = 'bmo_tasks';
 
 /** Migrate old task shapes from previous localStorage formats */
 function migrateTask(t: any): Task {
+  const settings = t.settings ?? DEFAULT_TASK_SETTINGS;
+  const completedPomodoros = t.completedPomodoros ?? t.sessionsCompleted ?? 0;
+  // Calculate session position in current round based on completed pomodoros
+  const sessionInCurrentRound = completedPomodoros % (settings.sessionsPerRound ?? 4);
   return {
     id: t.id ?? crypto.randomUUID(),
     title: t.title ?? t.text ?? '',
@@ -25,14 +29,15 @@ function migrateTask(t: any): Task {
           ? new Date(t.createdAt).toISOString()
           : t.createdAt
         : new Date().toISOString(),
-    completedPomodoros: t.completedPomodoros ?? t.sessionsCompleted ?? 0,
+    completedPomodoros,
     totalFocusMinutes: t.totalFocusMinutes ?? 0,
-    settings: t.settings ?? DEFAULT_TASK_SETTINGS,
+    settings,
     dueDate: t.dueDate,
     pinned: t.pinned ?? false,
     repeatDaily: t.repeatDaily ?? false,
     lastCompletedDate: t.lastCompletedDate,
     dailyStreak: t.dailyStreak ?? 0,
+    sessionInCurrentRound: t.sessionInCurrentRound ?? sessionInCurrentRound,
   };
 }
 
@@ -58,6 +63,7 @@ function loadTasks(): Task[] {
           ...task,
           completed: false,
           completedPomodoros: 0,
+          sessionInCurrentRound: 0,
           dailyStreak: streakBroken ? 0 : task.dailyStreak,
         };
       }
@@ -93,6 +99,7 @@ export function useTasks() {
         dueDate,
         pinned: pinned ?? false,
         repeatDaily: repeatDaily ?? false,
+        sessionInCurrentRound: 0,
       };
       save([newTask, ...tasks]); // prepend — newest missions appear first
     },
@@ -148,15 +155,17 @@ export function useTasks() {
   const incrementPomodoro = useCallback(
     (id: string, duration: number) => {
       save(
-        tasks.map(t =>
-          t.id === id
-            ? {
-                ...t,
-                completedPomodoros: t.completedPomodoros + 1,
-                totalFocusMinutes: t.totalFocusMinutes + duration,
-              }
-            : t,
-        ),
+        tasks.map(t => {
+          if (t.id !== id) return t;
+          const newCompleted = t.completedPomodoros + 1;
+          const newSessionInRound = newCompleted % (t.settings.sessionsPerRound ?? 4);
+          return {
+            ...t,
+            completedPomodoros: newCompleted,
+            totalFocusMinutes: t.totalFocusMinutes + duration,
+            sessionInCurrentRound: newSessionInRound,
+          };
+        }),
       );
     },
     [tasks, save],
@@ -167,18 +176,19 @@ export function useTasks() {
     (id: string, duration: number) => {
       const today = todayStr();
       save(
-        tasks.map(t =>
-          t.id === id
-            ? {
-                ...t,
-                completedPomodoros: t.completedPomodoros + 1,
-                totalFocusMinutes: t.totalFocusMinutes + duration,
-                completed: true,
-                lastCompletedDate: today,
-                dailyStreak: t.repeatDaily ? (t.dailyStreak ?? 0) + 1 : (t.dailyStreak ?? 0),
-              }
-            : t,
-        ),
+        tasks.map(t => {
+          if (t.id !== id) return t;
+          const newCompleted = t.completedPomodoros + 1;
+          return {
+            ...t,
+            completedPomodoros: newCompleted,
+            totalFocusMinutes: t.totalFocusMinutes + duration,
+            completed: true,
+            lastCompletedDate: today,
+            dailyStreak: t.repeatDaily ? (t.dailyStreak ?? 0) + 1 : (t.dailyStreak ?? 0),
+            sessionInCurrentRound: 0,
+          };
+        }),
       );
     },
     [tasks, save],

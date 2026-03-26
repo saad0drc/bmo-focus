@@ -20,6 +20,7 @@ export interface Task {
   repeatDaily?: boolean;
   lastCompletedDate?: string; // YYYY-MM-DD, used to auto-reset daily tasks
   dailyStreak?: number;       // consecutive days this mission has been completed
+  sessionInCurrentRound?: number;  // tracks position in current round (0-indexed, resets at sessionsPerRound)
 }
 
 export interface Session {
