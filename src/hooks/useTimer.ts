@@ -104,6 +104,7 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void, activeT
   const modeRef      = useRef<TimerMode>('focus');
   const settingsRef  = useRef<TimerSettings>(DEFAULT_SETTINGS);
   const isActiveRef  = useRef(false);
+  const timeLeftRef  = useRef(DEFAULT_SETTINGS.focus * 60);     // track current timeLeft
   const endTimeRef   = useRef<number | null>(null);           // absolute ms when session ends
   const lastCompletedAtRef   = useRef<number | null>(null);
   const lastActiveTaskIdRef  = useRef<string | undefined>(undefined); // track task changes
@@ -114,6 +115,7 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void, activeT
   useEffect(() => { modeRef.current = mode; }, [mode]);
   useEffect(() => { settingsRef.current = settings; }, [settings]);
   useEffect(() => { isActiveRef.current = isActive; }, [isActive]);
+  useEffect(() => { timeLeftRef.current = timeLeft; }, [timeLeft]);
   useEffect(() => { 
     // Track task changes and load/save timer state per task
     const prevTaskId = lastActiveTaskIdRef.current;
@@ -125,7 +127,7 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void, activeT
         const taskStates = JSON.parse(localStorage.getItem('bmo_task_timer_states') || '{}');
         taskStates[prevTaskId] = {
           mode: modeRef.current,
-          timeLeft: timeLeft,
+          timeLeft: timeLeftRef.current,  // Use ref to get current value
           isActive: false, // Always pause when switching
         };
         localStorage.setItem('bmo_task_timer_states', JSON.stringify(taskStates));
