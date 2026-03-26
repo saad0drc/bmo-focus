@@ -221,6 +221,13 @@ export default function App() {
             bmo_timer_state: {
               ...state,
               activeTaskSessionsPerRound: activeTask?.settings.sessionsPerRound,
+              // Sync task-specific durations so background.js uses correct timings
+              settings: {
+                focus: activeTask?.settings.focusDuration ?? 25,
+                shortBreak: activeTask?.settings.shortBreakDuration ?? 5,
+                longBreak: activeTask?.settings.longBreakDuration ?? 15,
+                sessionsPerRound: activeTask?.settings.sessionsPerRound ?? 4,
+              },
             },
           });
         });

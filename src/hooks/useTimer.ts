@@ -177,7 +177,13 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void, activeT
     
     lastActiveTaskIdRef.current = currentTaskId;
     activeTaskInfoRef.current = activeTaskInfo;
-  }, [activeTaskInfo?.taskId]);
+  }, [
+    activeTaskInfo?.taskId,
+    activeTaskInfo?.focusDuration,
+    activeTaskInfo?.shortBreakDuration,
+    activeTaskInfo?.longBreakDuration,
+    activeTaskInfo?.sessionsPerRound,
+  ]);
 
   // ── Sync local state from a background storage snapshot ──────────────────
   const applyBgState = useCallback((s: BgTimerState) => {
