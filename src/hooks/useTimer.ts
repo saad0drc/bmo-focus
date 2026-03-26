@@ -201,10 +201,10 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void, activeT
           // Check if we have task-specific info
           const taskInfo = activeTaskInfoRef.current;
           if (taskInfo) {
-            // For tasks: check if we reached the task's sessionsPerRound
+            // For tasks: increment session count and check if we completed the round
             const sessionCount = taskInfo.sessionCount + devSessionCountRef.current;
             const sessionsPerRound = taskInfo.sessionsPerRound;
-            nextMode = sessionCount >= sessionsPerRound ? 'longBreak' : 'shortBreak';
+            nextMode = sessionCount % sessionsPerRound === 0 ? 'longBreak' : 'shortBreak';
           } else {
             // For no-task sessions: use global counter and global setting
             const sessionsPerRound = s.sessionsPerRound ?? 4;

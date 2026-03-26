@@ -111,20 +111,6 @@ export default function App() {
     }
   }, [emotion]);
 
-  // Helper to show desktop notification
-  const showNotification = (title: string, options?: NotificationOptions) => {
-    const s = settingsRef.current;
-    if (!(s.notificationsEnabled ?? true)) return;
-    if (!('Notification' in window)) return;
-    if (Notification.permission === 'granted') {
-      new Notification(title, options);
-    } else if (Notification.permission !== 'denied') {
-      Notification.requestPermission().then(perm => {
-        if (perm === 'granted') new Notification(title, options);
-      });
-    }
-  };
-
   const handleTimerComplete = useCallback((completedMode: TimerMode) => {
     const s = settingsRef.current;
     const soundEnabled = s.soundEnabled ?? true;
@@ -149,27 +135,22 @@ export default function App() {
           completeRound(taskId, duration);
           completionSound = 'roundComplete';
           flashEmotion('success', 9000);
-          showNotification('🎉 Round Complete!', { body: `Completed all ${target} focus sessions!` });
         } else {
           incrementPomodoro(taskId, duration);
           completionSound = 'focusComplete';
           flashEmotion('success');
-          showNotification('✅ Focus Complete!', { body: `${newCount}/${target} sessions done` });
         }
       } else {
         completionSound = 'focusComplete';
         flashEmotion('success');
-        showNotification('✅ Focus Complete!', { body: 'Time for a break!' });
       }
     } else if (completedMode === 'shortBreak') {
       completionSound = 'breakComplete';
       flashEmotion('idle');
-      showNotification('☕ Break Over!', { body: 'Ready to focus again?' });
     } else {
       // longBreak
       completionSound = 'longBreakComplete';
       flashEmotion('idle');
-      showNotification('⭐ Long Break Over!', { body: 'Refreshed and ready!' });
     }
 
     if (!soundEnabled) return;
