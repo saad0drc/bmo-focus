@@ -138,31 +138,14 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void, activeT
         const taskStates = JSON.parse(localStorage.getItem('bmo_task_timer_states') || '{}');
         const savedState = taskStates[currentTaskId];
         const focusDuration = (activeTaskInfo?.focusDuration ?? 25) * 60;
-        const shortBreakDuration = (activeTaskInfo?.shortBreakDuration ?? 5) * 60;
-        const longBreakDuration = (activeTaskInfo?.longBreakDuration ?? 15) * 60;
         
         if (savedState) {
+          // Task has been worked on before - restore its state
           setModeState(savedState.mode);
-          // Check if duration changed: compare stored full duration against current duration
-          // If they don't match, reset to full duration (task settings were modified)
-          // Otherwise, restore the saved timeLeft (partial session is OK)
-          const storedDuration = savedState.fullDurationSeconds;
-          if (savedState.mode === 'focus' && storedDuration !== focusDuration) {
-            // Focus duration changed, reset to full
-            setTimeLeft(focusDuration);
-          } else if (savedState.mode === 'shortBreak' && storedDuration !== shortBreakDuration) {
-            // Short break duration changed, reset to full
-            setTimeLeft(shortBreakDuration);
-          } else if (savedState.mode === 'longBreak' && storedDuration !== longBreakDuration) {
-            // Long break duration changed, reset to full
-            setTimeLeft(longBreakDuration);
-          } else {
-            // Duration unchanged, restore the previous timeLeft (allow partial sessions)
-            setTimeLeft(savedState.timeLeft);
-          }
-          setIsActive(false); // Always start paused
+          setTimeLeft(savedState.timeLeft);
+          setIsActive(false); // Always start paused when switching
         } else {
-          // First time loading this task - set to full focus duration
+          // First time loading this task - start fresh with full focus duration
           setModeState('focus');
           setTimeLeft(focusDuration);
           setIsActive(false);
@@ -316,22 +299,10 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void, activeT
     if (!taskId) return;
     try {
       const taskStates = JSON.parse(localStorage.getItem('bmo_task_timer_states') || '{}');
-      
-      // Get the full duration for this mode
-      let fullDurationSeconds = 0;
-      if (modeRef.current === 'focus') {
-        fullDurationSeconds = (activeTaskInfoRef.current?.focusDuration ?? 25) * 60;
-      } else if (modeRef.current === 'shortBreak') {
-        fullDurationSeconds = (activeTaskInfoRef.current?.shortBreakDuration ?? 5) * 60;
-      } else if (modeRef.current === 'longBreak') {
-        fullDurationSeconds = (activeTaskInfoRef.current?.longBreakDuration ?? 15) * 60;
-      }
-      
       taskStates[taskId] = {
         mode,
         timeLeft,
         isActive,
-        fullDurationSeconds, // Store full duration to detect if settings changed
       };
       localStorage.setItem('bmo_task_timer_states', JSON.stringify(taskStates));
     } catch { /* ignore */ }
