@@ -9,10 +9,12 @@ interface BMOFaceProps {
   isActive?: boolean;
   mode?: TimerMode;
   activeTaskTitle?: string | null;
+  sessionInRound?: number;  // Current session position (0-based, display as 1-based)
+  sessionsPerRound?: number;  // Total sessions in round
   scale?: number;
 }
 
-export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle, scale = 1 }: BMOFaceProps) {
+export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle, sessionInRound, sessionsPerRound, scale = 1 }: BMOFaceProps) {
   const faceRef = useRef<HTMLDivElement>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
@@ -321,15 +323,31 @@ export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle, sc
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`absolute bottom-6 font-pixel tracking-widest transition-all duration-500 ${
+          className="absolute bottom-6 flex flex-col items-center gap-1 transition-all duration-500"
+          style={{ 
+            bottom: `${24 * scale}px`
+          }}
+        >
+          <div className={`font-pixel tracking-widest ${
             isActive ? 'text-[#1F4E5A] scale-110 text-5xl' : 'text-[#1F4E5A]/45 text-4xl'
           }`}
           style={{ 
             fontSize: isActive ? `${56 * scale}px` : `${48 * scale}px`,
-            bottom: `${24 * scale}px`
-          }}
-        >
-          {formatTime(timeLeft)}
+          }}>
+            {formatTime(timeLeft)}
+          </div>
+          
+          {/* Session indicator - show when task has session info */}
+          {sessionInRound !== undefined && sessionsPerRound !== undefined && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: isActive ? 1 : 0.5 }}
+              className="text-[#1F4E5A]/70 font-bold tracking-widest"
+              style={{ fontSize: `${14 * scale}px` }}
+            >
+              {(sessionInRound % sessionsPerRound) + 1}/{sessionsPerRound}
+            </motion.div>
+          )}
         </motion.div>
       )}
     </div>

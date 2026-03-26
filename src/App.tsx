@@ -405,6 +405,8 @@ export default function App() {
                 isActive={isActive}
                 mode={mode}
                 activeTaskTitle={activeTask?.title ?? null}
+                sessionInRound={activeTask?.sessionInCurrentRound}
+                sessionsPerRound={activeTask?.settings.sessionsPerRound}
                 scale={parseInt(layoutConfig.bmoMaxWidth) / 560}
               />
             </div>
