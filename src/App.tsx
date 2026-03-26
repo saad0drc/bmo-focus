@@ -171,7 +171,7 @@ export default function App() {
   }, [addSession, incrementPomodoro, completeRound, flashEmotion]);
 
   const { timeLeft, isActive, mode, startTimer, pauseTimer, resetTimer, setMode, settings, updateSettings } =
-    useTimer(handleTimerComplete, activeTaskId ? { 
+    useTimer(handleTimerComplete, useMemo(() => activeTaskId ? { 
       sessionCount: (tasks.find(t => t.id === activeTaskId)?.completedPomodoros ?? 0),
       sessionsPerRound: (tasks.find(t => t.id === activeTaskId)?.settings.sessionsPerRound ?? 4),
       sessionInCurrentRound: (tasks.find(t => t.id === activeTaskId)?.sessionInCurrentRound ?? 0),
@@ -179,7 +179,7 @@ export default function App() {
       focusDuration: (tasks.find(t => t.id === activeTaskId)?.settings.focusDuration ?? 25),
       shortBreakDuration: (tasks.find(t => t.id === activeTaskId)?.settings.shortBreakDuration ?? 5),
       longBreakDuration: (tasks.find(t => t.id === activeTaskId)?.settings.longBreakDuration ?? 15),
-    } : undefined);
+    } : undefined, [activeTaskId, tasks]));
 
   const soundEnabled = settings.soundEnabled ?? true;
 
