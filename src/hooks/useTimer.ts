@@ -84,7 +84,15 @@ export interface TimerState {
   isExtension: boolean;
 }
 
-export function useTimer(onComplete: (completedMode: TimerMode) => void, activeTaskInfo?: { sessionCount: number; sessionsPerRound: number; sessionInCurrentRound?: number }): TimerState {
+export function useTimer(onComplete: (completedMode: TimerMode) => void, activeTaskInfo?: { 
+  sessionCount: number; 
+  sessionsPerRound: number; 
+  sessionInCurrentRound?: number;
+  taskId?: string;
+  focusDuration?: number;
+  shortBreakDuration?: number;
+  longBreakDuration?: number;
+}): TimerState {
   // ── Core state (drives the UI directly in all cases) ──────────────────────
   const [mode, setModeState] = useState<TimerMode>('focus');
   const [settings, setSettings] = useState<TimerSettings>(DEFAULT_SETTINGS);
@@ -107,13 +115,56 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void, activeT
   useEffect(() => { settingsRef.current = settings; }, [settings]);
   useEffect(() => { isActiveRef.current = isActive; }, [isActive]);
   useEffect(() => { 
-    // Track task changes to properly handle round position
-    const currentTaskId = activeTaskInfo ? 'task' : undefined;
-    if (currentTaskId !== lastActiveTaskIdRef.current) {
-      lastActiveTaskIdRef.current = currentTaskId;
+    // Track task changes and load/save timer state per task
+    const prevTaskId = lastActiveTaskIdRef.current;
+    const currentTaskId = activeTaskInfo?.taskId;
+    
+    // Save previous task's timer state
+    if (prevTaskId && prevTaskId !== currentTaskId) {
+      try {
+        const taskStates = JSON.parse(localStorage.getItem('bmo_task_timer_states') || '{}');
+        taskStates[prevTaskId] = {
+          mode: modeRef.current,
+          timeLeft: timeLeft,
+          isActive: false, // Always pause when switching
+        };
+        localStorage.setItem('bmo_task_timer_states', JSON.stringify(taskStates));
+      } catch { /* ignore */ }
     }
+    
+    // Load new task's timer state
+    if (currentTaskId && currentTaskId !== prevTaskId) {
+      try {
+        const taskStates = JSON.parse(localStorage.getItem('bmo_task_timer_states') || '{}');
+        const savedState = taskStates[currentTaskId];
+        if (savedState) {
+          setModeState(savedState.mode);
+          setTimeLeft(savedState.timeLeft);
+          setIsActive(false); // Always start paused
+        } else {
+          // First time loading this task - set to full focus duration
+          const focusDuration = activeTaskInfo?.focusDuration ?? 25;
+          setModeState('focus');
+          setTimeLeft(focusDuration * 60);
+          setIsActive(false);
+        }
+      } catch { /* ignore */ }
+    }
+    
+    // Update task-specific settings
+    if (activeTaskInfo?.focusDuration !== undefined) {
+      const taskSettings: TimerSettings = {
+        focus: activeTaskInfo.focusDuration,
+        shortBreak: activeTaskInfo.shortBreakDuration ?? 5,
+        longBreak: activeTaskInfo.longBreakDuration ?? 15,
+        sessionsPerRound: activeTaskInfo.sessionsPerRound,
+      };
+      setSettings(taskSettings);
+    }
+    
+    lastActiveTaskIdRef.current = currentTaskId;
     activeTaskInfoRef.current = activeTaskInfo;
-  }, [activeTaskInfo]);
+  }, [activeTaskInfo?.taskId]);
 
   // ── Sync local state from a background storage snapshot ──────────────────
   const applyBgState = useCallback((s: BgTimerState) => {
@@ -233,6 +284,21 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void, activeT
     const id = setInterval(tick, 500);
     return () => clearInterval(id);
   }, [isActive]);
+
+  // Save current task's timer state whenever it changes
+  useEffect(() => {
+    const taskId = activeTaskInfoRef.current?.taskId;
+    if (!taskId) return;
+    try {
+      const taskStates = JSON.parse(localStorage.getItem('bmo_task_timer_states') || '{}');
+      taskStates[taskId] = {
+        mode,
+        timeLeft,
+        isActive,
+      };
+      localStorage.setItem('bmo_task_timer_states', JSON.stringify(taskStates));
+    } catch { /* ignore */ }
+  }, [timeLeft, mode, isActive]);
 
   // ── Controls — update local state immediately, then tell the background ───
   const startTimer = useCallback(() => {

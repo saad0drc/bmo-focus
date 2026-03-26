@@ -175,6 +175,10 @@ export default function App() {
       sessionCount: (tasks.find(t => t.id === activeTaskId)?.completedPomodoros ?? 0),
       sessionsPerRound: (tasks.find(t => t.id === activeTaskId)?.settings.sessionsPerRound ?? 4),
       sessionInCurrentRound: (tasks.find(t => t.id === activeTaskId)?.sessionInCurrentRound ?? 0),
+      taskId: activeTaskId,
+      focusDuration: (tasks.find(t => t.id === activeTaskId)?.settings.focusDuration ?? 25),
+      shortBreakDuration: (tasks.find(t => t.id === activeTaskId)?.settings.shortBreakDuration ?? 5),
+      longBreakDuration: (tasks.find(t => t.id === activeTaskId)?.settings.longBreakDuration ?? 15),
     } : undefined);
 
   const soundEnabled = settings.soundEnabled ?? true;
