@@ -121,6 +121,15 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void, activeT
     const prevTaskId = lastActiveTaskIdRef.current;
     const currentTaskId = activeTaskInfo?.taskId;
     
+    // Debug: Log task switches
+    console.debug('[useTimer] Task switch detected:', {
+      prev: prevTaskId,
+      current: currentTaskId,
+      focusDuration: activeTaskInfo?.focusDuration,
+      willSave: prevTaskId && prevTaskId !== currentTaskId,
+      willLoad: currentTaskId && currentTaskId !== prevTaskId,
+    });
+    
     // Save previous task's timer state
     if (prevTaskId && prevTaskId !== currentTaskId) {
       try {
@@ -131,6 +140,7 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void, activeT
           isActive: false, // Always pause when switching
         };
         localStorage.setItem('bmo_task_timer_states', JSON.stringify(taskStates));
+        console.debug('[useTimer] Saved state for task:', prevTaskId, taskStates[prevTaskId]);
       } catch { /* ignore */ }
     }
     
@@ -143,11 +153,13 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void, activeT
         
         if (savedState) {
           // Task has been worked on before - restore its state
+          console.debug('[useTimer] Restoring saved state for task:', currentTaskId, savedState);
           setModeState(savedState.mode);
           setTimeLeft(savedState.timeLeft);
           setIsActive(false); // Always start paused when switching
         } else {
           // First time loading this task - start fresh with full focus duration
+          console.debug('[useTimer] No saved state, initializing to full duration:', focusDuration, 'seconds');
           setModeState('focus');
           setTimeLeft(focusDuration);
           setIsActive(false);
@@ -163,6 +175,7 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void, activeT
         longBreak: activeTaskInfo.longBreakDuration ?? 15,
         sessionsPerRound: activeTaskInfo.sessionsPerRound,
       };
+      console.debug('[useTimer] Updating settings:', taskSettings);
       setSettings(taskSettings);
     }
     
