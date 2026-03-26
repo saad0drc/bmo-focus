@@ -153,18 +153,19 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void, activeT
         const taskStates = JSON.parse(localStorage.getItem('bmo_task_timer_states') || '{}');
         const savedState = taskStates[currentTaskId];
         const focusDuration = (activeTaskInfo?.focusDuration ?? 25) * 60;
+        const focusDurationInSeconds = focusDuration;
         
-        if (savedState) {
-          // Task has been worked on before - restore its state
+        if (savedState && savedState.timeLeft > 0 && savedState.timeLeft <= focusDurationInSeconds) {
+          // Task has valid saved state within the current task duration - restore it
           console.log('[useTimer] LOADING saved state for task:', currentTaskId, '=', savedState);
           setModeState(savedState.mode);
           setTimeLeft(savedState.timeLeft);
-          setIsActive(false); // Always start paused when switching
+          setIsActive(false);
         } else {
-          // First time loading this task - start fresh with full focus duration
-          console.log('[useTimer] NO saved state, setting to FULL DURATION:', focusDuration, 'seconds for task:', currentTaskId);
+          // No saved state or saved state is invalid (task duration changed) - start fresh with full focus duration
+          console.log('[useTimer] NO VALID saved state (or duration changed), setting to FULL DURATION:', focusDurationInSeconds, 'seconds for task:', currentTaskId, 'savedState was:', savedState);
           setModeState('focus');
-          setTimeLeft(focusDuration);
+          setTimeLeft(focusDurationInSeconds);
           setIsActive(false);
         }
       } catch { /* ignore */ }
