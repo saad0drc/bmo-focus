@@ -45,6 +45,7 @@ export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+  const prevActiveTaskIdRef = useRef<string | null>(null);
 
   // Task modal state — lifted here so it's outside any CSS-transformed parent
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -224,6 +225,14 @@ export default function App() {
       }
     }
   }, [activeTaskId, tasks]);
+
+  // Pause timer when switching tasks — don't let timer continue with different task
+  useEffect(() => {
+    if (prevActiveTaskIdRef.current !== activeTaskId && isActive) {
+      pauseTimer();
+    }
+    prevActiveTaskIdRef.current = activeTaskId;
+  }, [activeTaskId, isActive, pauseTimer]);
 
   // Load sound volume setting on app load
   useEffect(() => {
