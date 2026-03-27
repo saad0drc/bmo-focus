@@ -293,20 +293,15 @@ export default function App() {
     breakVariantRef.current = Math.random() < 0.5 ? 'sleepy' : 'break';
   }, [mode]);
 
-  // Sync per-task timer settings when active task changes
-  useEffect(() => {
-    if (!activeTaskId) return;
-    const task = tasks.find(t => t.id === activeTaskId);
-    if (task?.settings) {
-      updateSettings({
-        focus: task.settings.focusDuration,
-        shortBreak: task.settings.shortBreakDuration,
-        longBreak: task.settings.longBreakDuration,
-        sessionsPerRound: task.settings.sessionsPerRound,
-        soundEnabled,
-      });
-    }
-  }, [activeTaskId, tasks, updateSettings, soundEnabled]);
+  // NOTE: Removed - useTimer already handles task-specific settings in its own effect
+  // // Sync per-task timer settings when active task changes
+  // useEffect(() => {
+  //   if (!activeTaskId) return;
+  //   const task = tasks.find(t => t.id === activeTaskId);
+  //   if (task?.settings) {
+  //     updateSettings({...});
+  //   }
+  // }, [activeTaskId, tasks, updateSettings, soundEnabled]);
 
   // Sync BMO emotion with timer state
   useEffect(() => {
@@ -415,6 +410,7 @@ export default function App() {
                 isActive={isActive}
                 mode={mode}
                 activeTaskTitle={activeTask?.title ?? null}
+                taskFocusDuration={activeTask?.settings.focusDuration}
                 sessionInRound={activeTask?.sessionInCurrentRound}
                 sessionsPerRound={activeTask?.settings.sessionsPerRound}
                 scale={parseInt(layoutConfig.bmoMaxWidth) / 560}

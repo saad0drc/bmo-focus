@@ -55,6 +55,7 @@ function loadTasks(): Task[] {
     const yesterday = yesterdayStr();
     return (JSON.parse(raw) as any[]).map(t => {
       const task = migrateTask(t);
+      
       // Auto-reset daily repeat missions that were completed before today
       if (task.repeatDaily && task.completed && task.lastCompletedDate !== today) {
         // Streak breaks if the user missed yesterday entirely
@@ -67,6 +68,18 @@ function loadTasks(): Task[] {
           dailyStreak: streakBroken ? 0 : task.dailyStreak,
         };
       }
+      
+      // Reset pomodoro counter daily (for all tasks, not just daily ones)
+      const lastReset = task.lastPomodoroResetDate;
+      if (lastReset !== today) {
+        return {
+          ...task,
+          completedPomodoros: 0,
+          sessionInCurrentRound: 0,
+          lastPomodoroResetDate: today,
+        };
+      }
+      
       return task;
     });
   } catch {

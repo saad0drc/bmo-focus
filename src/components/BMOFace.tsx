@@ -9,12 +9,13 @@ interface BMOFaceProps {
   isActive?: boolean;
   mode?: TimerMode;
   activeTaskTitle?: string | null;
+  taskFocusDuration?: number;  // If set, show this instead of timeLeft
   sessionInRound?: number;  // Current session position (0-based, display as 1-based)
   sessionsPerRound?: number;  // Total sessions in round
   scale?: number;
 }
 
-export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle, sessionInRound, sessionsPerRound, scale = 1 }: BMOFaceProps) {
+export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle, taskFocusDuration, sessionInRound, sessionsPerRound, scale = 1 }: BMOFaceProps) {
   const faceRef = useRef<HTMLDivElement>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
@@ -334,7 +335,11 @@ export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle, se
           style={{ 
             fontSize: isActive ? `${56 * scale}px` : `${48 * scale}px`,
           }}>
-            {formatTime(timeLeft)}
+            {formatTime(
+              taskFocusDuration !== undefined && !isActive && timeLeft === taskFocusDuration * 60
+                ? taskFocusDuration * 60
+                : timeLeft
+            )}
           </div>
           
           {/* Session indicator - show when task has session info */}

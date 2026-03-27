@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 
 export type TimerMode = 'focus' | 'shortBreak' | 'longBreak';
 
@@ -104,10 +104,10 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void, activeT
   const modeRef      = useRef<TimerMode>('focus');
   const settingsRef  = useRef<TimerSettings>(DEFAULT_SETTINGS);
   const isActiveRef  = useRef(false);
-  const timeLeftRef  = useRef(DEFAULT_SETTINGS.focus * 60);     // track current timeLeft
-  const endTimeRef   = useRef<number | null>(null);           // absolute ms when session ends
+  const timeLeftRef  = useRef(DEFAULT_SETTINGS.focus * 60);
+  const endTimeRef   = useRef<number | null>(null);
   const lastCompletedAtRef   = useRef<number | null>(null);
-  const lastActiveTaskIdRef  = useRef<string | undefined>(undefined); // track task changes
+  const lastActiveTaskIdRef  = useRef<string | undefined>(undefined);
   const onCompleteRef = useRef(onComplete);
   const activeTaskInfoRef = useRef(activeTaskInfo);
 
@@ -116,7 +116,7 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void, activeT
   useEffect(() => { settingsRef.current = settings; }, [settings]);
   useEffect(() => { isActiveRef.current = isActive; }, [isActive]);
   useEffect(() => { timeLeftRef.current = timeLeft; }, [timeLeft]);
-  useEffect(() => { 
+  useLayoutEffect(() => { 
     // Track task changes and load/save timer state per task
     const prevTaskId = lastActiveTaskIdRef.current;
     const currentTaskId = activeTaskInfo?.taskId;
@@ -127,8 +127,8 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void, activeT
         const taskStates = JSON.parse(localStorage.getItem('bmo_task_timer_states') || '{}');
         taskStates[prevTaskId] = {
           mode: modeRef.current,
-          timeLeft: timeLeftRef.current,  // Use ref to get current value
-          isActive: false, // Always pause when switching
+          timeLeft: timeLeftRef.current,
+          isActive: false,
         };
         localStorage.setItem('bmo_task_timer_states', JSON.stringify(taskStates));
       } catch { /* ignore */ }
@@ -140,23 +140,26 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void, activeT
         const taskStates = JSON.parse(localStorage.getItem('bmo_task_timer_states') || '{}');
         const savedState = taskStates[currentTaskId];
         const focusDuration = (activeTaskInfo?.focusDuration ?? 25) * 60;
-        const focusDurationInSeconds = focusDuration;
         
-        if (savedState && savedState.timeLeft > 0 && savedState.timeLeft <= focusDurationInSeconds) {
-          // Task has valid saved state within the current task duration - restore it
+        // Only restore saved state if the timer was actually running when we last switched away
+        // Otherwise always reset to full duration
+        if (savedState && savedState.isActive && savedState.timeLeft > 0 && savedState.timeLeft <= focusDuration) {
           setModeState(savedState.mode);
           setTimeLeft(savedState.timeLeft);
           setIsActive(false);
         } else {
-          // No saved state or saved state is invalid (task duration changed) - start fresh with full focus duration
+          // Reset to full duration for the new task
           setModeState('focus');
-          setTimeLeft(focusDurationInSeconds);
+          setTimeLeft(focusDuration);
           setIsActive(false);
         }
+        
+        // CRITICAL: Clear the old task's endTime so the next start uses the correct duration
+        endTimeRef.current = null;
       } catch { /* ignore */ }
     }
     
-    // Update task-specific settings
+    // Update settings state AND ref for the new task
     if (activeTaskInfo?.focusDuration !== undefined) {
       const taskSettings: TimerSettings = {
         focus: activeTaskInfo.focusDuration,
@@ -164,7 +167,7 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void, activeT
         longBreak: activeTaskInfo.longBreakDuration ?? 15,
         sessionsPerRound: activeTaskInfo.sessionsPerRound,
       };
-        setSettings(taskSettings);
+      settingsRef.current = taskSettings;
     }
     
     lastActiveTaskIdRef.current = currentTaskId;
@@ -348,9 +351,8 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void, activeT
   const updateSettings = useCallback((newSettings: TimerSettings) => {
     const normalized = normalizeSettings(newSettings);
     setSettings(normalized);
-    if (!isActiveRef.current) {
-      setTimeLeft(normalized[modeRef.current] * 60);
-    }
+    // Don't reset timeLeft - let the task-switch effect handle that
+    // timeLeft should only be reset when explicitly requested via resetTimer/setMode
     if (isChromeExt) sendBgMessage('UPDATE_SETTINGS', { settings: normalized });
     else localStorage.setItem(LEGACY_SETTINGS_KEY, JSON.stringify(normalized));
   }, []);
