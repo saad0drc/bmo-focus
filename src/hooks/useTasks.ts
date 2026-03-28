@@ -69,17 +69,6 @@ function loadTasks(): Task[] {
         };
       }
       
-      // Reset pomodoro counter daily (for all tasks, not just daily ones)
-      const lastReset = task.lastPomodoroResetDate;
-      if (lastReset !== today) {
-        return {
-          ...task,
-          completedPomodoros: 0,
-          sessionInCurrentRound: 0,
-          lastPomodoroResetDate: today,
-        };
-      }
-      
       return task;
     });
   } catch {
