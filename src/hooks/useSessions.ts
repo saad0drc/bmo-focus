@@ -73,8 +73,8 @@ export function computeStreak(sessions: Session[]): number {
   );
   let streak = 0;
   const today = new Date();
-  // Start from yesterday (i=1) to avoid breaking streak if today has no sessions yet
-  for (let i = 1; i < 365; i++) {
+  // Start from today (i=0) to include today's sessions in the streak count
+  for (let i = 0; i < 365; i++) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
     if (datesWithPomodoros.has(toDateStr(d))) {
