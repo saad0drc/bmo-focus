@@ -268,6 +268,12 @@ export const StatsBoard = memo(function StatsBoard({ sessions, tasks, onOpenHist
             icon={<CheckCircle2 className="w-3 h-3 text-[#6BCB77]" strokeWidth={2.5} />}
             bg="bg-[#6BCB77]/8 border border-[#6BCB77]/15"
           />
+          <MiniStat
+            label="Total time"
+            value={`${today.totalTimeMinutes}m`}
+            icon={<Timer className="w-3 h-3 text-[#FFD93D]" strokeWidth={2.5} />}
+            bg="bg-[#FFD93D]/8 border border-[#FFD93D]/15"
+          />
         </div>
       </div>
 
@@ -284,7 +290,7 @@ export const StatsBoard = memo(function StatsBoard({ sessions, tasks, onOpenHist
         </div>
         <SimpleBarChart
           data={chartData}
-          maxCount={Math.max(...chartData.map(d => d.count), 4)}
+          maxCount={Math.max(...chartData.map(d => d.count), 8)}
           height="h-24 lg:h-36"
         />
       </div>
