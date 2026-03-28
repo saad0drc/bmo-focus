@@ -284,7 +284,7 @@ export const StatsBoard = memo(function StatsBoard({ sessions, tasks, onOpenHist
         </div>
         <SimpleBarChart
           data={chartData}
-          maxCount={Math.max(...chartData.map(d => d.count), 1)}
+          maxCount={Math.max(...chartData.map(d => d.count), 4)}
           height="h-24 lg:h-36"
         />
       </div>
