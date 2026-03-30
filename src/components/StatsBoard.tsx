@@ -1,8 +1,9 @@
 import React, { useMemo, memo } from 'react';
 import { motion } from 'motion/react';
-import { Flame, Target, Clock, BarChart2, TrendingUp, CheckCircle2, Timer } from 'lucide-react';
+import { Flame, Target, Clock, BarChart2, TrendingUp, CheckCircle2, Timer, Heart } from 'lucide-react';
 import { SimpleBarChart } from './SimpleBarChart';
 import { Session, Task } from '../types';
+import { Emotion } from '../hooks/useBMOState';
 import {
   computeTodayStats,
   computeWeekStats,
@@ -13,6 +14,7 @@ import {
 interface StatsBoardProps {
   sessions: Session[];
   tasks: Task[];
+  emotion?: Emotion;
   onOpenHistory?: () => void;
 }
 
@@ -31,6 +33,37 @@ function MiniStat({ label, value, icon, bg }: MiniStatProps) {
         <span className="text-[9px] font-black uppercase tracking-widest text-[#1F4E5A]/50">{label}</span>
       </div>
       <div className="font-pixel text-xl lg:text-3xl text-[#1F4E5A] leading-none">{value}</div>
+    </div>
+  );
+}
+
+function BMOHeartStat({ emotion }: { emotion?: Emotion }) {
+  const emotionColors: Record<Emotion, { heart: string; bg: string }> = {
+    idle: { heart: 'text-gray-400', bg: 'bg-gray-400/8 border border-gray-400/15' },
+    focus: { heart: 'text-[#FF5E5E]', bg: 'bg-[#FF5E5E]/8 border border-[#FF5E5E]/15' },
+    focus2: { heart: 'text-[#FF5E5E]', bg: 'bg-[#FF5E5E]/8 border border-[#FF5E5E]/15' },
+    success: { heart: 'text-[#6BCB77]', bg: 'bg-[#6BCB77]/8 border border-[#6BCB77]/15' },
+    sleepy: { heart: 'text-blue-400', bg: 'bg-blue-400/8 border border-blue-400/15' },
+    break: { heart: 'text-[#4ECDC4]', bg: 'bg-[#4ECDC4]/8 border border-[#4ECDC4]/15' },
+    confused: { heart: 'text-yellow-500', bg: 'bg-yellow-500/8 border border-yellow-500/15' },
+    excited: { heart: 'text-[#FFD93D]', bg: 'bg-[#FFD93D]/8 border border-[#FFD93D]/15' },
+    tired: { heart: 'text-purple-400', bg: 'bg-purple-400/8 border border-purple-400/15' },
+    shy: { heart: 'text-pink-400', bg: 'bg-pink-400/8 border border-pink-400/15' },
+    surprised: { heart: 'text-orange-400', bg: 'bg-orange-400/8 border border-orange-400/15' },
+    curious: { heart: 'text-cyan-400', bg: 'bg-cyan-400/8 border border-cyan-400/15' },
+    bored: { heart: 'text-gray-500', bg: 'bg-gray-500/8 border border-gray-500/15' },
+  };
+
+  const currentEmotion = emotion || 'idle';
+  const colors = emotionColors[currentEmotion];
+
+  return (
+    <div className={`${colors.bg} rounded-xl p-3 flex flex-col gap-1.5`}>
+      <div className="flex items-center gap-1.5">
+        <Heart className={`w-3 h-3 ${colors.heart} fill-current`} strokeWidth={2.5} />
+        <span className="text-[9px] font-black uppercase tracking-widest text-[#1F4E5A]/50">BMO Heart</span>
+      </div>
+      <div className="font-pixel text-lg lg:text-2xl text-[#1F4E5A] leading-none capitalize">{currentEmotion}</div>
     </div>
   );
 }
@@ -208,7 +241,7 @@ function AllTimeHistory({ sessions, tasks }: { sessions: Session[]; tasks: Task[
   );
 }
 
-export const StatsBoard = memo(function StatsBoard({ sessions, tasks, onOpenHistory }: StatsBoardProps) {
+export const StatsBoard = memo(function StatsBoard({ sessions, tasks, emotion, onOpenHistory }: StatsBoardProps) {
   const today    = useMemo(() => computeTodayStats(sessions), [sessions]);
   const week     = useMemo(() => computeWeekStats(sessions),  [sessions]);
   const streak   = useMemo(() => computeStreak(sessions),     [sessions]);
@@ -240,7 +273,7 @@ export const StatsBoard = memo(function StatsBoard({ sessions, tasks, onOpenHist
         )}
       </div>
 
-      {/* TODAY — 2×2 compact grid */}
+      {/* TODAY — 3×2 compact grid */}
       <div className="shrink-0">
         <p className="text-[9px] font-black uppercase tracking-widest text-[#1F4E5A]/40 mb-2">Today</p>
         <div className="grid grid-cols-2 gap-2">
@@ -274,6 +307,7 @@ export const StatsBoard = memo(function StatsBoard({ sessions, tasks, onOpenHist
             icon={<Timer className="w-3 h-3 text-[#FFD93D]" strokeWidth={2.5} />}
             bg="bg-[#FFD93D]/8 border border-[#FFD93D]/15"
           />
+          <BMOHeartStat emotion={emotion} />
         </div>
       </div>
 

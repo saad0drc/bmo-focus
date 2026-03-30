@@ -512,6 +512,7 @@ export default function App() {
                   <StatsBoard
                     sessions={sessions}
                     tasks={tasks}
+                    emotion={emotion}
                     onOpenHistory={() => setIsHistoryOpen(true)}
                   />
                 </Suspense>
