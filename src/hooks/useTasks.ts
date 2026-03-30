@@ -52,14 +52,16 @@ function loadTasks(): Task[] {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const today = todayStr();
-    return (JSON.parse(raw) as any[]).map(t => {
+    const parsed = JSON.parse(raw) as any[];
+    let needsSave = false;
+    
+    const result = parsed.map(t => {
       const task = migrateTask(t);
       
       // Auto-reset pomodoro counters when a new day begins
-      // This applies to ALL tasks that have a lastCompletedDate from a previous day
       if (task.lastCompletedDate && task.lastCompletedDate !== today && task.completedPomodoros > 0) {
+        needsSave = true;
         if (task.repeatDaily) {
-          // Repeat daily tasks: reset for new day, preserve streak (not broken by skipped days)
           return {
             ...task,
             completed: false,
@@ -68,7 +70,6 @@ function loadTasks(): Task[] {
             lastCompletedDate: undefined,
           };
         } else {
-          // Non-repeat tasks: just reset the daily pomodoro counter
           return {
             ...task,
             completedPomodoros: 0,
@@ -79,7 +80,15 @@ function loadTasks(): Task[] {
       
       return task;
     });
-  } catch {
+    
+    // IMPORTANT: Save the reset data back to localStorage immediately
+    if (needsSave) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
+    }
+    
+    return result;
+  } catch (err) {
+    console.error('[BMO] loadTasks error:', err);
     return [];
   }
 }
