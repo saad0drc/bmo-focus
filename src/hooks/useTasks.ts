@@ -58,8 +58,12 @@ function loadTasks(): Task[] {
     const result = parsed.map(t => {
       const task = migrateTask(t);
       
-      // Auto-reset pomodoro counters when a new day begins
-      if (task.lastCompletedDate && task.lastCompletedDate !== today && task.completedPomodoros > 0) {
+      // Check if task needs reset: has pomodoros from a previous day
+      // Use lastCompletedDate if available, fallback to createdAt for old tasks
+      const taskDateStr = task.lastCompletedDate || (task.createdAt ? task.createdAt.split('T')[0] : null);
+      const needsReset = taskDateStr && taskDateStr !== today && task.completedPomodoros > 0;
+      
+      if (needsReset) {
         needsSave = true;
         if (task.repeatDaily) {
           return {
