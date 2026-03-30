@@ -52,7 +52,6 @@ function loadTasks(): Task[] {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const today = todayStr();
-    const yesterday = yesterdayStr();
     return (JSON.parse(raw) as any[]).map(t => {
       const task = migrateTask(t);
       
@@ -60,14 +59,13 @@ function loadTasks(): Task[] {
       // This applies to ALL tasks that have a lastCompletedDate from a previous day
       if (task.lastCompletedDate && task.lastCompletedDate !== today && task.completedPomodoros > 0) {
         if (task.repeatDaily) {
-          // Repeat daily tasks: reset count and status, track streak
-          const streakBroken = task.lastCompletedDate !== yesterday;
+          // Repeat daily tasks: reset for new day, preserve streak (not broken by skipped days)
           return {
             ...task,
             completed: false,
             completedPomodoros: 0,
             sessionInCurrentRound: 0,
-            dailyStreak: streakBroken ? 0 : task.dailyStreak,
+            lastCompletedDate: undefined,
           };
         } else {
           // Non-repeat tasks: just reset the daily pomodoro counter
@@ -178,6 +176,7 @@ export function useTasks() {
             totalFocusMinutes: t.totalFocusMinutes + duration,
             sessionInCurrentRound: newSessionInRound,
             lastCompletedDate: today,
+            dailyStreak: t.repeatDaily && !t.completedPomodoros ? (t.dailyStreak ?? 0) + 1 : (t.dailyStreak ?? 0),
           };
         }),
       );
