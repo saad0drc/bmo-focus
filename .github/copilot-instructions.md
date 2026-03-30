@@ -72,3 +72,23 @@ All sounds are **procedurally generated** with the Web Audio API in `src/utils/a
 
 ### Framer Motion
 Use `AnimatePresence` + `layout` for list animations in `TaskBoard`. Use spring animations for BMO face transitions. The package is imported as `motion` (not `framer-motion`).
+
+## Important Implementation Notes
+
+### Daily Reset & Date Handling
+When modifying daily reset logic in `useTasks.ts`:
+- **Always set `lastCompletedDate`** when any pomodoro completes (both `incrementPomodoro` and `completeRound`)
+- **Reset check must use fallback dates**: If `lastCompletedDate` is missing, fall back to `createdAt` date (old tasks may not have `lastCompletedDate`)
+- **Persist resets immediately**: Call `localStorage.setItem()` in `loadTasks()` when data changes, don't rely on React state alone
+- **Test with old task data**: Create tasks on one day and check behavior on the next day to verify reset works
+
+### Debugging Storage Issues
+- Tasks use `localStorage` (key: `bmo_tasks`), **not** `chrome.storage`
+- Use console to inspect: `JSON.parse(localStorage.getItem('bmo_tasks'))`
+- Extension settings use `chrome.storage.local` (fallback to `localStorage` in dev mode)
+- Always check actual stored data first before assuming the code is wrong
+
+### Streak Tracking for RepeatDaily Tasks
+- Increment streak on the **first pomodoro of the day**, not just on `completeRound`
+- Preserve streak across skipped days (only break if task is never attempted)
+- Clear `lastCompletedDate` on reset to mark it as fresh for the new day
