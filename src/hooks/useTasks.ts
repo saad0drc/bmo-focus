@@ -166,6 +166,7 @@ export function useTasks() {
   /** Called when a focus pomodoro completes for this task */
   const incrementPomodoro = useCallback(
     (id: string, duration: number) => {
+      const today = todayStr();
       save(
         tasks.map(t => {
           if (t.id !== id) return t;
@@ -176,6 +177,7 @@ export function useTasks() {
             completedPomodoros: newCompleted,
             totalFocusMinutes: t.totalFocusMinutes + duration,
             sessionInCurrentRound: newSessionInRound,
+            lastCompletedDate: today,
           };
         }),
       );
