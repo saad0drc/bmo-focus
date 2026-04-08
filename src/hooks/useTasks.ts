@@ -38,6 +38,7 @@ function migrateTask(t: any): Task {
     lastCompletedDate: t.lastCompletedDate,
     dailyStreak: t.dailyStreak ?? 0,
     sessionInCurrentRound: t.sessionInCurrentRound ?? sessionInCurrentRound,
+    color: t.color,
   };
 }
 

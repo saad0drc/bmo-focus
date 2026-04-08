@@ -67,7 +67,34 @@ export function TaskBoard({
             </motion.div>
           )}
 
-          {sortedTasks.map(task => (
+          {sortedTasks.map(task => {
+            // Determine background color and styling
+            let bgColor = 'bg-white';
+            let borderColor = 'border-transparent';
+            let textColor = 'text-[#1F4E5A]';
+            let shadowStyle = 'shadow-sm hover:shadow-md hover:-translate-y-0.5';
+
+            if (activeTaskId === task.id) {
+              bgColor = 'bg-white';
+              borderColor = 'border-[#1F4E5A]';
+              shadowStyle = 'shadow-md ring-1 ring-[#1F4E5A]/10';
+            } else if (task.completed) {
+              bgColor = 'bg-[#1F4E5A]/5';
+              borderColor = 'border-transparent';
+              shadowStyle = '';
+            } else if (task.color) {
+              // Use task color for background
+              bgColor = '';
+              borderColor = 'border-transparent';
+              textColor = 'text-white';
+              shadowStyle = 'shadow-sm hover:shadow-md hover:-translate-y-0.5';
+            } else if (task.pinned) {
+              bgColor = 'bg-[#FFF9E6]';
+              borderColor = 'border-[#FFD93D]/60';
+              shadowStyle = 'shadow-sm hover:shadow-md hover:-translate-y-0.5';
+            }
+
+            return (
             <motion.div
               key={task.id}
               layout
@@ -77,21 +104,20 @@ export function TaskBoard({
               onClick={() => onSelectActive(task.id)}
               className={`group flex items-center gap-3 p-3 rounded-2xl border-2 transition-all relative overflow-hidden cursor-pointer ${
                 activeTaskId === task.id
-                  ? 'bg-white border-[#1F4E5A] shadow-md ring-1 ring-[#1F4E5A]/10'
+                  ? 'bg-white border-[#1F4E5A] shadow-md ring-1 ring-[#1F4E5A]/10 text-[#1F4E5A]'
                   : task.completed
-                  ? 'bg-[#1F4E5A]/5 border-transparent opacity-60 grayscale-[0.5]'
+                  ? 'bg-[#1F4E5A]/5 border-transparent opacity-60 grayscale-[0.5] text-[#1F4E5A]'
+                  : task.color
+                  ? `border-transparent ${shadowStyle} text-white`
                   : task.pinned
-                  ? 'bg-[#FFF9E6] border-[#FFD93D]/60 shadow-sm hover:shadow-md hover:-translate-y-0.5'
-                  : 'bg-white border-transparent shadow-sm hover:shadow-md hover:-translate-y-0.5'
+                  ? 'bg-[#FFF9E6] border-[#FFD93D]/60 shadow-sm hover:shadow-md hover:-translate-y-0.5 text-[#1F4E5A]'
+                  : 'bg-white border-transparent shadow-sm hover:shadow-md hover:-translate-y-0.5 text-[#1F4E5A]'
               }`}
+              style={task.color && activeTaskId !== task.id && !task.completed ? { backgroundColor: task.color } : undefined}
             >
-              {/* Active indicator bar */}
+              {/* Indicator bar: Active only (color is now background) */}
               {activeTaskId === task.id && (
                 <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#1F4E5A]" />
-              )}
-              {/* Pinned indicator bar */}
-              {task.pinned && activeTaskId !== task.id && (
-                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#FFD93D]" />
               )}
 
               {/* Completion checkbox */}
@@ -100,6 +126,8 @@ export function TaskBoard({
                 className={`w-6 h-6 rounded-md border-[2px] flex items-center justify-center transition-all shrink-0 ml-1 ${
                   task.completed
                     ? 'bg-[#6BCB77] border-[#6BCB77] text-white'
+                    : task.color && activeTaskId !== task.id
+                    ? 'border-white/40 hover:border-white bg-transparent text-white'
                     : 'border-[#1F4E5A]/20 hover:border-[#1F4E5A] bg-transparent'
                 }`}
               >
@@ -111,23 +139,31 @@ export function TaskBoard({
                 <div className="flex items-center gap-1.5">
                   <span
                     className={`text-sm font-bold tracking-tight truncate ${
-                      task.completed ? 'text-[#1F4E5A]/50 line-through decoration-2' : 'text-[#1F4E5A]'
+                      task.completed 
+                        ? 'text-[#1F4E5A]/50 line-through decoration-2' 
+                        : task.color && activeTaskId !== task.id
+                        ? 'text-white'
+                        : 'text-[#1F4E5A]'
                     }`}
                   >
                     {task.title}
                   </span>
                   {task.repeatDaily && (
                     <span className="flex items-center gap-0.5 shrink-0">
-                      <Repeat2 size={11} className="text-[#4ECDC4]" strokeWidth={2.5} />
+                      <Repeat2 size={11} className={task.color && activeTaskId !== task.id ? 'text-white/70' : 'text-[#4ECDC4]'} strokeWidth={2.5} />
                       {(task.dailyStreak ?? 0) > 0 && (
-                        <span className="text-[9px] font-black text-[#FF6B6B] leading-none">
+                        <span className={`text-[9px] font-black leading-none ${task.color && activeTaskId !== task.id ? 'text-white/90' : 'text-[#FF6B6B]'}`}>
                           🔥{task.dailyStreak}
                         </span>
                       )}
                     </span>
                   )}
                 </div>
-                <span className="text-[10px] text-[#1F4E5A]/50 font-mono flex items-center gap-1.5">
+                <span className={`text-[10px] font-mono flex items-center gap-1.5 ${
+                  task.color && activeTaskId !== task.id 
+                    ? 'text-white/70' 
+                    : 'text-[#1F4E5A]/50'
+                }`}>
                   <Clock size={10} />
                   {task.settings.focusDuration}m
                 </span>
@@ -137,23 +173,39 @@ export function TaskBoard({
                     <div
                       key={i}
                       className={`w-2 h-2 rounded-full transition-colors ${
-                        i < task.completedPomodoros ? 'bg-[#FF5E5E]' : 'bg-[#1F4E5A]/10'
+                        i < task.completedPomodoros 
+                          ? task.color && activeTaskId !== task.id
+                            ? 'bg-white/60'
+                            : 'bg-[#FF5E5E]'
+                          : task.color && activeTaskId !== task.id
+                          ? 'bg-white/20'
+                          : 'bg-[#1F4E5A]/10'
                       }`}
                     />
                   ))}
-                  <span className="text-[9px] text-[#1F4E5A]/35 font-mono ml-1">
+                  <span className={`text-[9px] font-mono ml-1 ${
+                    task.color && activeTaskId !== task.id
+                      ? 'text-white/50'
+                      : 'text-[#1F4E5A]/35'
+                  }`}>
                     {task.completedPomodoros}/{task.settings.sessionsPerRound}
                   </span>
                 </div>
               </div>
 
               {/* Action buttons — visible on hover */}
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className={`flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ${
+                task.color && activeTaskId !== task.id ? 'text-white' : ''
+              }`}>
                 <button
                   onClick={e => { e.stopPropagation(); onUpdate(task.id, { pinned: !task.pinned }); }}
                   className={`p-2 rounded-lg transition-all ${
                     task.pinned
-                      ? 'text-[#B89400] bg-[#FFD93D]/10 !opacity-100'
+                      ? task.color && activeTaskId !== task.id
+                        ? 'text-white bg-white/20 !opacity-100'
+                        : 'text-[#B89400] bg-[#FFD93D]/10 !opacity-100'
+                      : task.color && activeTaskId !== task.id
+                      ? 'text-white/60 hover:bg-white/20 hover:text-white'
                       : 'text-[#1F4E5A]/40 hover:bg-[#FFD93D]/10 hover:text-[#B89400]'
                   }`}
                 >
@@ -161,19 +213,28 @@ export function TaskBoard({
                 </button>
                 <button
                   onClick={e => { e.stopPropagation(); onOpenEdit(task); }}
-                  className="text-[#1F4E5A] hover:bg-[#1F4E5A]/10 p-2 rounded-lg transition-all"
+                  className={`p-2 rounded-lg transition-all ${
+                    task.color && activeTaskId !== task.id
+                      ? 'text-white hover:bg-white/20'
+                      : 'text-[#1F4E5A] hover:bg-[#1F4E5A]/10'
+                  }`}
                 >
                   <Settings size={14} />
                 </button>
                 <button
                   onClick={e => { e.stopPropagation(); onDelete(task.id); }}
-                  className="text-[#FF5E5E] hover:bg-[#FF5E5E]/10 p-2 rounded-lg transition-all"
+                  className={`p-2 rounded-lg transition-all ${
+                    task.color && activeTaskId !== task.id
+                      ? 'text-white/80 hover:bg-white/20'
+                      : 'text-[#FF5E5E] hover:bg-[#FF5E5E]/10'
+                  }`}
                 >
                   <Trash2 size={14} />
                 </button>
               </div>
             </motion.div>
-          ))}
+            );
+          })}
         </AnimatePresence>
       </div>
     </div>

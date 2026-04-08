@@ -254,13 +254,14 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void, activeT
         if (completedMode === 'focus') {
           const taskInfo = activeTaskInfoRef.current;
           if (taskInfo) {
-            // For tasks: use the task's current round position
-            const currentSessionInRound = taskInfo.sessionInCurrentRound ?? 0;
-            const nextSessionInRound = (currentSessionInRound + 1) % (taskInfo.sessionsPerRound);
+            // For tasks: calculate based on the count AFTER this pomo completes
+            const currentCount = taskInfo.sessionCount ?? 0;
+            const newCount = currentCount + 1;
             const sessionsPerRound = taskInfo.sessionsPerRound;
-            // Long break if we just completed the last session of the round (and about to reset to 0)
-            nextMode = nextSessionInRound === 0 ? 'longBreak' : 'shortBreak';
-            setSessionCount(currentSessionInRound + 1);
+            const newSessionInRound = newCount % sessionsPerRound;
+            // Long break if we just completed the last session of the round (newCount % sessionsPerRound === 0)
+            nextMode = newSessionInRound === 0 ? 'longBreak' : 'shortBreak';
+            setSessionCount(newCount);
           } else {
             // For no-task sessions: use global counter and global setting
             const sessionsPerRound = s.sessionsPerRound ?? 4;

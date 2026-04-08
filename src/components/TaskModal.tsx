@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Calendar, Clock, Save, Pin, Repeat2 } from 'lucide-react';
 import { Task, TaskSettings } from '../types';
+import { ADVENTURE_TIME_COLORS, DEFAULT_TASK_COLOR } from '../constants/adventureTimeColors';
 
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (title: string, settings: TaskSettings, dueDate?: string, pinned?: boolean, repeatDaily?: boolean) => void;
+  onSave: (title: string, settings: TaskSettings, dueDate?: string, pinned?: boolean, repeatDaily?: boolean, color?: string) => void;
   initialTask?: Task;
 }
 
@@ -23,6 +24,7 @@ export function TaskModal({ isOpen, onClose, onSave, initialTask }: TaskModalPro
   const [dueDate, setDueDate] = useState('');
   const [pinned, setPinned] = useState(false);
   const [repeatDaily, setRepeatDaily] = useState(false);
+  const [taskColor, setTaskColor] = useState(DEFAULT_TASK_COLOR);
 
   useEffect(() => {
     if (isOpen) {
@@ -32,12 +34,14 @@ export function TaskModal({ isOpen, onClose, onSave, initialTask }: TaskModalPro
         setDueDate(initialTask.dueDate || '');
         setPinned(initialTask.pinned ?? false);
         setRepeatDaily(initialTask.repeatDaily ?? false);
+        setTaskColor(initialTask.color || DEFAULT_TASK_COLOR);
       } else {
         setTitle('');
         setSettings(DEFAULT_SETTINGS);
         setDueDate(new Date().toISOString().split('T')[0]);
         setPinned(false);
         setRepeatDaily(false);
+        setTaskColor(DEFAULT_TASK_COLOR);
       }
     }
   }, [isOpen, initialTask]);
@@ -45,7 +49,7 @@ export function TaskModal({ isOpen, onClose, onSave, initialTask }: TaskModalPro
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (title.trim()) {
-      onSave(title, settings, dueDate, pinned, repeatDaily);
+      onSave(title, settings, dueDate, pinned, repeatDaily, taskColor);
       onClose();
     }
   };
@@ -137,6 +141,34 @@ export function TaskModal({ isOpen, onClose, onSave, initialTask }: TaskModalPro
                     <Repeat2 size={15} strokeWidth={2.5} />
                     Daily
                   </button>
+                </div>
+
+                {/* Color Picker */}
+                <div className="space-y-3">
+                  <label className="text-xs font-bold uppercase tracking-widest text-[#1F4E5A]/50">Mission Color</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {ADVENTURE_TIME_COLORS.map((color) => (
+                      <button
+                        key={color.hex}
+                        type="button"
+                        onClick={() => setTaskColor(color.hex)}
+                        className={`flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl border-3 transition-all ${
+                          taskColor === color.hex
+                            ? 'border-[#1F4E5A] scale-105 shadow-lg'
+                            : 'border-[#1F4E5A]/20 hover:border-[#1F4E5A]/40'
+                        }`}
+                        title={`${color.name} (${color.character})`}
+                      >
+                        <div
+                          className="w-6 h-6 rounded-full border-2 border-white shadow-md"
+                          style={{ backgroundColor: color.hex }}
+                        />
+                        <span className="text-xs font-bold text-[#1F4E5A] text-center line-clamp-2">
+                          {color.character}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Divider */}

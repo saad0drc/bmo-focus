@@ -22,6 +22,7 @@ export interface Task {
   dailyStreak?: number;       // consecutive days this mission has been completed
   sessionInCurrentRound?: number;  // tracks position in current round (0-indexed, resets at sessionsPerRound)
   lastPomodoroResetDate?: string; // YYYY-MM-DD, last day pomodoros were reset
+  color?: string; // hex color code from adventure time palette
 }
 
 export interface Session {

@@ -15,6 +15,7 @@ import { Session } from './types';
 import { Task, TaskSettings } from './types';
 import { motion } from 'motion/react';
 import { todayStr } from './utils/date';
+import { setFaviconColor, resetFavicon } from './utils/favicon';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import { playSound, setSoundVolume } from './utils/audio';
 
@@ -71,6 +72,20 @@ export default function App() {
     localStorage.setItem('bmo_activeTaskId', activeTaskId || '');
   }, [activeTaskId]);
 
+  // Update favicon color based on active task
+  useEffect(() => {
+    if (activeTaskId && tasks.length > 0) {
+      const activeTask = tasks.find(t => t.id === activeTaskId);
+      if (activeTask?.color) {
+        setFaviconColor(activeTask.color, activeTask.title);
+      } else {
+        resetFavicon();
+      }
+    } else {
+      resetFavicon();
+    }
+  }, [activeTaskId, tasks]);
+
   // Compact-mode scroll nav
   const layoutRef = useRef<HTMLDivElement>(null);
   const [atTop, setAtTop] = useState(true);
@@ -84,11 +99,17 @@ export default function App() {
 
   const handleOpenAdd = () => { setEditingTask(undefined); setIsTaskModalOpen(true); };
   const handleOpenEdit = (task: Task) => { setEditingTask(task); setIsTaskModalOpen(true); };
-  const handleModalSave = (title: string, settings: TaskSettings, dueDate?: string, pinned?: boolean, repeatDaily?: boolean) => {
+  const handleModalSave = (title: string, settings: TaskSettings, dueDate?: string, pinned?: boolean, repeatDaily?: boolean, color?: string) => {
     if (editingTask) {
-      updateTask(editingTask.id, { title, settings, dueDate, pinned, repeatDaily });
+      updateTask(editingTask.id, { title, settings, dueDate, pinned, repeatDaily, color });
     } else {
       addTask(title, settings, dueDate, pinned, repeatDaily);
+      if (color) {
+        const newTask = tasks.find(t => t.title === title && !t.completed);
+        if (newTask) {
+          updateTask(newTask.id, { color });
+        }
+      }
     }
   };
 
@@ -128,7 +149,7 @@ export default function App() {
       addSession({ id: crypto.randomUUID(), taskId, duration, completed: true, date: today });
 
       if (taskId) {
-        const task = tasksRef.current.find(t => t.id === taskId);
+        const task = tasks.find(t => t.id === taskId);
         const newCount = (task?.completedPomodoros ?? 0) + 1;
         const target   = task?.settings?.sessionsPerRound ?? 4;
 
