@@ -198,4 +198,53 @@ export const playSound = {
 
   /** Kept for backwards compatibility */
   complete: () => playSound.focusComplete(),
+
+  /** BMO LAUGHING - Happy celebratory laugh (like in Adventure Time) */
+  bmoLaugh: () => {
+    // Silly beep-boop laugh - rapid high-low notes
+    playSequence([
+      { freq: 880, start: 0.00, dur: 0.08 },   // "HA"
+      { freq: 660, start: 0.10, dur: 0.08 },   // "ha"
+      { freq: 880, start: 0.20, dur: 0.08 },   // "HA"
+      { freq: 660, start: 0.30, dur: 0.08 },   // "ha"
+      { freq: 1000, start: 0.40, dur: 0.12 },  // "HAHAHA!"
+    ], 'square', 0.18);
+  },
+
+  /** Task completed - celebration sound (like victory in Adventure Time) */
+  taskComplete: () => {
+    // Major ascending chord
+    playSequence([
+      { freq: C5, start: 0.00, dur: 0.08 },
+      { freq: E5, start: 0.02, dur: 0.08 },
+      { freq: G5, start: 0.04, dur: 0.08 },
+      { freq: C6, start: 0.06, dur: 0.50 },
+    ], 'sine', 0.24);
+    // Harmony line
+    playSequence([
+      { freq: E4, start: 0.00, dur: 0.08 },
+      { freq: G4, start: 0.02, dur: 0.08 },
+      { freq: C5, start: 0.04, dur: 0.08 },
+      { freq: E5, start: 0.06, dur: 0.50 },
+    ], 'square', 0.12);
+  },
+
+  /** Love/appreciation sound */
+  love: () => {
+    playSequence([
+      { freq: 523.25, start: 0.00, dur: 0.15 },  // C5 - warm
+      { freq: 659.25, start: 0.16, dur: 0.15 },  // E5 - beautiful
+      { freq: 783.99, start: 0.32, dur: 0.30 },  // G5 - long hold
+    ], 'sine', 0.16);
+  },
+
+  /** Determined/focused power-up sound */
+  powerUp: () => {
+    playSequence([
+      { freq: 440, start: 0.00, dur: 0.05 },
+      { freq: 550, start: 0.06, dur: 0.05 },
+      { freq: 660, start: 0.12, dur: 0.05 },
+      { freq: 880, start: 0.18, dur: 0.20 },
+    ], 'sawtooth', 0.15);
+  },
 };

@@ -13,7 +13,10 @@ export type Emotion =
   | 'shy'
   | 'surprised'
   | 'curious'
-  | 'bored';
+  | 'bored'
+  | 'laughing'
+  | 'love'
+  | 'determined';
 
 export function useBMOState() {
   const [emotion, setEmotionRaw] = useState<Emotion>('idle');

@@ -52,6 +52,9 @@ function BMOHeartStat({ emotion }: { emotion?: Emotion }) {
     surprised: { heart: 'text-orange-400', bg: 'bg-orange-400/8 border border-orange-400/15' },
     curious: { heart: 'text-cyan-400', bg: 'bg-cyan-400/8 border border-cyan-400/15' },
     bored: { heart: 'text-gray-500', bg: 'bg-gray-500/8 border border-gray-500/15' },
+    laughing: { heart: 'text-[#FFD93D]', bg: 'bg-[#FFD93D]/8 border border-[#FFD93D]/15' },
+    love: { heart: 'text-red-500', bg: 'bg-red-500/8 border border-red-500/15' },
+    determined: { heart: 'text-[#FF5E5E]', bg: 'bg-[#FF5E5E]/8 border border-[#FF5E5E]/15' },
   };
 
   const currentEmotion = emotion || 'idle';

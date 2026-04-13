@@ -37,7 +37,13 @@ export function BMOControls({
   };
 
   const handleStart = () => {
-    if (soundEnabled) playSound.start();
+    if (soundEnabled) {
+      playSound.start();
+      // Play power-up for focus sessions
+      if (mode === 'focus') {
+        setTimeout(() => playSound.powerUp(), 300);
+      }
+    }
     onStart();
   };
   const handlePause = () => {

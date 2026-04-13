@@ -100,6 +100,9 @@ export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle, ta
     surprised: 'M 38 47 Q 50 68 62 47',      // open "O" mouth
     curious:   'M 33 51 Q 50 63 67 51',      // wide curious smile
     bored:     'M 36 57 Q 50 53 64 57',      // slight droopy frown
+    laughing:  'M 20 42 Q 50 88 80 42 Q 50 92 20 42', // laughing: max grin with extra curve (BMO HAHAHA!)
+    love:      'M 28 50 Q 50 75 72 50',     // big loving smile
+    determined: 'M 42 54 L 58 54',          // determined straight line
   };
 
   // ── Eye shape per emotion ─────────────────────────────────────────────────
@@ -118,6 +121,9 @@ export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle, ta
     surprised: { scaleY: 1.55, h: 16, w: 15, r: '100%' },   // wide open circles
     curious:   { scaleY: 1.1,  h: 13, w: 12, r: '100%' },   // one raised
     bored:     { scaleY: 0.35, h: 12, w: 13, r: '40%'  },   // heavy-lidded
+    laughing:  { scaleY: 0.8, h: 14, w: 14, r: '100%' },    // squinting with joy (eyes closed-ish)
+    love:      { scaleY: 1.3,  h: 16, w: 16, r: '0%' },     // heart-shaped eyes (circles rotated)
+    determined: { scaleY: 0.15, h: 12, w: 12, r: '30%' },   // super squinted determined eyes
   };
 
   const ev = eyes[eff] ?? eyes.idle;
@@ -155,7 +161,7 @@ export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle, ta
     `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
 
   const shifted = isActive ? 'translateY(-24px)' : 'none';
-  const showBlush = eff === 'success' || eff === 'excited' || eff === 'break' || eff === 'shy';
+  const showBlush = eff === 'success' || eff === 'excited' || eff === 'break' || eff === 'shy' || eff === 'laughing' || eff === 'love';
 
   return (
     <div
@@ -201,55 +207,68 @@ export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle, ta
         )}
       </AnimatePresence>
 
-      {/* ── Eyes ─────────────────────────────────────────────────────────────── */}
-      <div className="flex justify-between transition-all duration-500" style={{ width: `${160 * scale}px`, marginBottom: `${32 * scale}px`, transform: shifted }}>
-        {/* Left eye */}
-        <motion.div
-          animate={{
-            x: eyeX, y: eyeY,
-            scaleY: isBlinking ? 0.08 : ev.scaleY,
-            height: ev.h * scale,
-            width: (eff === 'confused' ? 16 : eff === 'focus2' ? 14 : ev.w) * scale,
-            borderRadius: ev.r,
-          }}
-          transition={{ x: spring, y: spring, scaleY: { duration: 0.1 } }}
-          className="bg-[#1F4E5A] shadow-sm"
-        />
-        {/* Right eye — asymmetric for confused & curious */}
-        <motion.div
-          animate={{
-            x: eyeX, y: eyeY,
-            scaleY: isBlinking ? 0.08
-              : eff === 'focus2'   ? ev.scaleY * 1.6   // intense: one eye more squinted
-              : eff === 'confused' ? ev.scaleY * 0.5   // one big one small
-              : eff === 'curious'  ? ev.scaleY * 1.3   // one slightly raised
-              : ev.scaleY,
-            height: ev.h * scale,
-            width: (eff === 'confused' ? 8 : eff === 'focus2' ? 10 : ev.w) * scale,
-            borderRadius: ev.r,
-          }}
-          transition={{ x: spring, y: spring, scaleY: { duration: 0.1 } }}
-          className="bg-[#1F4E5A] shadow-sm"
-        />
-      </div>
-
-      {/* ── Mouth ────────────────────────────────────────────────────────────── */}
-      <svg
-        width={100 * scale} height={80 * scale} viewBox="0 0 100 80"
-        className="absolute top-1/2 -mt-2 transition-all duration-500"
-        style={{ transform: shifted }}
+      {/* ── Face container (bounces when laughing) ────────────────────────────── */}
+      <motion.div
+        animate={eff === 'laughing' ? {
+          y: [0, -8, 0, -8, 0, -6, 0, -4, 0, -2, 0],
+        } : {}}
+        transition={eff === 'laughing' ? {
+          duration: 1.5,
+          ease: 'easeInOut',
+          repeat: Infinity,
+        } : {}}
+        className="flex flex-col items-center relative"
       >
-        <motion.path
-          d={mouths[eff] ?? mouths.idle}
-          fill="transparent"
-          stroke="#1F4E5A"
-          strokeWidth={3.5 * scale}
-          strokeLinecap="round"
-          initial={false}
-          animate={{ d: mouths[eff] ?? mouths.idle }}
-          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-        />
-      </svg>
+        {/* ── Eyes ─────────────────────────────────────────────────────────────── */}
+        <div className="flex justify-between transition-all duration-500" style={{ width: `${160 * scale}px`, marginBottom: `${32 * scale}px`, transform: shifted }}>
+          {/* Left eye */}
+          <motion.div
+            animate={{
+              x: eyeX, y: eyeY,
+              scaleY: isBlinking ? 0.08 : (eff === 'laughing' ? 0.15 : ev.scaleY),
+              height: ev.h * scale,
+              width: (eff === 'confused' ? 16 : eff === 'focus2' ? 14 : eff === 'laughing' ? 18 : ev.w) * scale,
+              borderRadius: ev.r,
+            }}
+            transition={{ x: spring, y: spring, scaleY: { duration: 0.1 } }}
+            className="bg-[#1F4E5A] shadow-sm"
+          />
+          {/* Right eye — asymmetric for confused & curious */}
+          <motion.div
+            animate={{
+              x: eyeX, y: eyeY,
+              scaleY: isBlinking ? 0.08
+                : eff === 'focus2'   ? ev.scaleY * 1.6   // intense: one eye more squinted
+                : eff === 'confused' ? ev.scaleY * 0.5   // one big one small
+                : eff === 'curious'  ? ev.scaleY * 1.3   // one slightly raised
+                : eff === 'laughing' ? 0.15 : ev.scaleY,
+              height: ev.h * scale,
+              width: (eff === 'confused' ? 8 : eff === 'focus2' ? 10 : eff === 'laughing' ? 16 : ev.w) * scale,
+              borderRadius: ev.r,
+            }}
+            transition={{ x: spring, y: spring, scaleY: { duration: 0.1 } }}
+            className="bg-[#1F4E5A] shadow-sm"
+          />
+        </div>
+
+        {/* ── Mouth ────────────────────────────────────────────────────────────── */}
+        <svg
+          width={100 * scale} height={80 * scale} viewBox="0 0 100 80"
+          className="absolute top-1/2 -mt-2 transition-all duration-500"
+          style={{ transform: shifted }}
+        >
+          <motion.path
+            d={mouths[eff] ?? mouths.idle}
+            fill="transparent"
+            stroke="#1F4E5A"
+            strokeWidth={3.5 * scale}
+            strokeLinecap="round"
+            initial={false}
+            animate={{ d: mouths[eff] ?? mouths.idle }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+          />
+        </svg>
+      </motion.div>
 
       {/* ── Blush ────────────────────────────────────────────────────────────── */}
       <AnimatePresence>

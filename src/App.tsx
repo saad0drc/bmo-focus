@@ -140,7 +140,7 @@ export default function App() {
     // Local date string (avoids UTC offset bug)
     const today = todayStr();
 
-    let completionSound: 'focusComplete' | 'roundComplete' | 'breakComplete' | 'longBreakComplete';
+    let completionSound: 'focusComplete' | 'roundComplete' | 'breakComplete' | 'longBreakComplete' | 'taskComplete' | 'bmoLaugh';
 
     if (completedMode === 'focus') {
       let taskId = activeTaskIdRef.current;
@@ -165,12 +165,12 @@ export default function App() {
 
         if (newCount >= target) {
           completeRound(taskId, duration);
-          completionSound = 'roundComplete';
-          flashEmotion('success', 9000);
+          completionSound = 'taskComplete';
+          flashEmotion('laughing', 3000);
         } else {
           incrementPomodoro(taskId, duration);
-          completionSound = 'focusComplete';
-          flashEmotion('success');
+          completionSound = 'bmoLaugh';
+          flashEmotion('excited', 2000);
         }
       } else {
         completionSound = 'focusComplete';
@@ -191,7 +191,11 @@ export default function App() {
 
     if (!soundEnabled) return;
 
-    if (completionSound === 'roundComplete') {
+    if (completionSound === 'taskComplete') {
+      playSound.taskComplete();
+    } else if (completionSound === 'bmoLaugh') {
+      playSound.bmoLaugh();
+    } else if (completionSound === 'roundComplete') {
       playSound.roundComplete();
     } else if (completionSound === 'focusComplete') {
       playSound.focusComplete();
