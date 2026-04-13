@@ -12,10 +12,11 @@ interface BMOFaceProps {
   taskFocusDuration?: number;  // If set, show this instead of timeLeft
   sessionInRound?: number;  // Current session position (0-based, display as 1-based)
   sessionsPerRound?: number;  // Total sessions in round
+  completedPomodoros?: number;  // Total completed pomodoros for this task
   scale?: number;
 }
 
-export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle, taskFocusDuration, sessionInRound, sessionsPerRound, scale = 1 }: BMOFaceProps) {
+export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle, taskFocusDuration, sessionInRound, sessionsPerRound, completedPomodoros, scale = 1 }: BMOFaceProps) {
   const faceRef = useRef<HTMLDivElement>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
@@ -350,7 +351,10 @@ export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle, ta
               className="text-[#1F4E5A]/70 font-bold tracking-widest"
               style={{ fontSize: `${14 * scale}px` }}
             >
-              {(sessionInRound % sessionsPerRound) + 1}/{sessionsPerRound}
+              {completedPomodoros !== undefined 
+                ? `${completedPomodoros}/${sessionsPerRound}`
+                : `${(sessionInRound % sessionsPerRound) + 1}/${sessionsPerRound}`
+              }
             </motion.div>
           )}
         </motion.div>

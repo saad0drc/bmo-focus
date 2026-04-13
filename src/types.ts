@@ -31,6 +31,7 @@ export interface Session {
   duration: number; // minutes
   completed: boolean;
   date: string; // YYYY-MM-DD
+  type?: 'focus' | 'shortBreak' | 'longBreak'; // Session type; defaults to 'focus' for backward compat
 }
 
 export interface Challenge {

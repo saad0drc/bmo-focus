@@ -10,9 +10,12 @@ const DEFAULT_STATE = {
   endTime: null,
   pausedTimeLeft: null,
   sessionCount: 0,
+  sessionInCurrentRound: 0,
   settings: DEFAULT_SETTINGS,
   lastCompletedAt: null,
   lastCompletedMode: null,
+  activeTaskSessionInCurrentRound: undefined,
+  activeTaskSessionsPerRound: undefined,
 };
 
 async function getState() {
@@ -35,9 +38,12 @@ function modeDurationMs(mode, settings) {
   return mins * 60 * 1000;
 }
 
-function getNextMode(completedMode, newSessionCount, sessionsPerRound) {
+function getNextMode(completedMode, sessionInRound, sessionsPerRound) {
   if (completedMode !== 'focus') return 'focus';
-  return newSessionCount % sessionsPerRound === 0 ? 'longBreak' : 'shortBreak';
+  // Calculate next session position: (current + 1) % sessionsPerRound
+  const nextSessionInRound = (sessionInRound + 1) % sessionsPerRound;
+  // Long break if next position is 0 (we're at the end of the round)
+  return nextSessionInRound === 0 ? 'longBreak' : 'shortBreak';
 }
 
 // ── Notification content ────────────────────────────────────────────────────
@@ -46,14 +52,14 @@ function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function buildNotification(completedMode, nextMode, sessionCount, sessionsPerRound, taskSessionsPerRound) {
+function buildNotification(completedMode, nextMode, sessionInRound, sessionsPerRound, taskSessionsPerRound) {
   // ── Focus session finished ──────────────────────────────────────────────
   if (completedMode === 'focus') {
     // Use task-specific sessionsPerRound if available (for mission notifications)
     const effectiveSessionsPerRound = taskSessionsPerRound || sessionsPerRound;
-    const isRoundComplete = sessionCount % effectiveSessionsPerRound === 0;
-    const sessionInRound  = sessionCount % effectiveSessionsPerRound || effectiveSessionsPerRound;
-    const remaining       = effectiveSessionsPerRound - (sessionCount % effectiveSessionsPerRound);
+    const isRoundComplete = sessionInRound === 0;
+    const displaySessionNumber = sessionInRound || effectiveSessionsPerRound;
+    const remaining = isRoundComplete ? 0 : effectiveSessionsPerRound - sessionInRound;
 
     // Round complete → long break
     if (isRoundComplete) {
@@ -94,7 +100,7 @@ function buildNotification(completedMode, nextMode, sessionCount, sessionsPerRou
     };
 
     const fallback = pick([
-      `Session ${sessionInRound} complete! ☕ BMO is proud — ${remaining} more to the long break. Keep it up!`,
+      `Session ${displaySessionNumber} complete! ☕ BMO is proud — ${remaining} more to the long break. Keep it up!`,
       `Beep boop! Another one done! 🎮 ${remaining} session${remaining > 1 ? 's' : ''} left — BMO believes in you!`,
       `Nice focus, adventurer! ✨ Short break time. ${remaining} to go until the big rest!`,
       `BMO says: GREAT WORK! ☕ Take a breather — ${remaining} more sessions and you hit the long break!`,
@@ -107,7 +113,7 @@ function buildNotification(completedMode, nextMode, sessionCount, sessionsPerRou
         '🎮 Well Done, Adventurer!',
         '✨ Session Done — Rest Up!',
       ]),
-      message: byPosition[sessionInRound] ?? fallback,
+      message: byPosition[displaySessionNumber] ?? fallback,
     };
   }
 
@@ -182,30 +188,58 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   const state = await getState();
   const completedMode = state.mode;
   const sessionsPerRound = state.settings.sessionsPerRound ?? 4;
+  
+  // Determine which session tracker to use:
+  // - If there's an active task, use its sessionInCurrentRound
+  // - Otherwise, use global sessionInCurrentRound
+  const isTaskMode = state.activeTaskSessionsPerRound !== undefined;
+  const currentSessionInRound = isTaskMode 
+    ? (state.activeTaskSessionInCurrentRound ?? 0)
+    : (state.sessionInCurrentRound ?? 0);
+  const effectiveSessionsPerRound = isTaskMode 
+    ? state.activeTaskSessionsPerRound 
+    : sessionsPerRound;
 
-  const newSessionCount =
-    completedMode === 'focus' ? state.sessionCount + 1 : state.sessionCount;
+  // Calculate next session position
+  const newSessionInRound = completedMode === 'focus' 
+    ? (currentSessionInRound + 1) % effectiveSessionsPerRound 
+    : currentSessionInRound;
 
-  const nextMode = getNextMode(completedMode, newSessionCount, sessionsPerRound);
+  const nextMode = getNextMode(completedMode, currentSessionInRound, effectiveSessionsPerRound);
   const nextDurationMs = modeDurationMs(nextMode, state.settings);
 
-  // Signal completion — pause at the start of next mode, React handles sounds/tasks
-  await saveState({
+  // Update state: track sessions both globally and per-task
+  const updateObj = {
     mode: nextMode,
     isActive: false,
     endTime: null,
     pausedTimeLeft: nextDurationMs,
-    sessionCount: newSessionCount,
+    sessionCount: completedMode === 'focus' ? state.sessionCount + 1 : state.sessionCount,
     lastCompletedAt: Date.now(),
     lastCompletedMode: completedMode,
-  });
+  };
+
+  // Update the appropriate session tracker
+  if (isTaskMode) {
+    updateObj.activeTaskSessionInCurrentRound = newSessionInRound;
+  } else {
+    updateObj.sessionInCurrentRound = newSessionInRound;
+  }
+
+  await saveState(updateObj);
 
   // Send notification if the BMO tab isn't currently in focus
   try {
     const extensionUrl = chrome.runtime.getURL('index.html');
     const activeTabs = await chrome.tabs.query({ url: extensionUrl, active: true });
     if (activeTabs.length === 0) {
-      const { title, message } = buildNotification(completedMode, nextMode, newSessionCount, sessionsPerRound, state.activeTaskSessionsPerRound);
+      const { title, message } = buildNotification(
+        completedMode, 
+        nextMode, 
+        newSessionInRound,
+        effectiveSessionsPerRound, 
+        state.activeTaskSessionsPerRound
+      );
       chrome.notifications.create(ALARM_NAME, {
         type: 'basic',
         iconUrl: 'icon48.png',

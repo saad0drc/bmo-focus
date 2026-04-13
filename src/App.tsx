@@ -146,7 +146,7 @@ export default function App() {
       const taskId = activeTaskIdRef.current;
       const duration = s.focus;
 
-      addSession({ id: crypto.randomUUID(), taskId, duration, completed: true, date: today });
+      addSession({ id: crypto.randomUUID(), taskId, duration, completed: true, date: today, type: 'focus' });
 
       if (taskId) {
         const task = tasks.find(t => t.id === taskId);
@@ -167,10 +167,14 @@ export default function App() {
         flashEmotion('success');
       }
     } else if (completedMode === 'shortBreak') {
+      const duration = s.shortBreak;
+      addSession({ id: crypto.randomUUID(), taskId: null, duration, completed: true, date: today, type: 'shortBreak' });
       completionSound = 'breakComplete';
       flashEmotion('idle');
     } else {
       // longBreak
+      const duration = s.longBreak;
+      addSession({ id: crypto.randomUUID(), taskId: null, duration, completed: true, date: today, type: 'longBreak' });
       completionSound = 'longBreakComplete';
       flashEmotion('idle');
     }
@@ -245,6 +249,7 @@ export default function App() {
             bmo_timer_state: {
               ...state,
               activeTaskSessionsPerRound: activeTask?.settings.sessionsPerRound,
+              activeTaskSessionInCurrentRound: activeTask?.sessionInCurrentRound,
               // Sync task-specific durations so background.js uses correct timings
               settings: {
                 focus: activeTask?.settings.focusDuration ?? 25,
@@ -434,6 +439,7 @@ export default function App() {
                 taskFocusDuration={activeTask?.settings.focusDuration}
                 sessionInRound={activeTask?.sessionInCurrentRound}
                 sessionsPerRound={activeTask?.settings.sessionsPerRound}
+                completedPomodoros={activeTask?.completedPomodoros}
                 scale={parseInt(layoutConfig.bmoMaxWidth) / 560}
               />
             </div>

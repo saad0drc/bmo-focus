@@ -39,21 +39,20 @@ export interface DailyStat {
 export function computeTodayStats(sessions: Session[]): TodayStats {
   const today = todayStr();
   const todaySessions = sessions.filter(s => s.completed && s.date === today);
-  const pomodoros = todaySessions.length;
-  const focusMinutes = todaySessions.reduce((sum, s) => sum + s.duration, 0);
   
-  // Calculate total time including breaks
-  // For every 4 pomodoros: 3 short breaks (5 min) + 1 long break (15 min)
-  const completedRounds = Math.floor(pomodoros / 4);
-  const remainingPomos = pomodoros % 4;
+  // Count sessions by type
+  const focusSessions = todaySessions.filter(s => s.type === 'focus' || !s.type); // default to focus for backward compat
+  const breakSessions = todaySessions.filter(s => s.type === 'shortBreak' || s.type === 'longBreak');
   
-  const breakMinutes = (completedRounds * (3 * 5 + 15)) + (remainingPomos > 0 ? (remainingPomos - 1) * 5 : 0);
+  const pomodoros = focusSessions.length;
+  const focusMinutes = focusSessions.reduce((sum, s) => sum + s.duration, 0);
+  const breakMinutes = breakSessions.reduce((sum, s) => sum + s.duration, 0);
   const totalTimeMinutes = focusMinutes + breakMinutes;
   
   return {
     pomodoros,
     focusMinutes,
-    tasksTouched: new Set(todaySessions.map(s => s.taskId).filter(Boolean)).size,
+    tasksTouched: new Set(focusSessions.map(s => s.taskId).filter(Boolean)).size,
     totalTimeMinutes,
   };
 }

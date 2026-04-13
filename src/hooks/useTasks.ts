@@ -53,6 +53,7 @@ function loadTasks(): Task[] {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const today = todayStr();
+    const yesterday = yesterdayStr();
     const parsed = JSON.parse(raw) as any[];
     let needsSave = false;
     
@@ -67,18 +68,34 @@ function loadTasks(): Task[] {
       if (needsReset) {
         needsSave = true;
         if (task.repeatDaily) {
+          // Check if streak should break: if task wasn't completed yesterday
+          const streakBroken = task.lastCompletedDate !== yesterday;
+          
           return {
             ...task,
             completed: false,
             completedPomodoros: 0,
             sessionInCurrentRound: 0,
             lastCompletedDate: undefined,
+            dailyStreak: streakBroken ? 0 : (task.dailyStreak ?? 0),
           };
         } else {
           return {
             ...task,
             completedPomodoros: 0,
             sessionInCurrentRound: 0,
+          };
+        }
+      }
+      
+      // For repeatDaily tasks: also check if streak should break (even with 0 pomodoros)
+      if (task.repeatDaily && task.completedPomodoros === 0 && taskDateStr && taskDateStr !== today) {
+        // Use same fallback logic as above: lastCompletedDate or createdAt date
+        if (taskDateStr !== yesterday) {
+          needsSave = true;
+          return {
+            ...task,
+            dailyStreak: 0,
           };
         }
       }
@@ -190,7 +207,6 @@ export function useTasks() {
             totalFocusMinutes: t.totalFocusMinutes + duration,
             sessionInCurrentRound: newSessionInRound,
             lastCompletedDate: today,
-            dailyStreak: t.repeatDaily && !t.completedPomodoros ? (t.dailyStreak ?? 0) + 1 : (t.dailyStreak ?? 0),
           };
         }),
       );
