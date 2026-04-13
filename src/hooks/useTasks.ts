@@ -56,6 +56,7 @@ function loadTasks(): Task[] {
     const yesterday = yesterdayStr();
     const parsed = JSON.parse(raw) as any[];
     let needsSave = false;
+    const resettedTaskIds: string[] = [];
     
     const result = parsed.map(t => {
       const task = migrateTask(t);
@@ -67,6 +68,7 @@ function loadTasks(): Task[] {
       
       if (needsReset) {
         needsSave = true;
+        resettedTaskIds.push(task.id);
         if (task.repeatDaily) {
           // Check if streak should break: if task wasn't completed yesterday
           const streakBroken = task.lastCompletedDate !== yesterday;
@@ -106,6 +108,14 @@ function loadTasks(): Task[] {
     // IMPORTANT: Save the reset data back to localStorage immediately
     if (needsSave) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
+      
+      // CRITICAL: Clear active task selection if it was one of the reset tasks
+      // This prevents the timer from being "stuck" on yesterday's task
+      const activeTaskId = localStorage.getItem('bmo_activeTaskId');
+      if (activeTaskId && resettedTaskIds.includes(activeTaskId)) {
+        localStorage.removeItem('bmo_activeTaskId');
+        console.log(`[BMO] Cleared active task ${activeTaskId} (was reset for new day)`);
+      }
     }
     
     return result;

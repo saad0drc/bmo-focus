@@ -143,13 +143,23 @@ export default function App() {
     let completionSound: 'focusComplete' | 'roundComplete' | 'breakComplete' | 'longBreakComplete';
 
     if (completedMode === 'focus') {
-      const taskId = activeTaskIdRef.current;
+      let taskId = activeTaskIdRef.current;
       const duration = s.focus;
+
+      // CRITICAL: Validate taskId is still valid for today
+      // If the task doesn't exist or was reset, clear it to avoid logging to old task
+      if (taskId) {
+        const task = tasksRef.current.find(t => t.id === taskId);
+        if (!task) {
+          console.warn(`[BMO] Task ${taskId} no longer exists, clearing active task`);
+          taskId = null;
+        }
+      }
 
       addSession({ id: crypto.randomUUID(), taskId, duration, completed: true, date: today, type: 'focus' });
 
       if (taskId) {
-        const task = tasks.find(t => t.id === taskId);
+        const task = tasksRef.current.find(t => t.id === taskId);
         const newCount = (task?.completedPomodoros ?? 0) + 1;
         const target   = task?.settings?.sessionsPerRound ?? 4;
 
