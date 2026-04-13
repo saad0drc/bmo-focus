@@ -141,18 +141,18 @@ function buildNotification(completedMode, nextMode, sessionInRound, sessionsPerR
   // ── Long break finished ─────────────────────────────────────────────────
   return {
     title: pick([
-      '🌟 Fully Recharged — New Round!',
-      '🎮 BMO Says: New Adventure!',
-      '⭐ Fresh Round Starts Now!',
-      '🚀 Rested & Ready — Let\'s Go!',
+      '🌟 Time to Start a New Mission!',
+      '🎮 BMO Says: Pick Your Next Quest!',
+      '⭐ Ready for the Next Challenge?',
+      '🚀 Rest Complete — Choose Your Mission!',
     ]),
     message: pick([
-      "LONG BREAK DONE! You're FULLY recharged! BMO is SO excited for this new round — MATHEMATICAL! 🎮",
-      "New round, new adventure! BMO says: you've rested, recharged, now let's ABSOLUTELY CRUSH IT! ⚡",
-      "Beep boop! Systems fully rebooted! You + BMO = unstoppable team! New round starts NOW! 🌈",
-      "That was a great break! Now BMO says: channel all that rest energy and GO GO GO! 🚀",
-      "Welcome back, adventurer! BMO missed you! 💚 Ready for another epic round? Let's make it count!",
-      "BMO has been waiting and now the moment is here — NEW ROUND! ALGEBRAIC! You've got this! 🌟",
+      "That long break was LEGENDARY! Now BMO says: pick a new mission and let's ABSOLUTELY CRUSH IT! 🎮",
+      "You're fully recharged! BMO is ready to help you tackle your next mission. Choose wisely, adventurer! ⚡",
+      "Beep boop! Long break complete! Time to select your next goal — BMO believes in you! 🌈",
+      "That was perfectly earned! Now BMO says: which mission should we conquer next? Let's GO! 🚀",
+      "Welcome back, explorer! BMO missed you! 💚 What's next on your adventure? Pick a mission and let's go!",
+      "BMO has been resting too and is ENERGIZED! Now it's time to pick your next mission — you've got this! 🌟",
     ]),
   };
 }

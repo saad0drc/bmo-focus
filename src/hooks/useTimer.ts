@@ -272,22 +272,30 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void, activeT
             setSessionCount(nextSession);
             nextMode = nextSession % sessionsPerRound === 0 ? 'longBreak' : 'shortBreak';
           }
-        } else {
+        } else if (completedMode === 'shortBreak') {
+          // After short break, always auto-advance to focus
           nextMode = 'focus';
+        } else {
+          // After LONG break: STOP and don't auto-advance
+          // User must intentionally start next round (select new task or resume)
+          nextMode = 'longBreak'; // placeholder, won't be used
         }
 
         onCompleteRef.current(completedMode);
 
-        // Auto-advance: same rhythm as before
-        setTimeout(() => {
-          setModeState(nextMode);
-          setTimeLeft(settingsRef.current[nextMode] * 60);
-          endTimeRef.current = null;
+        // Auto-advance only for focus and short breaks
+        // Long breaks end the session — user must manually start next round
+        if (completedMode !== 'longBreak') {
           setTimeout(() => {
-            endTimeRef.current = Date.now() + settingsRef.current[nextMode] * 60 * 1000;
-            setIsActive(true);
-          }, 900);
-        }, 2800);
+            setModeState(nextMode);
+            setTimeLeft(settingsRef.current[nextMode] * 60);
+            endTimeRef.current = null;
+            setTimeout(() => {
+              endTimeRef.current = Date.now() + settingsRef.current[nextMode] * 60 * 1000;
+              setIsActive(true);
+            }, 900);
+          }, 2800);
+        }
       }
     };
 
