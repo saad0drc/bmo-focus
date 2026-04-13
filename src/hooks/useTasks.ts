@@ -210,7 +210,13 @@ export function useTasks() {
         tasks.map(t => {
           if (t.id !== id) return t;
           const newCompleted = t.completedPomodoros + 1;
-          const newSessionInRound = newCompleted % (t.settings.sessionsPerRound ?? 4);
+          const sessionsPerRound = t.settings.sessionsPerRound ?? 4;
+          // sessionInCurrentRound tracks 0-indexed position AFTER this completion
+          // Pomo 1 of 4 completes → sessionInCurrentRound = 0 (position of pomo just done)
+          // Pomo 2 of 4 completes → sessionInCurrentRound = 1
+          // Pomo 3 of 4 completes → sessionInCurrentRound = 2
+          // Pomo 4 of 4 completes → sessionInCurrentRound = 3 (triggers long break)
+          const newSessionInRound = (newCompleted - 1) % sessionsPerRound;
           return {
             ...t,
             completedPomodoros: newCompleted,
