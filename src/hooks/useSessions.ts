@@ -66,8 +66,9 @@ export function computeWeekStats(sessions: Session[]): WeekStats {
     d.setDate(d.getDate() - i);
     countsByDay[toDateStr(d)] = 0;
   }
+  // Count only focus sessions, not breaks
   sessions
-    .filter(s => s.completed && countsByDay[s.date] !== undefined)
+    .filter(s => s.completed && countsByDay[s.date] !== undefined && (s.type === 'focus' || !s.type))
     .forEach(s => { countsByDay[s.date]++; });
 
   const counts = Object.values(countsByDay);
@@ -106,7 +107,8 @@ export function computeChartData(sessions: Session[]) {
     d.setDate(d.getDate() - (6 - i));
     const date = toDateStr(d);
     const label = d.toLocaleDateString('en-US', { weekday: 'short' });
-    const count = sessions.filter(s => s.completed && s.date === date).length;
+    // Count only focus sessions, not breaks
+    const count = sessions.filter(s => s.completed && s.date === date && (s.type === 'focus' || !s.type)).length;
     return { date, label, count };
   });
 }
