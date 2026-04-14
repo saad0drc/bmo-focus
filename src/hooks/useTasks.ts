@@ -78,7 +78,9 @@ function loadTasks(): Task[] {
             completed: false,
             completedPomodoros: 0,
             sessionInCurrentRound: 0,
-            lastCompletedDate: undefined,
+            // IMPORTANT: Keep lastCompletedDate for streak tracking!
+            // Don't clear it - we need it to check if streak should break tomorrow
+            // Only the UI should ignore it when showing "completed today" status
             dailyStreak: streakBroken ? 0 : (task.dailyStreak ?? 0),
           };
         } else {
