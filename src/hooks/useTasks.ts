@@ -70,17 +70,23 @@ function loadTasks(): Task[] {
         needsSave = true;
         resettedTaskIds.push(task.id);
         if (task.repeatDaily) {
-          // Check if streak should break: if task wasn't completed yesterday
-          const streakBroken = task.lastCompletedDate !== yesterday;
+          // Streak breaks ONLY if:
+          // 1. Last completion was NOT yesterday, AND
+          // 2. We're certain it's been 2+ days (lastCompletedDate is old)
+          const lastCompleteDateObj = task.lastCompletedDate ? new Date(task.lastCompletedDate + 'T00:00:00') : null;
+          const yesterdayObj = new Date();
+          yesterdayObj.setDate(yesterdayObj.getDate() - 1);
+          const yesterdayStr = toDateStr(yesterdayObj);
+          
+          // Only break if it was completed more than 1 day ago
+          const streakBroken = task.lastCompletedDate && task.lastCompletedDate !== yesterdayStr;
           
           return {
             ...task,
             completed: false,
             completedPomodoros: 0,
             sessionInCurrentRound: 0,
-            // IMPORTANT: Keep lastCompletedDate for streak tracking!
-            // Don't clear it - we need it to check if streak should break tomorrow
-            // Only the UI should ignore it when showing "completed today" status
+            // Keep lastCompletedDate - UI only checks completedPomodoros for "today" status
             dailyStreak: streakBroken ? 0 : (task.dailyStreak ?? 0),
           };
         } else {
