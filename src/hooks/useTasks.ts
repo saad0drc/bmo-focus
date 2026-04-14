@@ -92,18 +92,6 @@ function loadTasks(): Task[] {
         }
       }
       
-      // For repeatDaily tasks: also check if streak should break (even with 0 pomodoros)
-      if (task.repeatDaily && task.completedPomodoros === 0 && taskDateStr && taskDateStr !== today) {
-        // Use same fallback logic as above: lastCompletedDate or createdAt date
-        if (taskDateStr !== yesterday) {
-          needsSave = true;
-          return {
-            ...task,
-            dailyStreak: 0,
-          };
-        }
-      }
-      
       return task;
     });
     
