@@ -247,4 +247,20 @@ export const playSound = {
       { freq: 880, start: 0.18, dur: 0.20 },
     ], 'sawtooth', 0.15);
   },
+
+  /** Blocked/crack sound — when user tries to access forbidden site */
+  blockCrack: () => {
+    playSequence([
+      { freq: 800, start: 0.00, dur: 0.05 },
+      { freq: 200, start: 0.06, dur: 0.10 },
+    ], 'square', 0.12);
+  },
+
+  /** Heal sound — when user returns to allowed site */
+  blockHeal: () => {
+    playSequence([
+      { freq: 600, start: 0.00, dur: 0.08 },
+      { freq: 1000, start: 0.08, dur: 0.12 },
+    ], 'sine', 0.10);
+  },
 };

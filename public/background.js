@@ -2,6 +2,14 @@ const STORAGE_KEY = 'bmo_timer_state';
 const ALARM_NAME = 'bmo_pomodoro';
 const AUTO_ADVANCE_DELAY_MS = 3000;
 
+// Character SVGs for blocked page
+const CHARACTER_SVGS = {
+  '#4ECDC4': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><rect x="20" y="20" width="216" height="216" rx="24" fill="#4ECDC4" stroke="#1F4E5A" stroke-width="8"/><rect x="40" y="40" width="176" height="176" rx="16" fill="#E8F5E9" stroke="#1F4E5A" stroke-width="6"/><g><rect x="55" y="65" width="45" height="55" rx="4" fill="#1F4E5A"/><rect x="62" y="72" width="18" height="22" fill="#E8F5E9" rx="2"/><circle cx="71" cy="83" r="4" fill="#1F4E5A"/></g><g><rect x="156" y="65" width="45" height="55" rx="4" fill="#1F4E5A"/><rect x="163" y="72" width="18" height="22" fill="#E8F5E9" rx="2"/><circle cx="172" cy="83" r="4" fill="#1F4E5A"/></g><path d="M 70 130 Q 128 150 186 130" stroke="#1F4E5A" stroke-width="8" fill="none" stroke-linecap="round"/><circle cx="35" cy="140" r="6" fill="#1F4E5A"/><circle cx="35" cy="165" r="6" fill="#1F4E5A"/></svg>`,
+  '#5B9BD5': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><path d="M 50 120 Q 50 40 128 30 Q 206 40 206 120" fill="white" stroke="#1F4E5A" stroke-width="8"/><rect x="50" y="110" width="156" height="20" fill="white" stroke="#1F4E5A" stroke-width="8"/><rect x="70" y="100" width="116" height="15" fill="#5B9BD5" stroke="#1F4E5A" stroke-width="3"/><circle cx="128" cy="150" r="85" fill="#5B9BD5" stroke="#1F4E5A" stroke-width="8"/><circle cx="128" cy="160" r="65" fill="#FFD9B3"/><g><rect x="75" y="125" width="32" height="40" rx="4" fill="#1F4E5A"/><rect x="82" y="133" width="12" height="16" fill="white" rx="2"/><circle cx="88" cy="141" r="3" fill="#1F4E5A"/></g><g><rect x="149" y="125" width="32" height="40" rx="4" fill="#1F4E5A"/><rect x="156" y="133" width="12" height="16" fill="white" rx="2"/><circle cx="162" cy="141" r="3" fill="#1F4E5A"/></g><path d="M 90 175 Q 128 195 166 175" stroke="#1F4E5A" stroke-width="8" fill="none" stroke-linecap="round"/></svg>`,
+  '#FF9F1C': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><circle cx="128" cy="140" r="100" fill="#FF9F1C" stroke="#1F4E5A" stroke-width="8"/><ellipse cx="50" cy="80" rx="35" ry="50" fill="#FF9F1C" stroke="#1F4E5A" stroke-width="8" transform="rotate(-20 50 80)"/><ellipse cx="206" cy="80" rx="35" ry="50" fill="#FF9F1C" stroke="#1F4E5A" stroke-width="8" transform="rotate(20 206 80)"/><ellipse cx="128" cy="160" rx="60" ry="55" fill="#FFB84D" stroke="#1F4E5A" stroke-width="6"/><circle cx="128" cy="145" r="20" fill="#1F4E5A"/><g><circle cx="90" cy="110" r="22" fill="#1F4E5A"/><circle cx="95" cy="108" r="8" fill="white"/></g><g><circle cx="166" cy="110" r="22" fill="#1F4E5A"/><circle cx="171" cy="108" r="8" fill="white"/></g><ellipse cx="128" cy="175" rx="25" ry="15" fill="#FF5E5E"/></svg>`,
+  '#FF69B4': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><circle cx="128" cy="140" r="90" fill="#FF69B4" stroke="#1F4E5A" stroke-width="8"/><polygon points="60,100 40,30 85,80" fill="#FFD700" stroke="#1F4E5A" stroke-width="6"/><polygon points="128,60 100,10 156,60" fill="#FFD700" stroke="#1F4E5A" stroke-width="6"/><polygon points="196,100 216,30 171,80" fill="#FFD700" stroke="#1F4E5A" stroke-width="6"/><circle cx="128" cy="150" r="70" fill="#FFB6D9"/><circle cx="95" cy="130" r="20" fill="#1F4E5A"/><circle cx="100" cy="128" r="7" fill="white"/><circle cx="161" cy="130" r="20" fill="#1F4E5A"/><circle cx="166" cy="128" r="7" fill="white"/><path d="M 95 165 Q 128 185 161 165" stroke="#1F4E5A" stroke-width="8" fill="none" stroke-linecap="round"/></svg>`,
+};
+
 const DEFAULT_SETTINGS = { focus: 25, shortBreak: 5, longBreak: 15, sessionsPerRound: 4 };
 
 const DEFAULT_STATE = {
@@ -308,9 +316,11 @@ chrome.webRequest.onBeforeRequest.addListener(
         '?domain=' + encodeURIComponent(requestHostname) +
         '&taskId=' + encodeURIComponent(bmo_activeTaskId);
 
+      // Get character SVG for task color
+      const taskColor = activeTask.color || '#4ECDC4';
+      const charSvg = CHARACTER_SVGS[taskColor] || CHARACTER_SVGS['#4ECDC4'];
+
       // Prepare data for blocking page
-      const charSvgModule = await import('/src/components/StatsBoard.tsx'); // Won't work, need different approach
-      
       await chrome.storage.local.set({
         blockedData: {
           mode: state.mode,
@@ -318,10 +328,14 @@ chrome.webRequest.onBeforeRequest.addListener(
           sessionInfo: `Session ${state.sessionInCurrentRound + 1}/${state.settings.sessionsPerRound}`,
           taskName: activeTask.title,
           streak: activeTask.dailyStreak || 0,
-          charSvg: '', // Will be populated separately
-          domain: requestHostname
+          charSvg: charSvg,
+          domain: requestHostname,
+          cracks: (state.blockAttempts || 0) // track crack count
         }
       });
+
+      // Increment block attempts for this session
+      await saveState({ blockAttempts: (state.blockAttempts || 0) + 1 });
 
       return { redirectUrl: blockingPageUrl };
     }
