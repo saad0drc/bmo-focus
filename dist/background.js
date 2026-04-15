@@ -329,18 +329,37 @@ try {
     const sessionAllowlist = state.sessionAllowlist || [];
     const requestUrl = new URL(details.url);
     const requestHostname = requestUrl.hostname;
+    
+    // Remove www prefix for matching
+    const normalizedHostname = requestHostname.replace(/^www\./, '');
 
-    console.log('[Blocker] Checking:', requestHostname, 'against allowed:', activeTask.allowedDomains);
+    console.log('[Blocker] Checking:', normalizedHostname, 'against allowed:', activeTask.allowedDomains);
 
-    // Check allowed domains
+    // Check allowed domains (with www normalization)
     const isAllowed = activeTask.allowedDomains.some(domain =>
+      normalizedHostname === domain || normalizedHostname.endsWith('.' + domain) ||
       requestHostname === domain || requestHostname.endsWith('.' + domain)
     ) || sessionAllowlist.some(domain =>
+      normalizedHostname === domain || normalizedHostname.endsWith('.' + domain) ||
       requestHostname === domain || requestHostname.endsWith('.' + domain)
     );
+    
+    // Check if referrer is from an allowed domain (trusted bubble)
+    let isFromTrustedSite = false;
+    if (details.initiator) {
+      const initiatorUrl = new URL(details.initiator);
+      const initiatorHostname = initiatorUrl.hostname.replace(/^www\./, '');
+      isFromTrustedSite = activeTask.allowedDomains.some(domain =>
+        initiatorHostname === domain || initiatorHostname.endsWith('.' + domain)
+      );
+      console.log('[Blocker] Request from:', initiatorHostname, '- Trusted:', isFromTrustedSite);
+    }
+    
+    // Allow if: directly allowed OR coming from trusted site (clicking links inside allowed domain)
+    const shouldAllow = isAllowed || isFromTrustedSite;
 
-    if (!isAllowed) {
-      console.log('[Blocker] BLOCKED:', requestHostname);
+    if (!shouldAllow) {
+      console.log('[Blocker] BLOCKED:', normalizedHostname);
       
       // Get character SVG for task color
       const taskColor = activeTask.color || '#4ECDC4';
