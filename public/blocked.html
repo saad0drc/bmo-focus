@@ -297,8 +297,6 @@
       </div>
 
       <div class="timer" id="timer">25:00 remaining</div>
-
-      <button class="button" id="allowBtn">Allow for this session</button>
     </div>
 
     <!-- RIGHT: Stats -->
@@ -493,18 +491,6 @@
     
     // Update timer every 100ms
     timerInterval = setInterval(updateTimer, 100);
-
-    // Allow button
-    document.getElementById('allowBtn').addEventListener('click', () => {
-      if (window.chrome && window.chrome.extension) {
-        chrome.runtime.sendMessage({ 
-          action: 'allowDomainTemporarily', 
-          domain: blockData.domain 
-        }, () => {
-          setTimeout(() => window.history.back(), 200);
-        });
-      }
-    });
 
     window.addEventListener('beforeunload', () => {
       if (timerInterval) clearInterval(timerInterval);
