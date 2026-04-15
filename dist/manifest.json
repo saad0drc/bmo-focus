@@ -15,7 +15,7 @@
     "notifications",
     "tabs",
     "windows",
-    "webRequest"
+    "webNavigation"
   ],
   "host_permissions": [
     "<all_urls>"

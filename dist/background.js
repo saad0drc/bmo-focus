@@ -272,16 +272,16 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   }, AUTO_ADVANCE_DELAY_MS);
 });
 
-console.log('[BMO] Service worker loaded, registering webRequest listener...');
+console.log('[BMO] Service worker loaded, registering navigation listener...');
 
-// ── Allowed World Blocker: Intercept navigations ─────────────────────────────
+// ── Allowed World Blocker: Intercept navigations via webNavigation API (MV3 compatible) ─
 try {
-  chrome.webRequest.onBeforeRequest.addListener(
+  chrome.webNavigation.onBeforeNavigate.addListener(
     async (details) => {
       // Only intercept main_frame navigations (not subframes, XHR, etc.)
-      if (details.type !== 'main_frame') return {};
+      if (details.frameId !== 0) return;  // frameId 0 = main frame
       
-      console.log('[Blocker] Request detected:', details.url);
+      console.log('[Blocker] Navigation detected:', details.url);
 
     const state = await getState();
 
@@ -360,24 +360,26 @@ try {
           streak: activeTask.dailyStreak || 0,
           charSvg: charSvg,
           domain: requestHostname,
-          cracks: (state.blockAttempts || 0) // track crack count
+          cracks: (state.blockAttempts || 0)
         }
       });
 
       // Increment block attempts for this session
       await saveState({ blockAttempts: (state.blockAttempts || 0) + 1 });
 
-      return { redirectUrl: blockingPageUrl };
+      // In MV3, we can't block directly. Instead, navigate the tab to blocking page
+      const blockingPageUrl = chrome.runtime.getURL('blocked.html') +
+        '?domain=' + encodeURIComponent(requestHostname) +
+        '&taskId=' + encodeURIComponent(bmo_activeTaskId);
+      
+      chrome.tabs.update(details.tabId, { url: blockingPageUrl });
     }
-
-    return {};
   },
-  { urls: ['<all_urls>'] },
-  ['blocking']
+  { url: [{ urlMatches: '.*' }] }
 );
-  console.log('[BMO] webRequest listener registered successfully!');
+  console.log('[BMO] webNavigation listener registered successfully!');
 } catch (e) {
-  console.error('[BMO] Failed to register webRequest listener:', e);
+  console.error('[BMO] Failed to register webNavigation listener:', e);
 }
 
 function formatTimeRemaining(endTime) {
