@@ -341,11 +341,7 @@ try {
 
     if (!isAllowed) {
       console.log('[Blocker] BLOCKED:', requestHostname);
-      // Block and redirect to blocking page
-      const blockingPageUrl = chrome.runtime.getURL('blocked.html') +
-        '?domain=' + encodeURIComponent(requestHostname) +
-        '&taskId=' + encodeURIComponent(bmo_activeTaskId);
-
+      
       // Get character SVG for task color
       const taskColor = activeTask.color || '#4ECDC4';
       const charSvg = CHARACTER_SVGS[taskColor] || CHARACTER_SVGS['#4ECDC4'];
@@ -367,7 +363,7 @@ try {
       // Increment block attempts for this session
       await saveState({ blockAttempts: (state.blockAttempts || 0) + 1 });
 
-      // In MV3, we can't block directly. Instead, navigate the tab to blocking page
+      // Navigate the tab to blocking page (MV3 approach)
       const blockingPageUrl = chrome.runtime.getURL('blocked.html') +
         '?domain=' + encodeURIComponent(requestHostname) +
         '&taskId=' + encodeURIComponent(bmo_activeTaskId);
