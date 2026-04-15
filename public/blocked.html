@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BMO - Stay Focused</title>
+  <title>BMO - Adventure Quest</title>
   <style>
     * {
       margin: 0;
@@ -12,27 +12,140 @@
     }
 
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #E8F5E9 0%, #F0F4F8 100%);
+      font-family: 'Comic Sans MS', 'Trebuchet MS', cursive;
+      background: linear-gradient(180deg, #87CEEB 0%, #E0F6FF 50%, #7FCC8F 100%);
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
       color: #1F4E5A;
+      overflow: hidden;
+      position: relative;
     }
 
+    /* Landscape background elements */
+    body::before {
+      content: '';
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 200px;
+      background: linear-gradient(180deg, transparent 0%, rgba(127, 204, 143, 0.3) 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .page-wrapper {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .parchment-bg {
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 95%;
+      max-width: 1400px;
+      height: 600px;
+      background: linear-gradient(135deg, #D4AF9A 0%, #E8D4B8 50%, #D4AF9A 100%);
+      border-radius: 40px 40px 20px 20px;
+      box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        inset 0 2px 5px rgba(0, 0, 0, 0.1);
+      border: 8px solid #8B6F47;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Scroll edge top */
+    .parchment-bg::before {
+      content: '';
+      position: absolute;
+      top: -15px;
+      left: 5%;
+      right: 5%;
+      height: 30px;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 60"><defs><pattern id="wavy" x="0" y="0" width="100" height="60" patternUnits="userSpaceOnUse"><path d="M0,30 Q25,10 50,30 T100,30" stroke="%238B6F47" stroke-width="4" fill="none"/></pattern></defs><rect fill="%23D4AF9A" width="1000" height="60"/><use href="%23wavy" x="0" y="0"/></svg>');
+      background-size: contain;
+      background-repeat: repeat-x;
+      background-position: 0 -10px;
+    }
+
+    /* Scroll edge bottom */
+    .parchment-bg::after {
+      content: '';
+      position: absolute;
+      bottom: -15px;
+      left: 5%;
+      right: 5%;
+      height: 30px;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 60"><defs><pattern id="wavy" x="0" y="0" width="100" height="60" patternUnits="userSpaceOnUse"><path d="M0,30 Q25,50 50,30 T100,30" stroke="%238B6F47" stroke-width="4" fill="none"/></pattern></defs><rect fill="%23D4AF9A" width="1000" height="60"/><use href="%23wavy" x="0" y="0"/></svg>');
+      background-size: contain;
+      background-repeat: repeat-x;
+    }
+
+    /* Wood pole elements */
+    .wood-pole {
+      position: absolute;
+      background: linear-gradient(90deg, #5C3D2E 0%, #7A5C47 50%, #5C3D2E 100%);
+      border: 2px solid #3D2817;
+      border-radius: 8px;
+      box-shadow: inset -2px -2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .pole-left {
+      left: 20px;
+      top: -10px;
+      bottom: -10px;
+      width: 16px;
+    }
+
+    .pole-right {
+      right: 20px;
+      top: -10px;
+      bottom: -10px;
+      width: 16px;
+    }
+
+    /* Main container */
     .container {
       display: grid;
-      grid-template-columns: 1fr 1.2fr 1fr;
-      gap: 40px;
-      width: 90%;
-      max-width: 1200px;
-      padding: 40px;
-      background: rgba(255, 255, 255, 0.6);
-      backdrop-filter: blur(10px);
-      border-radius: 20px;
-      box-shadow: 0 8px 32px rgba(78, 205, 196, 0.1);
-      border: 2px solid rgba(78, 205, 196, 0.2);
+      grid-template-columns: 1fr 1.3fr 1fr;
+      gap: 30px;
+      width: 85%;
+      max-width: 1300px;
+      padding: 40px 30px;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* Top banner */
+    .banner {
+      grid-column: 1 / -1;
+      text-align: center;
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 3;
+    }
+
+    .banner-text {
+      font-size: 48px;
+      font-weight: 900;
+      color: #8B0000;
+      text-shadow: 
+        4px 4px 0px rgba(139, 69, 19, 0.5),
+        -2px -2px 0px rgba(255, 255, 255, 0.3);
+      letter-spacing: 3px;
+      font-style: italic;
+      transform: scaleY(1.1);
     }
 
     /* LEFT PANEL */
@@ -40,200 +153,195 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
-      gap: 24px;
-      font-size: 14px;
+      gap: 20px;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 12px;
+      border: 3px solid #8B6F47;
     }
 
-    .mode-badge {
-      display: inline-block;
+    .adventure-label {
+      font-size: 18px;
+      font-weight: bold;
+      color: #8B0000;
+      text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      background: linear-gradient(90deg, #FFB84D 0%, #FFC66D 100%);
       padding: 8px 16px;
       border-radius: 8px;
-      font-weight: bold;
-      font-size: 12px;
-      letter-spacing: 1px;
-      width: fit-content;
-    }
-
-    .mode-badge.focus {
-      background: #FF5E5E;
-      color: white;
-    }
-
-    .mode-badge.break {
-      background: #6BCB77;
-      color: white;
-    }
-
-    .mode-badge.longbreak {
-      background: #FFD93D;
-      color: #1F4E5A;
+      border: 2px solid #8B4513;
+      text-align: center;
     }
 
     .timer {
-      font-size: 48px;
-      font-weight: bold;
+      font-size: 64px;
+      font-weight: 900;
       font-variant-numeric: tabular-nums;
       font-family: 'Courier New', monospace;
-      color: #1F4E5A;
-      background: rgba(78, 205, 196, 0.1);
-      padding: 12px 20px;
-      border-radius: 8px;
-      border-left: 4px solid #FF5E5E;
-      letter-spacing: 2px;
-      animation: timer-pulse 1s ease-in-out infinite;
+      color: #FF00FF;
+      text-shadow: 
+        0 0 10px rgba(255, 0, 255, 0.6),
+        0 0 20px rgba(255, 0, 255, 0.3),
+        2px 2px 0px rgba(0, 0, 0, 0.2);
+      background: linear-gradient(135deg, #2F5A6F 0%, #1F3F5A 100%);
+      padding: 16px 24px;
+      border-radius: 12px;
+      border: 4px solid #4ECDC4;
+      letter-spacing: 4px;
+      animation: timer-glow 1.5s ease-in-out infinite;
+      text-align: center;
     }
 
-    @keyframes timer-pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.95; }
+    @keyframes timer-glow {
+      0%, 100% { 
+        text-shadow: 
+          0 0 10px rgba(255, 0, 255, 0.6),
+          0 0 20px rgba(255, 0, 255, 0.3),
+          2px 2px 0px rgba(0, 0, 0, 0.2);
+      }
+      50% { 
+        text-shadow: 
+          0 0 15px rgba(255, 0, 255, 0.8),
+          0 0 30px rgba(255, 0, 255, 0.5),
+          2px 2px 0px rgba(0, 0, 0, 0.2);
+      }
     }
 
     .session-info {
-      font-size: 14px;
-      color: #1F4E5A;
-      opacity: 0.7;
-      background: rgba(107, 203, 119, 0.1);
-      padding: 8px 16px;
-      border-radius: 6px;
-      border-left: 3px solid #6BCB77;
-      letter-spacing: 0.5px;
+      font-size: 15px;
+      font-weight: bold;
+      color: #2F5A6F;
+      background: rgba(107, 203, 119, 0.2);
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 2px solid #6BCB77;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
-    /* CENTER PANEL - HEART */
+    /* CENTER PANEL */
     .center-panel {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 24px;
+      gap: 16px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      border: 3px dashed #8B6F47;
     }
 
-    .heart-container {
+    .heart-locket {
       position: relative;
-      width: 140px;
-      height: 140px;
+      width: 160px;
+      height: 160px;
       display: flex;
       align-items: center;
       justify-content: center;
-      animation: heart-pulse 0.8s ease-in-out infinite;
+      animation: locket-pulse 1.2s ease-in-out infinite;
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
     }
 
-    @keyframes heart-pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.08); }
+    @keyframes locket-pulse {
+      0%, 100% { transform: scale(1) rotate(0deg); }
+      50% { transform: scale(1.06) rotate(2deg); }
     }
 
-    @keyframes heart-crack {
-      0% { 
-        filter: drop-shadow(0 0 0px #FF5E5E);
-        transform: scale(1);
-      }
-      20% { 
-        transform: scale(0.98) rotate(1deg);
-      }
-      40% { 
-        transform: scale(0.96) rotate(-1deg);
-        filter: drop-shadow(0 0 8px rgba(255, 94, 94, 0.4));
-      }
-      60% { 
-        transform: scale(0.98) rotate(0deg);
-      }
-      100% { 
-        filter: drop-shadow(0 0 0px #FF5E5E);
-        transform: scale(1);
-      }
+    .heart-locket svg {
+      width: 100%;
+      height: 100%;
     }
 
-    @keyframes heart-heal {
-      0% { 
-        filter: drop-shadow(0 0 8px rgba(107, 203, 119, 0.6));
-      }
-      100% { 
-        filter: drop-shadow(0 0 0px #6BCB77);
-      }
-    }
-
-    .heart-container.cracked {
-      animation: heart-crack 0.5s ease-in-out;
-    }
-
-    .heart-container.healing {
-      animation: heart-heal 0.6s ease-in-out;
-    }
-
-    .heart-container.cracked {
-      animation: heart-crack 0.5s ease-out;
-    }
-
-    @keyframes heart-crack {
-      0% { transform: scale(1) rotate(0deg); }
-      25% { transform: scale(0.98) rotate(-2deg); }
-      75% { transform: scale(0.98) rotate(2deg); }
-      100% { transform: scale(1) rotate(0deg); }
-    }
-
-    .heart-svg {
-      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
-    }
-
-    .message {
+    .mission-box {
+      background: linear-gradient(135deg, #A8D5A8 0%, #9ACC9F 100%);
+      padding: 16px 20px;
+      border-radius: 12px;
+      border: 3px solid #6B8E6B;
       text-align: center;
-      font-size: 16px;
-      font-weight: 600;
-      color: #1F4E5A;
-      line-height: 1.4;
-      max-width: 300px;
+      box-shadow: inset -2px -2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .mission-label {
+      font-size: 12px;
+      font-weight: bold;
+      color: #2F4A2F;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
     }
 
     .task-name {
-      font-size: 18px;
-      font-weight: bold;
-      color: #4ECDC4;
+      font-size: 20px;
+      font-weight: 900;
+      color: #1F4E5A;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      background: linear-gradient(135deg, #4ECDC4, #1F4E5A);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      letter-spacing: 2px;
+      text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.5);
     }
 
-    .button {
-      padding: 12px 28px;
-      border: 2px solid #4ECDC4;
-      background: white;
-      color: #4ECDC4;
-      border-radius: 8px;
+    .diversion-message {
+      background: linear-gradient(135deg, #E8D4B8 0%, #DCC5A0 100%);
+      padding: 14px 18px;
+      border-radius: 10px;
+      border: 2px solid #8B6F47;
+      font-size: 15px;
       font-weight: bold;
+      color: #2F4A2F;
+      text-align: center;
+      line-height: 1.4;
+      box-shadow: inset -1px -1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .hero-button {
+      background: linear-gradient(135deg, #FFD93D 0%, #FFC700 100%);
+      border: 3px solid #8B4513;
+      padding: 14px 32px;
+      border-radius: 12px;
+      font-weight: 900;
+      font-size: 16px;
+      color: #2F4A2F;
       cursor: pointer;
-      font-size: 14px;
-      transition: all 0.3s ease;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2);
+      letter-spacing: 2px;
+      text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.4);
+      transition: all 0.2s ease;
+      box-shadow: 
+        0 6px 12px rgba(0, 0, 0, 0.2),
+        inset -2px -2px 4px rgba(0, 0, 0, 0.1);
       position: relative;
       overflow: hidden;
     }
 
-    .button::before {
+    .hero-button::before {
       content: '';
       position: absolute;
       top: 0;
       left: -100%;
       width: 100%;
       height: 100%;
-      background: #4ECDC4;
-      transition: left 0.3s ease;
-      z-index: -1;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s ease;
+      animation: shine 3s infinite;
     }
 
-    .button:hover {
-      color: white;
+    @keyframes shine {
+      0% { left: -100%; }
+      50% { left: 100%; }
+      100% { left: 100%; }
+    }
+
+    .hero-button:hover {
       transform: translateY(-3px);
-      box-shadow: 0 6px 16px rgba(78, 205, 196, 0.4);
+      box-shadow: 
+        0 8px 16px rgba(0, 0, 0, 0.3),
+        inset -2px -2px 4px rgba(0, 0, 0, 0.15);
     }
 
-    .button:hover::before {
-      left: 0;
+    .hero-button:active {
+      transform: translateY(-1px);
     }
 
     /* RIGHT PANEL */
@@ -241,121 +349,222 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
-      gap: 32px;
-      align-items: flex-end;
-    }
-
-    .streak-box {
-      text-align: right;
-      background: rgba(255, 217, 61, 0.15);
-      padding: 16px 20px;
+      align-items: center;
+      gap: 24px;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.05);
       border-radius: 12px;
-      border: 2px solid rgba(255, 217, 61, 0.3);
-      animation: streak-glow 2s ease-in-out infinite;
+      border: 3px solid #8B6F47;
     }
 
-    @keyframes streak-glow {
-      0%, 100% { box-shadow: 0 0 0px rgba(255, 217, 61, 0); }
-      50% { box-shadow: 0 0 12px rgba(255, 217, 61, 0.3); }
+    .treasure-chest {
+      position: relative;
+      width: 140px;
+      height: 120px;
+      background: linear-gradient(135deg, #D4464F 0%, #B8363F 100%);
+      border-radius: 8px 8px 4px 4px;
+      border: 4px solid #8B3838;
+      box-shadow: 
+        inset -4px -4px 8px rgba(0, 0, 0, 0.3),
+        0 8px 16px rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: chest-bounce 0.6s ease-in-out infinite;
     }
 
-    .streak-number {
-      font-size: 48px;
+    @keyframes chest-bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .treasure-chest::before {
+      content: '';
+      position: absolute;
+      top: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80%;
+      height: 16px;
+      background: linear-gradient(90deg, #B8B8B8 0%, #D4D4D4 50%, #B8B8B8 100%);
+      border-radius: 4px;
+      border: 2px solid #808080;
+    }
+
+    .treasure-chest::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      right: 0;
+      height: 8px;
+      background: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);
+      border-radius: 0 0 4px 4px;
+    }
+
+    .treasure-open {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50%;
+      background: linear-gradient(135deg, #FFD93D 0%, #FFC700 100%);
+      border-radius: 8px 8px 0 0;
+      border-bottom: 3px solid #8B4513;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
       font-weight: bold;
-      color: #FFD93D;
-      text-shadow: 0 2px 8px rgba(255, 217, 61, 0.3);
+      animation: open-bounce 1s ease-in-out infinite;
+      color: #FF00FF;
+      text-shadow: 0 0 8px rgba(255, 0, 255, 0.4);
+    }
+
+    @keyframes open-bounce {
+      0%, 100% { transform: rotateX(0deg); }
+      50% { transform: rotateX(-30deg); }
+    }
+
+    .streak-counter {
+      text-align: center;
     }
 
     .streak-label {
+      font-size: 16px;
+      font-weight: bold;
+      color: #8B0000;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.1);
+      margin-bottom: 8px;
+    }
+
+    .streak-number {
+      font-size: 52px;
+      font-weight: 900;
+      color: #FFD93D;
+      text-shadow: 
+        0 0 8px rgba(255, 217, 61, 0.4),
+        2px 2px 0px rgba(0, 0, 0, 0.2);
+      font-family: 'Comic Sans MS', cursive;
+      letter-spacing: 2px;
+    }
+
+    .streak-motto {
       font-size: 12px;
       font-weight: bold;
       color: #1F4E5A;
-      opacity: 0.6;
+      text-transform: uppercase;
       letter-spacing: 1px;
+      margin-top: 10px;
+      background: rgba(255, 217, 61, 0.2);
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 2px solid #FFD93D;
     }
 
-    .motto {
-      font-size: 14px;
-      font-weight: 600;
-      color: #1F4E5A;
-      opacity: 0.7;
-      text-align: right;
-      line-height: 1.5;
-      max-width: 180px;
+    /* FOOTER MESSAGE */
+    .footer-message {
+      grid-column: 1 / -1;
+      text-align: center;
+      font-size: 13px;
+      font-weight: bold;
+      color: #8B0000;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 10px;
     }
 
-    /* Character SVG */
-    .char-svg {
-      width: 64px;
-      height: 64px;
-      margin-bottom: 16px;
+    /* Loading/Debug info */
+    #storageDebug {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      font-size: 10px;
+      color: #666;
+      background: rgba(255, 255, 255, 0.7);
+      padding: 8px;
+      border-radius: 4px;
+      max-width: 200px;
+      word-break: break-all;
     }
-
-    @media (max-width: 1024px) {
-      .container {
-        grid-template-columns: 1fr;
-        gap: 32px;
-      }
-
-      .left-panel, .right-panel {
-        align-items: center;
-        text-align: center;
-      }
-
-      .right-panel {
-        align-items: center;
-      }
-
-      .motto {
-        text-align: center;
-      }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <!-- LEFT PANEL -->
-    <div class="left-panel">
-      <div>
-        <div class="mode-badge focus" id="modeBadge">FOCUS</div>
-      </div>
-      <div>
-        <div class="timer" id="timer">25:00</div>
-      </div>
-      <div class="session-info" id="sessionInfo">
-        Session 2/4
-      </div>
-    </div>
+  <div class="page-wrapper">
+    <div class="parchment-bg">
+      <div class="wood-pole pole-left"></div>
+      <div class="wood-pole pole-right"></div>
+      
+      <div class="container">
+        <!-- BANNER -->
+        <div class="banner">
+          <div class="banner-text">⚔️ BMOFocus ⚔️</div>
+        </div>
 
-    <!-- CENTER PANEL -->
-    <div class="center-panel">
-      <div class="char-svg" id="charSvg"></div>
-      <div class="heart-container" id="heart">
-        <svg class="heart-svg" width="140" height="140" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="heartGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#D4A574;stop-opacity:1" />
-              <stop offset="50%" style="stop-color:#C9915E;stop-opacity:1" />
-              <stop offset="100%" style="stop-color:#B8742E;stop-opacity:1" />
-            </linearGradient>
-          </defs>
-          <path d="M50,90 C20,70 5,55 5,40 C5,25 15,15 25,15 C35,15 45,25 50,32 C55,25 65,15 75,15 C85,15 95,25 95,40 C95,55 80,70 50,90 Z" fill="url(#heartGradient)" stroke="#8B5A1F" stroke-width="1.5" />
-        </svg>
-      </div>
-      <div class="task-name" id="taskName">Study TOP</div>
-      <div class="message" id="message">hey… this isn't part of the mission 👀</div>
-      <button class="button" id="allowBtn">Allow for this session</button>
-    </div>
+        <!-- LEFT PANEL -->
+        <div class="left-panel">
+          <div class="adventure-label">ADVENTURE LOG: <span id="sessionDisplay">2/4</span></div>
+          <div class="timer" id="timer">25:00</div>
+          <div class="session-info" id="sessionInfo">Pomodoro in progress</div>
+        </div>
 
-    <!-- RIGHT PANEL -->
-    <div class="right-panel">
-      <div class="streak-box">
-        <div class="streak-number" id="streak">12</div>
-        <div class="streak-label">DAY STREAK</div>
+        <!-- CENTER PANEL -->
+        <div class="center-panel">
+          <div class="heart-locket" id="locket">
+            <svg width="160" height="160" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+              <!-- Outer locket frame (gold) -->
+              <defs>
+                <radialGradient id="locketGold" cx="50%" cy="30%">
+                  <stop offset="0%" style="stop-color:#FFE4B5;stop-opacity:1" />
+                  <stop offset="100%" style="stop-color:#DAA520;stop-opacity:1" />
+                </radialGradient>
+              </defs>
+              <circle cx="100" cy="100" r="95" fill="url(#locketGold)" stroke="#8B4513" stroke-width="3"/>
+              <!-- Inner circle for character -->
+              <circle cx="100" cy="100" r="75" fill="#E8F5E9" stroke="#1F4E5A" stroke-width="2"/>
+              <!-- Character SVG will be inserted here via JS -->
+            </svg>
+            <div id="charSvgContainer" style="position: absolute; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center;"></div>
+          </div>
+
+          <div class="mission-box">
+            <div class="mission-label">Current Mission:</div>
+            <div class="task-name" id="taskName">STUDY TOP</div>
+          </div>
+
+          <div class="diversion-message" id="diversionMsg">
+            HEY... BMO detects a non-approved diversion...<br>
+            BMO is watching. 👀
+          </div>
+
+          <button class="hero-button" id="allowBtn">COMMENCE DIVERSION</button>
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div class="right-panel">
+          <div class="treasure-chest">
+            <div class="treasure-open">💎</div>
+          </div>
+          
+          <div class="streak-counter">
+            <div class="streak-label">Adventure Streak</div>
+            <div class="streak-number" id="streak">12</div>
+            <div class="streak-motto">don't break the chain</div>
+          </div>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="footer-message">
+          ⚡ DON'T UN-INVITE US! ⚡
+        </div>
       </div>
-      <div class="motto">don't break<br>the chain</div>
     </div>
   </div>
+
+  <div id="storageDebug"></div>
 
   <script src="characterSvgs.js"></script>
   <script>
@@ -427,19 +636,30 @@
     setInterval(loadAllData, 2000);
 
     function updateUI() {
-      // Set mode badge
-      const modeBadge = document.getElementById('modeBadge');
       const mode = blockData.mode || 'focus';
-      modeBadge.textContent = mode === 'focus' ? 'FOCUS' : mode === 'shortBreak' ? 'BREAK' : 'LONG BREAK';
-      modeBadge.className = `mode-badge ${mode === 'focus' ? 'focus' : mode === 'shortBreak' ? 'break' : 'longbreak'}`;
 
-      // Set session info with REAL data
-      const sessionStr = `Session ${(blockData.sessionInCurrentRound || 0) + 1}/${blockData.sessionsPerRound || 4}`;
-      document.getElementById('sessionInfo').textContent = sessionStr;
+      // Update session display
+      const sessionStr = `${(blockData.sessionInCurrentRound || 0) + 1}/${blockData.sessionsPerRound || 4}`;
+      document.getElementById('sessionDisplay').textContent = sessionStr;
 
-      // Set character SVG
-      if (blockData.charSvg) {
-        document.getElementById('charSvg').innerHTML = blockData.charSvg;
+      // Update session info text
+      const sessionMessages = {
+        focus: 'Focus Mode Active - Distractions Not Allowed!',
+        shortBreak: 'Short Break Time - Relax a Bit',
+        longBreak: 'Long Break Time - Enjoy Your Rest'
+      };
+      const sessionKey = mode === 'focus' ? 'focus' : mode === 'shortBreak' ? 'shortBreak' : 'longBreak';
+      document.getElementById('sessionInfo').textContent = sessionMessages[sessionKey] || sessionMessages.focus;
+
+      // Insert character SVG into locket
+      if (blockData.charSvg && CHARACTER_SVGS[blockData.taskColor]) {
+        const container = document.getElementById('charSvgContainer');
+        container.innerHTML = CHARACTER_SVGS[blockData.taskColor];
+        const svg = container.querySelector('svg');
+        if (svg) {
+          svg.style.width = '120px';
+          svg.style.height = '120px';
+        }
       }
 
       // Set task name
@@ -451,37 +671,32 @@
       // Set BMO message based on mode
       const messages = {
         focus: [
-          "hey… this isn't part of the mission 👀",
-          "stay focused, friend 💛",
-          "mission first… always 🎯",
-          "let's finish this together 🤝"
+          "HEY... BMO detects a non-approved diversion...\nBMO is watching. 👀",
+          "This isn't part of the mission, friend 💛",
+          "Mission first... always 🎯",
+          "Let's focus together 🤝"
         ],
         shortBreak: [
-          "take a breath… but stay close 💚",
-          "break time! don't wander off 🌳",
-          "see you in a few 👋"
+          "Take a breath... but stay close 💚",
+          "Break time! Don't wander too far 🌳",
+          "See you in a few 👋"
         ],
         longBreak: [
-          "you earned this! enjoy ✨",
-          "rest up, we'll be back soon 🌙",
-          "recharge those batteries 🔋"
+          "You earned this! Enjoy ✨",
+          "Rest up, we'll be back soon 🌙",
+          "Recharge those batteries 🔋"
         ]
       };
       
-      const modeKey = mode === 'focus' ? 'focus' : mode === 'shortBreak' ? 'shortBreak' : 'longBreak';
-      const messageList = messages[modeKey] || messages.focus;
+      const messageList = messages[sessionKey] || messages.focus;
       const randomMsg = messageList[Math.floor(Math.random() * messageList.length)];
-      document.getElementById('message').textContent = randomMsg;
+      document.getElementById('diversionMsg').textContent = randomMsg;
 
-      // Apply crack animation on load
-      triggerHeartCrack();
-    }
-
-    function triggerHeartCrack() {
-      const heart = document.getElementById('heart');
-      heart.classList.remove('cracked');
-      void heart.offsetWidth; // Trigger reflow to restart animation
-      heart.classList.add('cracked');
+      // Apply locket animation
+      const locket = document.getElementById('locket');
+      locket.style.animation = 'none';
+      void locket.offsetWidth; // Trigger reflow
+      locket.style.animation = 'locket-pulse 1.2s ease-in-out infinite';
     }
 
     function playBlockSound() {
@@ -549,9 +764,6 @@
       }
     }
 
-    // Timer state for live updates
-    let timerEndTime = null;
-    
     // Real-time timer updates - calculate locally for smooth display
     function updateTimer() {
       if (!blockData.endTime) return;
