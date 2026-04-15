@@ -272,11 +272,16 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   }, AUTO_ADVANCE_DELAY_MS);
 });
 
+console.log('[BMO] Service worker loaded, registering webRequest listener...');
+
 // ── Allowed World Blocker: Intercept navigations ─────────────────────────────
-chrome.webRequest.onBeforeRequest.addListener(
-  async (details) => {
-    // Only intercept main_frame navigations (not subframes, XHR, etc.)
-    if (details.type !== 'main_frame') return {};
+try {
+  chrome.webRequest.onBeforeRequest.addListener(
+    async (details) => {
+      // Only intercept main_frame navigations (not subframes, XHR, etc.)
+      if (details.type !== 'main_frame') return {};
+      
+      console.log('[Blocker] Request detected:', details.url);
 
     const state = await getState();
 
@@ -370,6 +375,10 @@ chrome.webRequest.onBeforeRequest.addListener(
   { urls: ['<all_urls>'] },
   ['blocking']
 );
+  console.log('[BMO] webRequest listener registered successfully!');
+} catch (e) {
+  console.error('[BMO] Failed to register webRequest listener:', e);
+}
 
 function formatTimeRemaining(endTime) {
   if (!endTime) return '25:00';
