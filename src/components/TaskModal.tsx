@@ -60,7 +60,22 @@ export function TaskModal({ isOpen, onClose, onSave, initialTask }: TaskModalPro
   };
 
   const addDomain = () => {
-    const domain = domainInput.trim().toLowerCase();
+    let domain = domainInput.trim().toLowerCase();
+    
+    // Extract domain from full URL (e.g., https://github.com/user/repo → github.com)
+    if (domain.includes('://')) {
+      try {
+        const url = new URL(domain);
+        domain = url.hostname;
+      } catch {
+        // If URL parsing fails, try to extract domain manually
+        domain = domain.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
+      }
+    }
+    
+    // Remove www prefix if present
+    domain = domain.replace(/^www\./, '');
+    
     if (domain && !allowedDomains.includes(domain) && allowedDomains.length < 3) {
       setAllowedDomains([...allowedDomains, domain]);
       setDomainInput('');

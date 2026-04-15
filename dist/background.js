@@ -281,20 +281,42 @@ chrome.webRequest.onBeforeRequest.addListener(
     const state = await getState();
 
     // Only block if focus mode is active
-    if (!state.isActive || state.mode !== 'focus') return {};
+    if (!state.isActive || state.mode !== 'focus') {
+      return {};
+    }
 
     // Get active task ID
     const { bmo_activeTaskId } = await chrome.storage.local.get('bmo_activeTaskId');
-    if (!bmo_activeTaskId) return {};
+    if (!bmo_activeTaskId) {
+      console.log('[Blocker] No active task ID found');
+      return {};
+    }
 
     // Get all tasks
     const { bmo_tasks } = await chrome.storage.local.get('bmo_tasks');
-    if (!bmo_tasks) return {};
+    if (!bmo_tasks) {
+      console.log('[Blocker] No tasks found in storage');
+      return {};
+    }
 
-    const tasks = JSON.parse(bmo_tasks);
+    let tasks;
+    try {
+      // Handle both string and object formats
+      tasks = typeof bmo_tasks === 'string' ? JSON.parse(bmo_tasks) : bmo_tasks;
+    } catch (e) {
+      console.error('[Blocker] Failed to parse tasks:', e, bmo_tasks);
+      return {};
+    }
+
     const activeTask = tasks.find(t => t.id === bmo_activeTaskId);
 
-    if (!activeTask || !activeTask.allowedDomains || activeTask.allowedDomains.length === 0) {
+    if (!activeTask) {
+      console.log('[Blocker] Active task not found:', bmo_activeTaskId);
+      return {};
+    }
+
+    if (!activeTask.allowedDomains || activeTask.allowedDomains.length === 0) {
+      console.log('[Blocker] No allowed domains for task:', activeTask.title);
       return {};
     }
 
@@ -302,6 +324,8 @@ chrome.webRequest.onBeforeRequest.addListener(
     const sessionAllowlist = state.sessionAllowlist || [];
     const requestUrl = new URL(details.url);
     const requestHostname = requestUrl.hostname;
+
+    console.log('[Blocker] Checking:', requestHostname, 'against allowed:', activeTask.allowedDomains);
 
     // Check allowed domains
     const isAllowed = activeTask.allowedDomains.some(domain =>
@@ -311,6 +335,7 @@ chrome.webRequest.onBeforeRequest.addListener(
     );
 
     if (!isAllowed) {
+      console.log('[Blocker] BLOCKED:', requestHostname);
       // Block and redirect to blocking page
       const blockingPageUrl = chrome.runtime.getURL('blocked.html') +
         '?domain=' + encodeURIComponent(requestHostname) +
