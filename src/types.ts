@@ -23,6 +23,7 @@ export interface Task {
   sessionInCurrentRound?: number;  // tracks position in current round (0-indexed, resets at sessionsPerRound)
   lastPomodoroResetDate?: string; // YYYY-MM-DD, last day pomodoros were reset
   color?: string; // hex color code from adventure time palette
+  allowedDomains?: string[]; // allowed domains for Allowed World blocker (e.g., ["github.com", "theodinproject.com"])
 }
 
 export interface Session {

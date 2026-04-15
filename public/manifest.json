@@ -9,10 +9,27 @@
   "background": {
     "service_worker": "background.js"
   },
-  "permissions": ["storage", "alarms", "notifications", "tabs", "windows"],
+  "permissions": [
+    "storage",
+    "alarms",
+    "notifications",
+    "tabs",
+    "windows",
+    "webRequest"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["blocked.html"],
+      "matches": ["<all_urls>"]
+    }
+  ],
   "icons": {
     "16": "icon16.png",
     "48": "icon48.png",
     "128": "icon128.png"
   }
 }
+

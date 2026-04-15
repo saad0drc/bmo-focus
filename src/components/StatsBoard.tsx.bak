@@ -337,169 +337,56 @@ function BMOHeartStat({ emotion, mode = 'focus', activeTaskId, tasks = [] }: BMO
   // Get SVG for this color (use heart variants)
   const characterSvg = heartCharacterSVGs[taskColor] || heartCharacterSVGs['#4ECDC4'];
   
-  // State indicator: focus, break, or long break - visual style only
-  const getStateStyle = (timerMode: TimerMode) => {
+  // State indicator: focus, break, or long break
+  const getStateIndicator = (timerMode: TimerMode) => {
     switch (timerMode) {
       case 'focus':
-        return { icon: '🔥', bgGradient: 'from-[#FF5E5E]/10 to-[#FFB347]/10', borderColor: 'border-[#FF5E5E]/40' };
+        return { icon: '🔴', label: 'Focus', color: 'text-[#FF5E5E]', bg: 'bg-[#FF5E5E]/20' };
       case 'shortBreak':
-        return { icon: '☕', bgGradient: 'from-[#6BCB77]/10 to-[#FFB347]/10', borderColor: 'border-[#6BCB77]/30' };
+        return { icon: '🟢', label: 'Break', color: 'text-[#6BCB77]', bg: 'bg-[#6BCB77]/20' };
       case 'longBreak':
-        return { icon: '🎉', bgGradient: 'from-[#FFD93D]/15 to-[#FFB347]/15', borderColor: 'border-[#FFD93D]/40' };
+        return { icon: '⭐', label: 'Long Break', color: 'text-[#FFD93D]', bg: 'bg-[#FFD93D]/20' };
       default:
-        return { icon: '⭕', bgGradient: 'from-gray-400/10 to-[#FFB347]/5', borderColor: 'border-gray-400/20' };
+        return { icon: '⭕', label: 'Idle', color: 'text-gray-400', bg: 'bg-gray-400/20' };
     }
   };
   
-  const stateStyle = getStateStyle(mode);
+  const stateInfo = getStateIndicator(mode);
 
   return (
     <motion.div
-      className={`col-span-2 flex flex-col items-center gap-1`}
+      className={`${stateInfo.bg} rounded-xl p-4 flex flex-col items-center gap-2.5 border-2 ${stateInfo.color} border-current/30 col-span-2`}
+      animate={{
+        scale: mode === 'focus' ? [1, 1.02, 1] : 1,
+      }}
+      transition={{
+        duration: mode === 'focus' ? 2 : 0,
+        repeat: mode === 'focus' ? Infinity : 0,
+      }}
     >
-      {/* Heartbeat Effect Container - Compact */}
-      <div className="relative w-32 h-32 lg:w-40 lg:h-40 flex items-center justify-center">
-        
-        {/* Animated ripple effect rings - shows heartbeat */}
-        {mode === 'focus' && (
-          <>
-            {[0, 1, 2].map((i) => (
-              <motion.div
-                key={`ripple-focus-${i}`}
-                className="absolute rounded-full border-2 border-[#FF5E5E]"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                }}
-                animate={{
-                  scale: [1, 1.4, 1.8],
-                  opacity: [0.8, 0.4, 0],
-                }}
-                transition={{
-                  duration: 0.8,
-                  repeat: Infinity,
-                  delay: i * 0.2,
-                }}
-              />
-            ))}
-          </>
-        )}
-
-        {mode === 'shortBreak' && (
-          <>
-            {[0, 1, 2].map((i) => (
-              <motion.div
-                key={`ripple-break-${i}`}
-                className="absolute rounded-full border-2 border-[#6BCB77]"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                }}
-                animate={{
-                  scale: [1, 1.3, 1.6],
-                  opacity: [0.6, 0.3, 0],
-                }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  delay: i * 0.3,
-                }}
-              />
-            ))}
-          </>
-        )}
-
-        {mode === 'longBreak' && (
-          <>
-            {[0, 1, 2].map((i) => (
-              <motion.div
-                key={`ripple-longbreak-${i}`}
-                className="absolute rounded-full border-2 border-[#FFD93D]"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                }}
-                animate={{
-                  scale: [1, 1.5, 2],
-                  opacity: [0.8, 0.4, 0],
-                }}
-                transition={{
-                  duration: 1.2,
-                  repeat: Infinity,
-                  delay: i * 0.25,
-                }}
-              />
-            ))}
-          </>
-        )}
-
-        {/* SVG Heart - bigger to fit character better */}
-        <motion.div
-          className="relative z-10"
-          animate={
-            mode === 'focus'
-              ? { scale: [0.95, 1.08, 0.95] }
-              : mode === 'longBreak'
-              ? { scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }
-              : { scale: 1 }
-          }
-          transition={
-            mode === 'focus'
-              ? { duration: 0.8, repeat: Infinity, ease: 'easeInOut' }
-              : mode === 'longBreak'
-              ? { duration: 1.2, repeat: Infinity, ease: 'easeInOut' }
-              : { duration: 0 }
-          }
-        >
-          <svg
-            width="110"
-            height="110"
-            viewBox="0 0 100 100"
-            xmlns="http://www.w3.org/2000/svg"
-            className="drop-shadow-lg"
-          >
-            {/* Richer copper-bronze heart with warm depth */}
-            <defs>
-              <linearGradient id="heartGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style={{ stopColor: '#D4A574', stopOpacity: 1 }} />
-                <stop offset="50%" style={{ stopColor: '#C9915E', stopOpacity: 1 }} />
-                <stop offset="100%" style={{ stopColor: '#B8742E', stopOpacity: 1 }} />
-              </linearGradient>
-              <filter id="heartGlow">
-                <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
-                <feMerge>
-                  <feMergeNode in="coloredBlur"/>
-                  <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-              </filter>
-            </defs>
-            {/* Real smooth heart shape - warmer, richer tone */}
-            <path
-              d="M50,90 C20,70 5,55 5,40 C5,25 15,15 25,15 C35,15 45,25 50,32 C55,25 65,15 75,15 C85,15 95,25 95,40 C95,55 80,70 50,90 Z"
-              fill="url(#heartGradient)"
-              stroke="#8B5A1F"
-              strokeWidth="1.5"
-              filter="url(#heartGlow)"
-            />
-          </svg>
-        </motion.div>
-
-        {/* Character SVG in center */}
-        <div className="absolute w-8 h-8 lg:w-10 lg:h-10 z-20">
-          <svg
-            viewBox="0 0 256 256"
-            xmlns="http://www.w3.org/2000/svg"
-            dangerouslySetInnerHTML={{ __html: characterSvg }}
-            className="w-full h-full drop-shadow-md"
-          />
-        </div>
+      {/* SVG Character Face */}
+      <div className="w-16 h-16 lg:w-20 lg:h-20">
+        <svg
+          viewBox="0 0 256 256"
+          xmlns="http://www.w3.org/2000/svg"
+          dangerouslySetInnerHTML={{ __html: characterSvg }}
+          className="w-full h-full drop-shadow-md"
+        />
       </div>
-
-      {/* Task name below - tight spacing */}
-      <div className="text-center mt-1">
-        <div className="font-pixel text-[9px] lg:text-xs text-[#1F4E5A] leading-none font-bold truncate max-w-[100px] uppercase tracking-tight">
+      
+      {/* Task Name */}
+      <div className="text-center">
+        <div className="font-pixel text-sm lg:text-base text-[#1F4E5A] leading-none font-bold truncate max-w-[120px]">
           {taskName}
         </div>
+      </div>
+      
+      {/* State Indicator */}
+      <div className="flex items-center gap-1.5">
+        <span className="text-lg">{stateInfo.icon}</span>
+        <span className={`text-xs font-black uppercase tracking-widest ${stateInfo.color}`}>
+          {stateInfo.label}
+        </span>
       </div>
     </motion.div>
   );

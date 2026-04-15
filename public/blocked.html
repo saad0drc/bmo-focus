@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BMO - Stay Focused</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #E8F5E9 0%, #F0F4F8 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #1F4E5A;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr 1fr;
+      gap: 40px;
+      width: 90%;
+      max-width: 1200px;
+      padding: 40px;
+    }
+
+    /* LEFT PANEL */
+    .left-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 24px;
+      font-size: 14px;
+    }
+
+    .mode-badge {
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 12px;
+      letter-spacing: 1px;
+      width: fit-content;
+    }
+
+    .mode-badge.focus {
+      background: #FF5E5E;
+      color: white;
+    }
+
+    .mode-badge.break {
+      background: #6BCB77;
+      color: white;
+    }
+
+    .mode-badge.longbreak {
+      background: #FFD93D;
+      color: #1F4E5A;
+    }
+
+    .timer {
+      font-size: 48px;
+      font-weight: bold;
+      font-variant-numeric: tabular-nums;
+      font-family: 'Courier New', monospace;
+      color: #1F4E5A;
+    }
+
+    .session-info {
+      font-size: 14px;
+      color: #1F4E5A;
+      opacity: 0.7;
+    }
+
+    /* CENTER PANEL - HEART */
+    .center-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+    }
+
+    .heart-container {
+      position: relative;
+      width: 140px;
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: heart-pulse 0.8s ease-in-out infinite;
+    }
+
+    @keyframes heart-pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+
+    .heart-container.cracked {
+      animation: heart-crack 0.5s ease-out;
+    }
+
+    @keyframes heart-crack {
+      0% { transform: scale(1) rotate(0deg); }
+      25% { transform: scale(0.98) rotate(-2deg); }
+      75% { transform: scale(0.98) rotate(2deg); }
+      100% { transform: scale(1) rotate(0deg); }
+    }
+
+    .heart-svg {
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+    }
+
+    .message {
+      text-align: center;
+      font-size: 16px;
+      font-weight: 600;
+      color: #1F4E5A;
+      line-height: 1.4;
+      max-width: 300px;
+    }
+
+    .task-name {
+      font-size: 18px;
+      font-weight: bold;
+      color: #4ECDC4;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .button {
+      padding: 12px 28px;
+      border: 2px solid #4ECDC4;
+      background: white;
+      color: #4ECDC4;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .button:hover {
+      background: #4ECDC4;
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    /* RIGHT PANEL */
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 32px;
+      align-items: flex-end;
+    }
+
+    .streak-box {
+      text-align: right;
+    }
+
+    .streak-number {
+      font-size: 48px;
+      font-weight: bold;
+      color: #FFD93D;
+    }
+
+    .streak-label {
+      font-size: 12px;
+      font-weight: bold;
+      color: #1F4E5A;
+      opacity: 0.6;
+      letter-spacing: 1px;
+    }
+
+    .motto {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1F4E5A;
+      opacity: 0.7;
+      text-align: right;
+      line-height: 1.5;
+      max-width: 180px;
+    }
+
+    /* Character SVG */
+    .char-svg {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 1024px) {
+      .container {
+        grid-template-columns: 1fr;
+        gap: 32px;
+      }
+
+      .left-panel, .right-panel {
+        align-items: center;
+        text-align: center;
+      }
+
+      .right-panel {
+        align-items: center;
+      }
+
+      .motto {
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- LEFT PANEL -->
+    <div class="left-panel">
+      <div>
+        <div class="mode-badge focus" id="modeBadge">FOCUS</div>
+      </div>
+      <div>
+        <div class="timer" id="timer">25:00</div>
+      </div>
+      <div class="session-info" id="sessionInfo">
+        Session 2/4
+      </div>
+    </div>
+
+    <!-- CENTER PANEL -->
+    <div class="center-panel">
+      <div class="char-svg" id="charSvg"></div>
+      <div class="heart-container" id="heart">
+        <svg class="heart-svg" width="140" height="140" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="heartGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#D4A574;stop-opacity:1" />
+              <stop offset="50%" style="stop-color:#C9915E;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#B8742E;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          <path d="M50,90 C20,70 5,55 5,40 C5,25 15,15 25,15 C35,15 45,25 50,32 C55,25 65,15 75,15 C85,15 95,25 95,40 C95,55 80,70 50,90 Z" fill="url(#heartGradient)" stroke="#8B5A1F" stroke-width="1.5" />
+        </svg>
+      </div>
+      <div class="task-name" id="taskName">Study TOP</div>
+      <div class="message" id="message">hey… this isn't part of the mission 👀</div>
+      <button class="button" id="allowBtn">Allow for this session</button>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right-panel">
+      <div class="streak-box">
+        <div class="streak-number" id="streak">12</div>
+        <div class="streak-label">DAY STREAK</div>
+      </div>
+      <div class="motto">don't break<br>the chain</div>
+    </div>
+  </div>
+
+  <script>
+    // Get data from chrome.storage
+    chrome.storage.local.get(['blockedData'], (result) => {
+      if (result.blockedData) {
+        const data = result.blockedData;
+        
+        // Set mode badge
+        const modeBadge = document.getElementById('modeBadge');
+        modeBadge.textContent = data.mode === 'focus' ? 'FOCUS' : data.mode === 'shortBreak' ? 'BREAK' : 'LONG BREAK';
+        modeBadge.className = `mode-badge ${data.mode === 'focus' ? 'focus' : data.mode === 'shortBreak' ? 'break' : 'longbreak'}`;
+
+        // Set timer
+        document.getElementById('timer').textContent = data.timeRemaining || '25:00';
+
+        // Set session info
+        document.getElementById('sessionInfo').textContent = data.sessionInfo || 'Session 1/4';
+
+        // Set character SVG
+        if (data.charSvg) {
+          document.getElementById('charSvg').innerHTML = data.charSvg;
+        }
+
+        // Set task name
+        document.getElementById('taskName').textContent = data.taskName || 'Current Task';
+
+        // Set streak
+        document.getElementById('streak').textContent = data.streak || '0';
+
+        // Cracked animation on load
+        const heart = document.getElementById('heart');
+        heart.classList.add('cracked');
+        setTimeout(() => heart.classList.remove('cracked'), 500);
+
+        // Play sound
+        if (window.chrome && window.chrome.extension) {
+          chrome.runtime.sendMessage({ action: 'playBlockSound' });
+        }
+      }
+    });
+
+    // Allow for this session button
+    document.getElementById('allowBtn').addEventListener('click', () => {
+      if (window.chrome && window.chrome.extension) {
+        const url = new URL(window.location);
+        const blockedDomain = url.searchParams.get('domain');
+        chrome.runtime.sendMessage({ 
+          action: 'allowDomainTemporarily', 
+          domain: blockedDomain 
+        }, () => {
+          // Close or redirect
+          window.history.back();
+        });
+      }
+    });
+
+    // Update timer in real-time
+    setInterval(() => {
+      chrome.storage.local.get(['blockedData'], (result) => {
+        if (result.blockedData) {
+          document.getElementById('timer').textContent = result.blockedData.timeRemaining || '25:00';
+        }
+      });
+    }, 1000);
+  </script>
+</body>
+</html>

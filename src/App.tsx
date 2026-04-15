@@ -99,15 +99,15 @@ export default function App() {
 
   const handleOpenAdd = () => { setEditingTask(undefined); setIsTaskModalOpen(true); };
   const handleOpenEdit = (task: Task) => { setEditingTask(task); setIsTaskModalOpen(true); };
-  const handleModalSave = (title: string, settings: TaskSettings, dueDate?: string, pinned?: boolean, repeatDaily?: boolean, color?: string) => {
+  const handleModalSave = (title: string, settings: TaskSettings, dueDate?: string, pinned?: boolean, repeatDaily?: boolean, color?: string, allowedDomains?: string[]) => {
     if (editingTask) {
-      updateTask(editingTask.id, { title, settings, dueDate, pinned, repeatDaily, color });
+      updateTask(editingTask.id, { title, settings, dueDate, pinned, repeatDaily, color, allowedDomains });
     } else {
       addTask(title, settings, dueDate, pinned, repeatDaily);
-      if (color) {
+      if (color || allowedDomains) {
         const newTask = tasks.find(t => t.title === title && !t.completed);
         if (newTask) {
-          updateTask(newTask.id, { color });
+          updateTask(newTask.id, { color, allowedDomains });
         }
       }
     }
@@ -555,6 +555,8 @@ export default function App() {
                     tasks={tasks}
                     emotion={emotion}
                     onOpenHistory={() => setIsHistoryOpen(true)}
+                    mode={mode}
+                    activeTaskId={activeTaskId}
                   />
                 </Suspense>
               </div>

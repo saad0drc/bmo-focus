@@ -7,7 +7,7 @@ import { ADVENTURE_TIME_COLORS, DEFAULT_TASK_COLOR } from '../constants/adventur
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (title: string, settings: TaskSettings, dueDate?: string, pinned?: boolean, repeatDaily?: boolean, color?: string) => void;
+  onSave: (title: string, settings: TaskSettings, dueDate?: string, pinned?: boolean, repeatDaily?: boolean, color?: string, allowedDomains?: string[]) => void;
   initialTask?: Task;
 }
 
@@ -25,6 +25,8 @@ export function TaskModal({ isOpen, onClose, onSave, initialTask }: TaskModalPro
   const [pinned, setPinned] = useState(false);
   const [repeatDaily, setRepeatDaily] = useState(false);
   const [taskColor, setTaskColor] = useState(DEFAULT_TASK_COLOR);
+  const [allowedDomains, setAllowedDomains] = useState<string[]>([]);
+  const [domainInput, setDomainInput] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -35,6 +37,7 @@ export function TaskModal({ isOpen, onClose, onSave, initialTask }: TaskModalPro
         setPinned(initialTask.pinned ?? false);
         setRepeatDaily(initialTask.repeatDaily ?? false);
         setTaskColor(initialTask.color || DEFAULT_TASK_COLOR);
+        setAllowedDomains(initialTask.allowedDomains || []);
       } else {
         setTitle('');
         setSettings(DEFAULT_SETTINGS);
@@ -42,16 +45,30 @@ export function TaskModal({ isOpen, onClose, onSave, initialTask }: TaskModalPro
         setPinned(false);
         setRepeatDaily(false);
         setTaskColor(DEFAULT_TASK_COLOR);
+        setAllowedDomains([]);
       }
+      setDomainInput('');
     }
   }, [isOpen, initialTask]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (title.trim()) {
-      onSave(title, settings, dueDate, pinned, repeatDaily, taskColor);
+      onSave(title, settings, dueDate, pinned, repeatDaily, taskColor, allowedDomains);
       onClose();
     }
+  };
+
+  const addDomain = () => {
+    const domain = domainInput.trim().toLowerCase();
+    if (domain && !allowedDomains.includes(domain) && allowedDomains.length < 3) {
+      setAllowedDomains([...allowedDomains, domain]);
+      setDomainInput('');
+    }
+  };
+
+  const removeDomain = (domain: string) => {
+    setAllowedDomains(allowedDomains.filter(d => d !== domain));
   };
 
   return (
@@ -169,6 +186,54 @@ export function TaskModal({ isOpen, onClose, onSave, initialTask }: TaskModalPro
                       </button>
                     ))}
                   </div>
+                </div>
+
+                {/* Allowed Domains (Allowed World) */}
+                <div className="space-y-3">
+                  <label className="text-xs font-bold uppercase tracking-widest text-[#1F4E5A]/50">Allowed Websites (Focus Mode)</label>
+                  <p className="text-xs text-[#1F4E5A]/60">Add 2-3 domains you need for this mission (e.g., github.com)</p>
+                  
+                  {/* Domain Input */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={domainInput}
+                      onChange={(e) => setDomainInput(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && addDomain()}
+                      placeholder="github.com"
+                      className="flex-1 text-sm font-medium text-[#1F4E5A] placeholder-[#1F4E5A]/30 bg-[#F0F4F8] px-3 py-2 rounded-lg border-2 border-transparent focus:border-[#63C5DA] focus:outline-none transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={addDomain}
+                      disabled={allowedDomains.length >= 3}
+                      className="px-4 py-2 bg-[#4ECDC4] text-white text-sm font-bold rounded-lg hover:bg-[#3FB9AE] disabled:bg-[#1F4E5A]/20 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Add
+                    </button>
+                  </div>
+
+                  {/* Domain Tags */}
+                  <div className="flex flex-wrap gap-2">
+                    {allowedDomains.map((domain) => (
+                      <div
+                        key={domain}
+                        className="flex items-center gap-2 bg-[#4ECDC4]/15 border-2 border-[#4ECDC4] px-3 py-1.5 rounded-lg"
+                      >
+                        <span className="text-sm font-bold text-[#1F4E5A]">{domain}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeDomain(domain)}
+                          className="text-[#1F4E5A]/40 hover:text-[#1F4E5A] transition-colors"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  {allowedDomains.length === 0 && (
+                    <p className="text-xs text-[#FF5E5E]/60">No allowed websites yet. Add some to enable focus blocking!</p>
+                  )}
                 </div>
 
                 {/* Divider */}

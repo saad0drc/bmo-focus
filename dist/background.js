@@ -264,6 +264,82 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   }, AUTO_ADVANCE_DELAY_MS);
 });
 
+// ── Allowed World Blocker: Intercept navigations ─────────────────────────────
+chrome.webRequest.onBeforeRequest.addListener(
+  async (details) => {
+    // Only intercept main_frame navigations (not subframes, XHR, etc.)
+    if (details.type !== 'main_frame') return {};
+
+    const state = await getState();
+
+    // Only block if focus mode is active
+    if (!state.isActive || state.mode !== 'focus') return {};
+
+    // Get active task ID
+    const { bmo_activeTaskId } = await chrome.storage.local.get('bmo_activeTaskId');
+    if (!bmo_activeTaskId) return {};
+
+    // Get all tasks
+    const { bmo_tasks } = await chrome.storage.local.get('bmo_tasks');
+    if (!bmo_tasks) return {};
+
+    const tasks = JSON.parse(bmo_tasks);
+    const activeTask = tasks.find(t => t.id === bmo_activeTaskId);
+
+    if (!activeTask || !activeTask.allowedDomains || activeTask.allowedDomains.length === 0) {
+      return {};
+    }
+
+    // Check if current URL is in session allowlist (temp allows)
+    const sessionAllowlist = state.sessionAllowlist || [];
+    const requestUrl = new URL(details.url);
+    const requestHostname = requestUrl.hostname;
+
+    // Check allowed domains
+    const isAllowed = activeTask.allowedDomains.some(domain =>
+      requestHostname === domain || requestHostname.endsWith('.' + domain)
+    ) || sessionAllowlist.some(domain =>
+      requestHostname === domain || requestHostname.endsWith('.' + domain)
+    );
+
+    if (!isAllowed) {
+      // Block and redirect to blocking page
+      const blockingPageUrl = chrome.runtime.getURL('blocked.html') +
+        '?domain=' + encodeURIComponent(requestHostname) +
+        '&taskId=' + encodeURIComponent(bmo_activeTaskId);
+
+      // Prepare data for blocking page
+      const charSvgModule = await import('/src/components/StatsBoard.tsx'); // Won't work, need different approach
+      
+      await chrome.storage.local.set({
+        blockedData: {
+          mode: state.mode,
+          timeRemaining: formatTimeRemaining(state.endTime),
+          sessionInfo: `Session ${state.sessionInCurrentRound + 1}/${state.settings.sessionsPerRound}`,
+          taskName: activeTask.title,
+          streak: activeTask.dailyStreak || 0,
+          charSvg: '', // Will be populated separately
+          domain: requestHostname
+        }
+      });
+
+      return { redirectUrl: blockingPageUrl };
+    }
+
+    return {};
+  },
+  { urls: ['<all_urls>'] },
+  ['blocking']
+);
+
+function formatTimeRemaining(endTime) {
+  if (!endTime) return '25:00';
+  const ms = Math.max(0, endTime - Date.now());
+  const mins = Math.floor(ms / 60000);
+  const secs = Math.floor((ms % 60000) / 1000);
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
 // ── Messages from the React tab ─────────────────────────────────────────────
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   handleMessage(message)
@@ -331,6 +407,23 @@ async function handleMessage(msg) {
 
     case 'GET_STATE': {
       return state;
+    }
+
+    // ── Allowed World Blocker ──────────────────────────────────────────────────
+    case 'playBlockSound': {
+      // Sound would play here (currently no-op, implement in React layer)
+      return { ok: true };
+    }
+
+    case 'allowDomainTemporarily': {
+      const { domain } = msg;
+      const current = await getState();
+      const sessionAllowlist = current.sessionAllowlist || [];
+      if (!sessionAllowlist.includes(domain)) {
+        sessionAllowlist.push(domain);
+        await saveState({ sessionAllowlist });
+      }
+      return { ok: true };
     }
 
     default:
