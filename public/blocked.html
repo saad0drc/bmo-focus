@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BMO - Adventure Quest</title>
+  <title>BMO - Stay Focused</title>
   <style>
     * {
       margin: 0;
@@ -13,576 +13,347 @@
 
     body {
       font-family: 'Comic Sans MS', 'Trebuchet MS', cursive;
-      background: linear-gradient(180deg, #87CEEB 0%, #E0F6FF 50%, #7FCC8F 100%);
+      background: linear-gradient(135deg, #E8F5E9 0%, #F0F4F8 100%);
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
       color: #1F4E5A;
-      overflow: hidden;
-      position: relative;
     }
 
-    /* Landscape background elements */
-    body::before {
-      content: '';
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 200px;
-      background: linear-gradient(180deg, transparent 0%, rgba(127, 204, 143, 0.3) 100%);
-      pointer-events: none;
-      z-index: 0;
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(78, 205, 196, 0.15);
+      border: 3px solid #4ECDC4;
+      padding: 40px;
+      max-width: 900px;
+      width: 90%;
+      display: grid;
+      grid-template-columns: 1fr 2fr 1fr;
+      gap: 40px;
+      align-items: start;
     }
 
-    .page-wrapper {
-      position: relative;
-      z-index: 10;
-      width: 100%;
-      height: 100vh;
+    /* LEFT: BMO Face */
+    .bmo-face {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 300px;
+    }
+
+    .bmo-face svg {
+      width: 240px;
+      height: 240px;
+      animation: bmo-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes bmo-pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    /* CENTER: Task & Message */
+    .center-section {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .task-info {
+      background: linear-gradient(135deg, rgba(78, 205, 196, 0.1), rgba(107, 203, 119, 0.1));
+      padding: 20px;
+      border-radius: 16px;
+      border: 2px solid #4ECDC4;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .task-icon {
+      width: 80px;
+      height: 80px;
       display: flex;
       align-items: center;
       justify-content: center;
+      flex-shrink: 0;
     }
 
-    .parchment-bg {
-      position: absolute;
-      top: -20px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 95%;
-      max-width: 1400px;
-      height: 600px;
-      background: linear-gradient(135deg, #D4AF9A 0%, #E8D4B8 50%, #D4AF9A 100%);
-      border-radius: 40px 40px 20px 20px;
-      box-shadow: 
-        0 20px 60px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2),
-        inset 0 2px 5px rgba(0, 0, 0, 0.1);
-      border: 8px solid #8B6F47;
-      position: relative;
-      z-index: 1;
+    .task-icon svg {
+      width: 100%;
+      height: 100%;
     }
 
-    /* Scroll edge top */
-    .parchment-bg::before {
-      content: '';
-      position: absolute;
-      top: -15px;
-      left: 5%;
-      right: 5%;
-      height: 30px;
-      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 60"><defs><pattern id="wavy" x="0" y="0" width="100" height="60" patternUnits="userSpaceOnUse"><path d="M0,30 Q25,10 50,30 T100,30" stroke="%238B6F47" stroke-width="4" fill="none"/></pattern></defs><rect fill="%23D4AF9A" width="1000" height="60"/><use href="%23wavy" x="0" y="0"/></svg>');
-      background-size: contain;
-      background-repeat: repeat-x;
-      background-position: 0 -10px;
-    }
-
-    /* Scroll edge bottom */
-    .parchment-bg::after {
-      content: '';
-      position: absolute;
-      bottom: -15px;
-      left: 5%;
-      right: 5%;
-      height: 30px;
-      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 60"><defs><pattern id="wavy" x="0" y="0" width="100" height="60" patternUnits="userSpaceOnUse"><path d="M0,30 Q25,50 50,30 T100,30" stroke="%238B6F47" stroke-width="4" fill="none"/></pattern></defs><rect fill="%23D4AF9A" width="1000" height="60"/><use href="%23wavy" x="0" y="0"/></svg>');
-      background-size: contain;
-      background-repeat: repeat-x;
-    }
-
-    /* Wood pole elements */
-    .wood-pole {
-      position: absolute;
-      background: linear-gradient(90deg, #5C3D2E 0%, #7A5C47 50%, #5C3D2E 100%);
-      border: 2px solid #3D2817;
-      border-radius: 8px;
-      box-shadow: inset -2px -2px 4px rgba(0, 0, 0, 0.3);
-    }
-
-    .pole-left {
-      left: 20px;
-      top: -10px;
-      bottom: -10px;
-      width: 16px;
-    }
-
-    .pole-right {
-      right: 20px;
-      top: -10px;
-      bottom: -10px;
-      width: 16px;
-    }
-
-    /* Main container */
-    .container {
-      display: grid;
-      grid-template-columns: 1fr 1.3fr 1fr;
-      gap: 30px;
-      width: 85%;
-      max-width: 1300px;
-      padding: 40px 30px;
-      position: relative;
-      z-index: 2;
-    }
-
-    /* Top banner */
-    .banner {
-      grid-column: 1 / -1;
-      text-align: center;
-      margin-bottom: 10px;
-      position: relative;
-      z-index: 3;
-    }
-
-    .banner-text {
-      font-size: 48px;
+    .task-details h2 {
+      font-size: 24px;
+      color: #1F4E5A;
+      margin-bottom: 8px;
       font-weight: 900;
-      color: #8B0000;
-      text-shadow: 
-        4px 4px 0px rgba(139, 69, 19, 0.5),
-        -2px -2px 0px rgba(255, 255, 255, 0.3);
-      letter-spacing: 3px;
-      font-style: italic;
-      transform: scaleY(1.1);
     }
 
-    /* LEFT PANEL */
-    .left-panel {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      gap: 20px;
-      padding: 20px;
-      background: rgba(0, 0, 0, 0.05);
+    .task-details p {
+      font-size: 14px;
+      color: #1F4E5A;
+      opacity: 0.7;
+    }
+
+    .message-box {
+      background: #FFE4E1;
+      padding: 24px;
       border-radius: 12px;
-      border: 3px solid #8B6F47;
-    }
-
-    .adventure-label {
+      border-left: 5px solid #FF5E5E;
+      text-align: center;
       font-size: 18px;
       font-weight: bold;
-      color: #8B0000;
-      text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      background: linear-gradient(90deg, #FFB84D 0%, #FFC66D 100%);
-      padding: 8px 16px;
-      border-radius: 8px;
-      border: 2px solid #8B4513;
-      text-align: center;
+      color: #1F4E5A;
+      line-height: 1.6;
     }
 
-    .timer {
-      font-size: 64px;
-      font-weight: 900;
-      font-variant-numeric: tabular-nums;
-      font-family: 'Courier New', monospace;
-      color: #FF00FF;
-      text-shadow: 
-        0 0 10px rgba(255, 0, 255, 0.6),
-        0 0 20px rgba(255, 0, 255, 0.3),
-        2px 2px 0px rgba(0, 0, 0, 0.2);
-      background: linear-gradient(135deg, #2F5A6F 0%, #1F3F5A 100%);
-      padding: 16px 24px;
+    .button {
+      background: linear-gradient(135deg, #4ECDC4, #1F4E5A);
+      color: white;
+      border: none;
+      padding: 14px 28px;
       border-radius: 12px;
-      border: 4px solid #4ECDC4;
-      letter-spacing: 4px;
-      animation: timer-glow 1.5s ease-in-out infinite;
-      text-align: center;
-    }
-
-    @keyframes timer-glow {
-      0%, 100% { 
-        text-shadow: 
-          0 0 10px rgba(255, 0, 255, 0.6),
-          0 0 20px rgba(255, 0, 255, 0.3),
-          2px 2px 0px rgba(0, 0, 0, 0.2);
-      }
-      50% { 
-        text-shadow: 
-          0 0 15px rgba(255, 0, 255, 0.8),
-          0 0 30px rgba(255, 0, 255, 0.5),
-          2px 2px 0px rgba(0, 0, 0, 0.2);
-      }
-    }
-
-    .session-info {
-      font-size: 15px;
       font-weight: bold;
-      color: #2F5A6F;
-      background: rgba(107, 203, 119, 0.2);
-      padding: 12px 16px;
-      border-radius: 8px;
-      border: 2px solid #6BCB77;
-      text-align: center;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
       text-transform: uppercase;
       letter-spacing: 1px;
     }
 
-    /* CENTER PANEL */
-    .center-panel {
+    .button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(78, 205, 196, 0.3);
+    }
+
+    /* RIGHT: Stats */
+    .stats-section {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      padding: 20px;
-      background: rgba(255, 255, 255, 0.1);
+      gap: 24px;
+    }
+
+    .stat-box {
+      background: rgba(78, 205, 196, 0.08);
+      padding: 16px;
       border-radius: 12px;
-      border: 3px dashed #8B6F47;
-    }
-
-    .heart-locket {
-      position: relative;
-      width: 160px;
-      height: 160px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      animation: locket-pulse 1.2s ease-in-out infinite;
-      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
-    }
-
-    @keyframes locket-pulse {
-      0%, 100% { transform: scale(1) rotate(0deg); }
-      50% { transform: scale(1.06) rotate(2deg); }
-    }
-
-    .heart-locket svg {
-      width: 100%;
-      height: 100%;
-    }
-
-    .mission-box {
-      background: linear-gradient(135deg, #A8D5A8 0%, #9ACC9F 100%);
-      padding: 16px 20px;
-      border-radius: 12px;
-      border: 3px solid #6B8E6B;
+      border: 2px solid rgba(78, 205, 196, 0.3);
       text-align: center;
-      box-shadow: inset -2px -2px 4px rgba(0, 0, 0, 0.1);
     }
 
-    .mission-label {
+    .stat-label {
       font-size: 12px;
       font-weight: bold;
-      color: #2F4A2F;
+      color: #1F4E5A;
+      opacity: 0.6;
       text-transform: uppercase;
       letter-spacing: 1px;
-      margin-bottom: 4px;
-    }
-
-    .task-name {
-      font-size: 20px;
-      font-weight: 900;
-      color: #1F4E5A;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.5);
-    }
-
-    .diversion-message {
-      background: linear-gradient(135deg, #E8D4B8 0%, #DCC5A0 100%);
-      padding: 14px 18px;
-      border-radius: 10px;
-      border: 2px solid #8B6F47;
-      font-size: 15px;
-      font-weight: bold;
-      color: #2F4A2F;
-      text-align: center;
-      line-height: 1.4;
-      box-shadow: inset -1px -1px 2px rgba(0, 0, 0, 0.1);
-    }
-
-    .hero-button {
-      background: linear-gradient(135deg, #FFD93D 0%, #FFC700 100%);
-      border: 3px solid #8B4513;
-      padding: 14px 32px;
-      border-radius: 12px;
-      font-weight: 900;
-      font-size: 16px;
-      color: #2F4A2F;
-      cursor: pointer;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.4);
-      transition: all 0.2s ease;
-      box-shadow: 
-        0 6px 12px rgba(0, 0, 0, 0.2),
-        inset -2px -2px 4px rgba(0, 0, 0, 0.1);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .hero-button::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-      transition: left 0.5s ease;
-      animation: shine 3s infinite;
-    }
-
-    @keyframes shine {
-      0% { left: -100%; }
-      50% { left: 100%; }
-      100% { left: 100%; }
-    }
-
-    .hero-button:hover {
-      transform: translateY(-3px);
-      box-shadow: 
-        0 8px 16px rgba(0, 0, 0, 0.3),
-        inset -2px -2px 4px rgba(0, 0, 0, 0.15);
-    }
-
-    .hero-button:active {
-      transform: translateY(-1px);
-    }
-
-    /* RIGHT PANEL */
-    .right-panel {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 24px;
-      padding: 20px;
-      background: rgba(0, 0, 0, 0.05);
-      border-radius: 12px;
-      border: 3px solid #8B6F47;
-    }
-
-    .treasure-chest {
-      position: relative;
-      width: 140px;
-      height: 120px;
-      background: linear-gradient(135deg, #D4464F 0%, #B8363F 100%);
-      border-radius: 8px 8px 4px 4px;
-      border: 4px solid #8B3838;
-      box-shadow: 
-        inset -4px -4px 8px rgba(0, 0, 0, 0.3),
-        0 8px 16px rgba(0, 0, 0, 0.2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      animation: chest-bounce 0.6s ease-in-out infinite;
-    }
-
-    @keyframes chest-bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-6px); }
-    }
-
-    .treasure-chest::before {
-      content: '';
-      position: absolute;
-      top: -8px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 80%;
-      height: 16px;
-      background: linear-gradient(90deg, #B8B8B8 0%, #D4D4D4 50%, #B8B8B8 100%);
-      border-radius: 4px;
-      border: 2px solid #808080;
-    }
-
-    .treasure-chest::after {
-      content: '';
-      position: absolute;
-      bottom: -4px;
-      left: 0;
-      right: 0;
-      height: 8px;
-      background: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);
-      border-radius: 0 0 4px 4px;
-    }
-
-    .treasure-open {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 50%;
-      background: linear-gradient(135deg, #FFD93D 0%, #FFC700 100%);
-      border-radius: 8px 8px 0 0;
-      border-bottom: 3px solid #8B4513;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 32px;
-      font-weight: bold;
-      animation: open-bounce 1s ease-in-out infinite;
-      color: #FF00FF;
-      text-shadow: 0 0 8px rgba(255, 0, 255, 0.4);
-    }
-
-    @keyframes open-bounce {
-      0%, 100% { transform: rotateX(0deg); }
-      50% { transform: rotateX(-30deg); }
-    }
-
-    .streak-counter {
-      text-align: center;
-    }
-
-    .streak-label {
-      font-size: 16px;
-      font-weight: bold;
-      color: #8B0000;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.1);
       margin-bottom: 8px;
     }
 
-    .streak-number {
-      font-size: 52px;
+    .stat-value {
+      font-size: 36px;
       font-weight: 900;
-      color: #FFD93D;
-      text-shadow: 
-        0 0 8px rgba(255, 217, 61, 0.4),
-        2px 2px 0px rgba(0, 0, 0, 0.2);
-      font-family: 'Comic Sans MS', cursive;
-      letter-spacing: 2px;
+      color: #4ECDC4;
+      text-shadow: 0 2px 4px rgba(78, 205, 196, 0.2);
     }
 
-    .streak-motto {
-      font-size: 12px;
-      font-weight: bold;
-      color: #1F4E5A;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-top: 10px;
-      background: rgba(255, 217, 61, 0.2);
-      padding: 8px 12px;
-      border-radius: 6px;
+    .streak-box {
+      background: linear-gradient(135deg, rgba(255, 217, 61, 0.15), rgba(255, 217, 61, 0.05));
       border: 2px solid #FFD93D;
     }
 
-    /* FOOTER MESSAGE */
-    .footer-message {
-      grid-column: 1 / -1;
-      text-align: center;
-      font-size: 13px;
-      font-weight: bold;
-      color: #8B0000;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-top: 10px;
+    .streak-box .stat-value {
+      color: #FFD93D;
     }
 
-    /* Loading/Debug info */
-    #storageDebug {
-      position: fixed;
-      bottom: 10px;
-      right: 10px;
-      font-size: 10px;
-      color: #666;
-      background: rgba(255, 255, 255, 0.7);
-      padding: 8px;
-      border-radius: 4px;
-      max-width: 200px;
-      word-break: break-all;
+    .seven-days {
+      background: rgba(78, 205, 196, 0.08);
+      padding: 16px;
+      border-radius: 12px;
+      border: 2px solid rgba(78, 205, 196, 0.3);
     }
+
+    .seven-days-label {
+      font-size: 12px;
+      font-weight: bold;
+      color: #1F4E5A;
+      opacity: 0.6;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+
+    .days-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+    }
+
+    .day-bar {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .day-label {
+      font-size: 10px;
+      font-weight: bold;
+      color: #1F4E5A;
+      opacity: 0.5;
+    }
+
+    .day-value {
+      height: 40px;
+      background: linear-gradient(180deg, #4ECDC4, #1F4E5A);
+      border-radius: 4px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      font-size: 10px;
+      color: white;
+      font-weight: bold;
+      padding-bottom: 2px;
+      min-height: 8px;
+    }
+
+    .day-value.zero {
+      background: #E8F5E9;
+      border: 1px solid #ddd;
+    }
+
+    .timer {
+      background: linear-gradient(135deg, #FF5E5E, #E63946);
+      color: white;
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: bold;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 2px;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+
+      .bmo-face svg {
+        width: 160px;
+        height: 160px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="page-wrapper">
-    <div class="parchment-bg">
-      <div class="wood-pole pole-left"></div>
-      <div class="wood-pole pole-right"></div>
-      
-      <div class="container">
-        <!-- BANNER -->
-        <div class="banner">
-          <div class="banner-text">⚔️ BMOFocus ⚔️</div>
+  <div class="container">
+    <!-- LEFT: BMO Face -->
+    <div class="bmo-face" id="bmoFace">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+        <!-- BMO Screen/Body -->
+        <rect x="20" y="20" width="216" height="216" rx="24" fill="#4ECDC4" stroke="#1F4E5A" stroke-width="8"/>
+        <!-- Screen Display -->
+        <rect x="40" y="40" width="176" height="176" rx="16" fill="#E8F5E9" stroke="#1F4E5A" stroke-width="6"/>
+        <!-- Left Eye -->
+        <g>
+          <rect x="55" y="65" width="45" height="55" rx="4" fill="#1F4E5A"/>
+          <rect x="62" y="72" width="18" height="22" fill="#E8F5E9" rx="2"/>
+          <circle cx="71" cy="83" r="4" fill="#1F4E5A"/>
+        </g>
+        <!-- Right Eye -->
+        <g>
+          <rect x="156" y="65" width="45" height="55" rx="4" fill="#1F4E5A"/>
+          <rect x="163" y="72" width="18" height="22" fill="#E8F5E9" rx="2"/>
+          <circle cx="172" cy="83" r="4" fill="#1F4E5A"/>
+        </g>
+        <!-- Mouth - happy curve -->
+        <path d="M 70 130 Q 128 150 186 130" stroke="#1F4E5A" stroke-width="8" fill="none" stroke-linecap="round"/>
+        <!-- Buttons on side -->
+        <circle cx="35" cy="140" r="6" fill="#1F4E5A"/>
+        <circle cx="35" cy="165" r="6" fill="#1F4E5A"/>
+      </svg>
+    </div>
+
+    <!-- CENTER: Task & Message -->
+    <div class="center-section">
+      <div class="task-info">
+        <div class="task-icon" id="taskIcon">
+          <!-- SVG will be inserted here -->
         </div>
-
-        <!-- LEFT PANEL -->
-        <div class="left-panel">
-          <div class="adventure-label">ADVENTURE LOG: <span id="sessionDisplay">2/4</span></div>
-          <div class="timer" id="timer">25:00</div>
-          <div class="session-info" id="sessionInfo">Pomodoro in progress</div>
+        <div class="task-details">
+          <h2 id="taskName">Study TOP</h2>
+          <p id="sessionInfo">Session 2/4 • Focus Mode</p>
         </div>
+      </div>
 
-        <!-- CENTER PANEL -->
-        <div class="center-panel">
-          <div class="heart-locket" id="locket">
-            <svg width="160" height="160" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-              <!-- Outer locket frame (gold) -->
-              <defs>
-                <radialGradient id="locketGold" cx="50%" cy="30%">
-                  <stop offset="0%" style="stop-color:#FFE4B5;stop-opacity:1" />
-                  <stop offset="100%" style="stop-color:#DAA520;stop-opacity:1" />
-                </radialGradient>
-              </defs>
-              <circle cx="100" cy="100" r="95" fill="url(#locketGold)" stroke="#8B4513" stroke-width="3"/>
-              <!-- Inner circle for character -->
-              <circle cx="100" cy="100" r="75" fill="#E8F5E9" stroke="#1F4E5A" stroke-width="2"/>
-              <!-- Character SVG will be inserted here via JS -->
-            </svg>
-            <div id="charSvgContainer" style="position: absolute; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center;"></div>
-          </div>
+      <div class="message-box" id="messageBox">
+        Stay focused, friend 💛
+      </div>
 
-          <div class="mission-box">
-            <div class="mission-label">Current Mission:</div>
-            <div class="task-name" id="taskName">STUDY TOP</div>
-          </div>
+      <div class="timer" id="timer">25:00 remaining</div>
 
-          <div class="diversion-message" id="diversionMsg">
-            HEY... BMO detects a non-approved diversion...<br>
-            BMO is watching. 👀
-          </div>
+      <button class="button" id="allowBtn">Allow for this session</button>
+    </div>
 
-          <button class="hero-button" id="allowBtn">COMMENCE DIVERSION</button>
-        </div>
+    <!-- RIGHT: Stats -->
+    <div class="stats-section">
+      <div class="stat-box streak-box">
+        <div class="stat-label">Day Streak</div>
+        <div class="stat-value" id="streak">12</div>
+      </div>
 
-        <!-- RIGHT PANEL -->
-        <div class="right-panel">
-          <div class="treasure-chest">
-            <div class="treasure-open">💎</div>
-          </div>
-          
-          <div class="streak-counter">
-            <div class="streak-label">Adventure Streak</div>
-            <div class="streak-number" id="streak">12</div>
-            <div class="streak-motto">don't break the chain</div>
-          </div>
-        </div>
-
-        <!-- FOOTER -->
-        <div class="footer-message">
-          ⚡ DON'T UN-INVITE US! ⚡
+      <div class="seven-days">
+        <div class="seven-days-label">Last 7 Days</div>
+        <div class="days-grid" id="daysGrid">
+          <!-- Day bars will be inserted here -->
         </div>
       </div>
     </div>
   </div>
 
-  <div id="storageDebug"></div>
-
   <script src="characterSvgs.js"></script>
   <script>
     let blockData = {};
     let timerInterval = null;
-    let timerEndTime = null;
 
-    // Load and refresh data from chrome.storage
+    // Character-specific messages
+    const characterMessages = {
+      '#4ECDC4': [
+        "Stay focused, friend 💛",
+        "Let's finish this mission together 🤝",
+        "You got this! 💪"
+      ],
+      '#5B9BD5': [
+        "Dude, keep it together! 🎩",
+        "This is your mathematical destiny! 📐",
+        "Don't break the chain! 🔗"
+      ],
+      '#FFB6C1': [
+        "Oh my Glob! Get back to work! 👑",
+        "This is unacceptable, bestie! 💎",
+        "Focus! It's mathematical! ✨"
+      ],
+      '#FF6B9D': [
+        "Yo, stay on task! 🔥",
+        "Stop fooling around! ⚡",
+        "Get back in there! 💯"
+      ],
+      '#9370DB': [
+        "Come on, focus! 🌙",
+        "Get back to your mission! 🎭",
+        "No distractions! 🚫"
+      ]
+    };
+
     function loadAllData() {
-      chrome.storage.local.get(['bmo_tasks', 'bmo_activeTaskId', 'bmo_timer_state'], (result) => {
+      chrome.storage.local.get(['bmo_tasks', 'bmo_activeTaskId', 'bmo_timer_state', 'bmo_sessions'], (result) => {
         try {
-          console.log('[Blocker] Storage snapshot:', {
-            tasks: result.bmo_tasks ? 'exists' : 'missing',
-            activeTaskId: result.bmo_activeTaskId,
-            timerState: result.bmo_timer_state
-          });
-
-          // Parse tasks
           const tasks = result.bmo_tasks 
             ? (typeof result.bmo_tasks === 'string' ? JSON.parse(result.bmo_tasks) : result.bmo_tasks)
             : [];
@@ -590,38 +361,29 @@
           const activeTaskId = result.bmo_activeTaskId;
           const activeTask = tasks.find(t => t.id === activeTaskId);
           const timerState = result.bmo_timer_state;
+          const sessions = result.bmo_sessions 
+            ? (typeof result.bmo_sessions === 'string' ? JSON.parse(result.bmo_sessions) : result.bmo_sessions)
+            : [];
 
           if (!activeTask || !timerState) {
-            console.error('[Blocker] Missing active task or timer state', { activeTask: !!activeTask, timerState: !!timerState });
+            console.error('[Blocker] Missing active task or timer state');
             return;
           }
 
-          console.log('[Blocker] Found active task:', { title: activeTask.title, dailyStreak: activeTask.dailyStreak });
-          console.log('[Blocker] Timer state:', { mode: timerState.mode, sessionInCurrentRound: timerState.sessionInCurrentRound, endTime: timerState.endTime });
-
-          // Build blockData from REAL sources
           blockData = {
             mode: timerState.mode || 'focus',
             taskName: activeTask.title,
             streak: activeTask.dailyStreak !== undefined ? activeTask.dailyStreak : 0,
-            completedPomodoros: activeTask.completedPomodoros || 0,
             sessionInCurrentRound: timerState.sessionInCurrentRound || 0,
             sessionsPerRound: timerState.settings?.sessionsPerRound || 4,
             endTime: timerState.endTime,
             taskColor: activeTask.color || '#4ECDC4',
             charSvg: CHARACTER_SVGS[activeTask.color] || CHARACTER_SVGS['#4ECDC4'],
-            domain: timerState.blockedDomain || 'unknown'
+            domain: timerState.blockedDomain || 'unknown',
+            sessions: sessions
           };
 
-          console.log('[Blocker] blockData ready:', blockData);
-
-          // Only update UI on initial load
-          if (timerEndTime === null) {
-            updateUI();
-            playBlockSound();
-            timerEndTime = blockData.endTime;
-          }
-
+          updateUI();
           updateTimer();
         } catch (e) {
           console.error('[Blocker] Failed to load data:', e);
@@ -629,142 +391,66 @@
       });
     }
 
-    // Load on page open
-    loadAllData();
-    
-    // Refresh data every 2 seconds to catch changes
-    setInterval(loadAllData, 2000);
+    function getLast7DaysData() {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const data = [];
+
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toLocaleDateString('en-CA');
+        
+        const count = (blockData.sessions || []).filter(s => s.date === dateStr).length;
+        data.push({ date: dateStr, count: count, dayLabel: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()] });
+      }
+
+      return data;
+    }
 
     function updateUI() {
       const mode = blockData.mode || 'focus';
 
-      // Update session display
-      const sessionStr = `${(blockData.sessionInCurrentRound || 0) + 1}/${blockData.sessionsPerRound || 4}`;
-      document.getElementById('sessionDisplay').textContent = sessionStr;
+      // Update task name and session
+      document.getElementById('taskName').textContent = blockData.taskName || 'Current Task';
+      const modeText = mode === 'focus' ? 'Focus Mode' : mode === 'shortBreak' ? 'Short Break' : 'Long Break';
+      document.getElementById('sessionInfo').textContent = 
+        `Session ${(blockData.sessionInCurrentRound || 0) + 1}/${blockData.sessionsPerRound || 4} • ${modeText}`;
 
-      // Update session info text
-      const sessionMessages = {
-        focus: 'Focus Mode Active - Distractions Not Allowed!',
-        shortBreak: 'Short Break Time - Relax a Bit',
-        longBreak: 'Long Break Time - Enjoy Your Rest'
-      };
-      const sessionKey = mode === 'focus' ? 'focus' : mode === 'shortBreak' ? 'shortBreak' : 'longBreak';
-      document.getElementById('sessionInfo').textContent = sessionMessages[sessionKey] || sessionMessages.focus;
-
-      // Insert character SVG into locket
-      if (blockData.charSvg && CHARACTER_SVGS[blockData.taskColor]) {
-        const container = document.getElementById('charSvgContainer');
-        container.innerHTML = CHARACTER_SVGS[blockData.taskColor];
+      // Update character SVG
+      if (blockData.charSvg) {
+        const container = document.getElementById('taskIcon');
+        container.innerHTML = blockData.charSvg;
         const svg = container.querySelector('svg');
         if (svg) {
-          svg.style.width = '120px';
-          svg.style.height = '120px';
+          svg.style.width = '80px';
+          svg.style.height = '80px';
         }
       }
 
-      // Set task name
-      document.getElementById('taskName').textContent = blockData.taskName || 'Current Task';
+      // Update message based on character
+      const messages = characterMessages[blockData.taskColor] || characterMessages['#4ECDC4'];
+      const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+      document.getElementById('messageBox').textContent = randomMsg;
 
-      // Set REAL streak from active task
+      // Update streak
       document.getElementById('streak').textContent = blockData.streak || '0';
+
+      // Update 7-day chart
+      const last7Days = getLast7DaysData();
+      const maxCount = Math.max(...last7Days.map(d => d.count), 1);
       
-      // Set BMO message based on mode
-      const messages = {
-        focus: [
-          "HEY... BMO detects a non-approved diversion...\nBMO is watching. 👀",
-          "This isn't part of the mission, friend 💛",
-          "Mission first... always 🎯",
-          "Let's focus together 🤝"
-        ],
-        shortBreak: [
-          "Take a breath... but stay close 💚",
-          "Break time! Don't wander too far 🌳",
-          "See you in a few 👋"
-        ],
-        longBreak: [
-          "You earned this! Enjoy ✨",
-          "Rest up, we'll be back soon 🌙",
-          "Recharge those batteries 🔋"
-        ]
-      };
-      
-      const messageList = messages[sessionKey] || messages.focus;
-      const randomMsg = messageList[Math.floor(Math.random() * messageList.length)];
-      document.getElementById('diversionMsg').textContent = randomMsg;
-
-      // Apply locket animation
-      const locket = document.getElementById('locket');
-      locket.style.animation = 'none';
-      void locket.offsetWidth; // Trigger reflow
-      locket.style.animation = 'locket-pulse 1.2s ease-in-out infinite';
+      const daysGrid = document.getElementById('daysGrid');
+      daysGrid.innerHTML = last7Days.map(day => `
+        <div class="day-bar">
+          <div class="day-label">${day.dayLabel}</div>
+          <div class="day-value ${day.count === 0 ? 'zero' : ''}" style="height: ${day.count === 0 ? '8px' : Math.max(8, (day.count / maxCount) * 40) + 'px'}">
+            ${day.count > 0 ? day.count : ''}
+          </div>
+        </div>
+      `).join('');
     }
 
-    function playBlockSound() {
-      // Blocked/crack sound via Web Audio API
-      try {
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const now = audioContext.currentTime;
-        
-        // Crack sound - short high-low burst
-        const osc = audioContext.createOscillator();
-        const gain = audioContext.createGain();
-        
-        osc.connect(gain);
-        gain.connect(audioContext.destination);
-        
-        osc.frequency.setValueAtTime(800, now);
-        osc.frequency.exponentialRampToValueAtTime(200, now + 0.05);
-        
-        gain.gain.setValueAtTime(0.15, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
-        
-        osc.start(now);
-        osc.stop(now + 0.05);
-
-        // Second tone
-        const osc2 = audioContext.createOscillator();
-        const gain2 = audioContext.createGain();
-        
-        osc2.connect(gain2);
-        gain2.connect(audioContext.destination);
-        
-        osc2.frequency.setValueAtTime(200, now + 0.06);
-        gain2.gain.setValueAtTime(0.12, now + 0.06);
-        gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.16);
-        
-        osc2.start(now + 0.06);
-        osc2.stop(now + 0.16);
-      } catch (e) {
-        console.error('Failed to play block sound:', e);
-      }
-    }
-
-    function playHealSound() {
-      // Heal sound - pop/recovery via Web Audio API
-      try {
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const now = audioContext.currentTime;
-        
-        const osc = audioContext.createOscillator();
-        const gain = audioContext.createGain();
-        
-        osc.connect(gain);
-        gain.connect(audioContext.destination);
-        
-        osc.frequency.setValueAtTime(600, now);
-        osc.frequency.exponentialRampToValueAtTime(1200, now + 0.08);
-        
-        gain.gain.setValueAtTime(0.15, now);
-        gain.gain.exponentialRampToValueAtTime(0, now + 0.15);
-        
-        osc.start(now);
-        osc.stop(now + 0.15);
-      } catch (e) {
-        console.error('Failed to play heal sound:', e);
-      }
-    }
-
-    // Real-time timer updates - calculate locally for smooth display
     function updateTimer() {
       if (!blockData.endTime) return;
       
@@ -772,29 +458,29 @@
       const timeLeftMs = Math.max(0, blockData.endTime - now);
       const mins = Math.floor(timeLeftMs / 60000);
       const secs = Math.floor((timeLeftMs % 60000) / 1000);
-      const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')} remaining`;
       document.getElementById('timer').textContent = formatted;
     }
 
-    // Update timer smoothly every 100ms
+    // Load initially
+    loadAllData();
+    setInterval(loadAllData, 2000);
+    
+    // Update timer every 100ms
     timerInterval = setInterval(updateTimer, 100);
 
-    // Allow for this session button
+    // Allow button
     document.getElementById('allowBtn').addEventListener('click', () => {
       if (window.chrome && window.chrome.extension) {
-        const domain = blockData.domain;
         chrome.runtime.sendMessage({ 
           action: 'allowDomainTemporarily', 
-          domain: domain 
+          domain: blockData.domain 
         }, () => {
-          playHealSound();
-          // Close the tab or go back
           setTimeout(() => window.history.back(), 200);
         });
       }
     });
 
-    // Clean up on unload
     window.addEventListener('beforeunload', () => {
       if (timerInterval) clearInterval(timerInterval);
     });
