@@ -58,7 +58,7 @@ export default function App() {
   // Compute daily stats for history modal
   const dailyStats = useMemo(() => computeAllDailyStats(sessions), [sessions]);
 
-  // Persist activeTaskId to localStorage so timer callbacks work after tab reopens
+  // Persist activeTaskId to localStorage and chrome.storage.local
   useEffect(() => {
     try {
       const saved = localStorage.getItem('bmo_activeTaskId');
@@ -70,6 +70,10 @@ export default function App() {
 
   useEffect(() => {
     localStorage.setItem('bmo_activeTaskId', activeTaskId || '');
+    // Also sync to chrome.storage.local for background service worker (Allowed World blocker)
+    if (typeof chrome?.storage?.local?.set === 'function') {
+      chrome.storage.local.set({ bmo_activeTaskId: activeTaskId || '' });
+    }
   }, [activeTaskId]);
 
   // Update favicon color based on active task

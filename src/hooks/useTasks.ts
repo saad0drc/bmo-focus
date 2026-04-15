@@ -138,14 +138,15 @@ function loadTasks(): Task[] {
 }
 
 function persist(tasks: Task[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  const tasksJson = JSON.stringify(tasks);
+  localStorage.setItem(STORAGE_KEY, tasksJson);
   
-  // Also backup to Chrome storage for safety
+  // Also sync to Chrome storage for background service worker (Allowed World blocker)
   if (typeof chrome !== 'undefined' && chrome.storage?.local) {
     try {
-      chrome.storage.local.set({ [STORAGE_KEY]: tasks });
+      chrome.storage.local.set({ [STORAGE_KEY]: tasksJson });
     } catch (e) {
-      console.warn('[BMO] Chrome storage backup failed for tasks');
+      console.warn('[BMO] Chrome storage sync failed for tasks');
     }
   }
 }
