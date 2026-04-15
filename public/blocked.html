@@ -12,305 +12,253 @@
     }
 
     body {
-      font-family: 'Comic Sans MS', 'Trebuchet MS', cursive;
-      background: linear-gradient(135deg, #E8F5E9 0%, #F0F4F8 100%);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #E8F5E9 0%, #D4F1E8 100%);
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
       color: #1F4E5A;
+      padding: 20px;
     }
 
-    .container {
-      background: rgba(255, 255, 255, 0.95);
+    .card {
+      background: white;
       border-radius: 24px;
-      box-shadow: 0 20px 60px rgba(78, 205, 196, 0.15);
-      border: 3px solid #4ECDC4;
-      padding: 40px;
-      max-width: 900px;
-      width: 90%;
-      display: grid;
-      grid-template-columns: 1fr 2fr 1fr;
-      gap: 40px;
-      align-items: start;
-    }
-
-    /* LEFT: BMO Face */
-    .bmo-face {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 300px;
-    }
-
-    .bmo-face svg {
-      width: 240px;
-      height: 240px;
-      animation: bmo-pulse 2s ease-in-out infinite;
-    }
-
-    @keyframes bmo-pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
-
-    /* CENTER: Task & Message */
-    .center-section {
+      padding: 48px 40px;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
       display: flex;
       flex-direction: column;
+      align-items: center;
       gap: 24px;
-    }
-
-    .task-info {
-      background: linear-gradient(135deg, rgba(78, 205, 196, 0.1), rgba(107, 203, 119, 0.1));
-      padding: 20px;
-      border-radius: 16px;
-      border: 2px solid #4ECDC4;
-      display: flex;
-      gap: 16px;
-      align-items: center;
-    }
-
-    .task-icon {
-      width: 80px;
-      height: 80px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .task-icon svg {
-      width: 100%;
-      height: 100%;
-    }
-
-    .task-details h2 {
-      font-size: 24px;
-      color: #1F4E5A;
-      margin-bottom: 8px;
-      font-weight: 900;
-    }
-
-    .task-details p {
-      font-size: 14px;
-      color: #1F4E5A;
-      opacity: 0.7;
-    }
-
-    .message-box {
-      background: #FFE4E1;
-      padding: 24px;
-      border-radius: 12px;
-      border-left: 5px solid #FF5E5E;
       text-align: center;
-      font-size: 18px;
-      font-weight: bold;
-      color: #1F4E5A;
-      line-height: 1.6;
     }
 
-    .button {
-      background: linear-gradient(135deg, #4ECDC4, #1F4E5A);
-      color: white;
-      border: none;
-      padding: 14px 28px;
-      border-radius: 12px;
-      font-weight: bold;
-      font-size: 16px;
-      cursor: pointer;
-      transition: all 0.3s ease;
+    .title {
+      font-size: 28px;
+      font-weight: 800;
+      color: #1F4E5A;
+      letter-spacing: -0.5px;
+    }
+
+    .heart {
+      width: 100px;
+      height: 100px;
+      animation: heartbeat 1.5s ease-in-out infinite;
+    }
+
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    .task-name {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1F4E5A;
       text-transform: uppercase;
       letter-spacing: 1px;
     }
 
-    .button:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 20px rgba(78, 205, 196, 0.3);
-    }
-
-    /* RIGHT: Stats */
-    .stats-section {
+    .character-icon {
+      width: 90px;
+      height: 90px;
       display: flex;
-      flex-direction: column;
-      gap: 24px;
+      align-items: center;
+      justify-content: center;
+      background: rgba(78, 205, 196, 0.08);
+      border-radius: 16px;
+      border: 2px solid #4ECDC4;
     }
 
-    .stat-box {
-      background: rgba(78, 205, 196, 0.08);
-      padding: 16px;
-      border-radius: 12px;
-      border: 2px solid rgba(78, 205, 196, 0.3);
+    .character-icon svg {
+      width: 80px;
+      height: 80px;
+    }
+
+    .message {
+      font-size: 16px;
+      color: #1F4E5A;
+      line-height: 1.6;
+      opacity: 0.85;
+      margin: 8px 0;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      width: 100%;
+      margin-top: 16px;
+      padding-top: 24px;
+      border-top: 1px solid #f0f0f0;
+    }
+
+    .stat {
       text-align: center;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: #4ECDC4;
+      display: block;
     }
 
     .stat-label {
       font-size: 12px;
-      font-weight: bold;
+      font-weight: 600;
       color: #1F4E5A;
       opacity: 0.6;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
+    }
+
+    .timer {
+      font-size: 18px;
+      font-weight: 700;
+      color: #FF5E5E;
       letter-spacing: 1px;
-      margin-bottom: 8px;
+      font-family: 'Courier New', monospace;
+      margin-top: 4px;
     }
 
-    .stat-value {
-      font-size: 36px;
-      font-weight: 900;
-      color: #4ECDC4;
-      text-shadow: 0 2px 4px rgba(78, 205, 196, 0.2);
-    }
-
-    .streak-box {
-      background: linear-gradient(135deg, rgba(255, 217, 61, 0.15), rgba(255, 217, 61, 0.05));
-      border: 2px solid #FFD93D;
-    }
-
-    .streak-box .stat-value {
-      color: #FFD93D;
-    }
-
-    .seven-days {
-      background: rgba(78, 205, 196, 0.08);
-      padding: 16px;
+    .seven-days-mini {
+      width: 100%;
+      margin-top: 16px;
+      padding: 12px;
+      background: rgba(78, 205, 196, 0.04);
       border-radius: 12px;
-      border: 2px solid rgba(78, 205, 196, 0.3);
+      border: 1px solid rgba(78, 205, 196, 0.1);
     }
 
     .seven-days-label {
-      font-size: 12px;
-      font-weight: bold;
+      font-size: 11px;
+      font-weight: 600;
       color: #1F4E5A;
-      opacity: 0.6;
+      opacity: 0.5;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
     }
 
-    .days-grid {
+    .days-mini {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: 6px;
-    }
-
-    .day-bar {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
       gap: 4px;
     }
 
-    .day-label {
-      font-size: 10px;
-      font-weight: bold;
+    .day-mini {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .day-label-mini {
+      font-size: 9px;
+      font-weight: 600;
       color: #1F4E5A;
       opacity: 0.5;
     }
 
-    .day-value {
-      height: 40px;
+    .day-bar-mini {
+      width: 100%;
+      height: 20px;
       background: linear-gradient(180deg, #4ECDC4, #1F4E5A);
-      border-radius: 4px;
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      font-size: 10px;
-      color: white;
-      font-weight: bold;
-      padding-bottom: 2px;
-      min-height: 8px;
+      border-radius: 3px;
+      min-height: 4px;
     }
 
-    .day-value.zero {
-      background: #E8F5E9;
+    .day-bar-mini.zero {
+      background: #f0f0f0;
       border: 1px solid #ddd;
     }
 
-    .timer {
-      background: linear-gradient(135deg, #FF5E5E, #E63946);
+    .day-count-mini {
+      font-size: 8px;
+      font-weight: 700;
       color: white;
-      padding: 12px;
-      border-radius: 8px;
-      text-align: center;
-      font-size: 14px;
-      font-weight: bold;
-      font-family: 'Courier New', monospace;
-      letter-spacing: 2px;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
     }
 
-    @media (max-width: 768px) {
-      .container {
-        grid-template-columns: 1fr;
-        gap: 24px;
+    @media (max-width: 480px) {
+      .card {
+        padding: 32px 24px;
+        gap: 20px;
       }
 
-      .bmo-face svg {
-        width: 160px;
-        height: 160px;
+      .title {
+        font-size: 24px;
+      }
+
+      .heart {
+        width: 80px;
+        height: 80px;
+      }
+
+      .task-name {
+        font-size: 20px;
+      }
+
+      .character-icon {
+        width: 80px;
+        height: 80px;
+      }
+
+      .character-icon svg {
+        width: 70px;
+        height: 70px;
       }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <!-- LEFT: BMO Face -->
-    <div class="bmo-face" id="bmoFace">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
-        <!-- BMO Screen/Body -->
-        <rect x="20" y="20" width="216" height="216" rx="24" fill="#4ECDC4" stroke="#1F4E5A" stroke-width="8"/>
-        <!-- Screen Display -->
-        <rect x="40" y="40" width="176" height="176" rx="16" fill="#E8F5E9" stroke="#1F4E5A" stroke-width="6"/>
-        <!-- Left Eye -->
-        <g>
-          <rect x="55" y="65" width="45" height="55" rx="4" fill="#1F4E5A"/>
-          <rect x="62" y="72" width="18" height="22" fill="#E8F5E9" rx="2"/>
-          <circle cx="71" cy="83" r="4" fill="#1F4E5A"/>
-        </g>
-        <!-- Right Eye -->
-        <g>
-          <rect x="156" y="65" width="45" height="55" rx="4" fill="#1F4E5A"/>
-          <rect x="163" y="72" width="18" height="22" fill="#E8F5E9" rx="2"/>
-          <circle cx="172" cy="83" r="4" fill="#1F4E5A"/>
-        </g>
-        <!-- Mouth - happy curve -->
-        <path d="M 70 130 Q 128 150 186 130" stroke="#1F4E5A" stroke-width="8" fill="none" stroke-linecap="round"/>
-        <!-- Buttons on side -->
-        <circle cx="35" cy="140" r="6" fill="#1F4E5A"/>
-        <circle cx="35" cy="165" r="6" fill="#1F4E5A"/>
-      </svg>
+  <div class="card">
+    <div class="title">BMOFocus</div>
+    
+    <svg class="heart" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="heartGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#D4A574;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#A0794A;stop-opacity:1" />
+        </linearGradient>
+      </defs>
+      <path d="M50,90 C20,70 5,55 5,40 C5,25 15,15 25,15 C35,15 45,25 50,32 C55,25 65,15 75,15 C85,15 95,25 95,40 C95,55 80,70 50,90 Z" 
+            fill="url(#heartGrad)" stroke="#8B5A1F" stroke-width="1.5" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.1))"/>
+    </svg>
+
+    <div class="task-name" id="taskName">Study TOP</div>
+
+    <div class="character-icon" id="charIcon">
     </div>
 
-    <!-- CENTER: Task & Message -->
-    <div class="center-section">
-      <div class="task-info">
-        <div class="task-icon" id="taskIcon">
-          <!-- SVG will be inserted here -->
-        </div>
-        <div class="task-details">
-          <h2 id="taskName">Study TOP</h2>
-          <p id="sessionInfo">Session 2/4 • Focus Mode</p>
-        </div>
-      </div>
-
-      <div class="message-box" id="messageBox">
-        Stay focused, friend 💛
-      </div>
-
-      <div class="timer" id="timer">25:00 remaining</div>
+    <div class="message" id="message">
+      BMO is watching... un-approved diversion detected.
     </div>
 
-    <!-- RIGHT: Stats -->
-    <div class="stats-section">
-      <div class="stat-box streak-box">
-        <div class="stat-label">Day Streak</div>
-        <div class="stat-value" id="streak">12</div>
+    <div class="stats-row">
+      <div class="stat">
+        <span class="stat-value" id="streak">1</span>
+        <span class="stat-label">Day Streak</span>
       </div>
+      <div class="stat">
+        <span class="stat-value" id="timerDisplay">25</span>
+        <span class="stat-label">Time Left</span>
+        <div class="timer" id="timerSeconds">:00</div>
+      </div>
+    </div>
 
-      <div class="seven-days">
-        <div class="seven-days-label">Last 7 Days</div>
-        <div class="days-grid" id="daysGrid">
-          <!-- Day bars will be inserted here -->
-        </div>
+    <div class="seven-days-mini">
+      <div class="seven-days-label">Last 7 Days</div>
+      <div class="days-mini" id="daysGrid">
       </div>
     </div>
   </div>
@@ -320,17 +268,16 @@
     let blockData = {};
     let timerInterval = null;
 
-    // Character-specific messages
     const characterMessages = {
       '#4ECDC4': [
+        "BMO is watching... un-approved diversion detected.",
         "Stay focused, friend 💛",
-        "Let's finish this mission together 🤝",
-        "You got this! 💪"
+        "Let's finish this mission together 🤝"
       ],
       '#5B9BD5': [
-        "Dude, keep it together! 🎩",
-        "This is your mathematical destiny! 📐",
-        "Don't break the chain! 🔗"
+        "Yo dude, get back to your mathematical destiny!",
+        "This isn't the way, bro 🎩",
+        "Focus up! Time is ticking ⏰"
       ],
       '#FFB6C1': [
         "Oh my Glob! Get back to work! 👑",
@@ -343,13 +290,12 @@
         "Get back in there! 💯"
       ],
       '#9370DB': [
-        "Come on, focus! 🌙",
         "Get back to your mission! 🎭",
-        "No distractions! 🚫"
+        "No distractions allowed! 🚫",
+        "Focus is key 🌙"
       ]
     };
 
-    // Calculate global streak from completed sessions
     function computeGlobalStreak(sessions) {
       const completedSessions = sessions.filter(s => s.completed);
       const datesWithPomodoros = new Set(completedSessions.map(s => s.date));
@@ -358,7 +304,6 @@
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
-      // Count consecutive days backwards from today
       for (let i = 0; i < 365; i++) {
         const d = new Date(today);
         d.setDate(d.getDate() - i);
@@ -372,6 +317,27 @@
       }
       
       return streak;
+    }
+
+    function getLast7DaysData(sessions) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const data = [];
+
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toLocaleDateString('en-CA');
+        
+        const count = (sessions || []).filter(s => s.date === dateStr && s.completed).length;
+        data.push({ 
+          date: dateStr, 
+          count: count, 
+          dayLabel: ['S', 'M', 'T', 'W', 'T', 'F', 'S'][date.getDay()] 
+        });
+      }
+
+      return data;
     }
 
     function loadAllData() {
@@ -388,61 +354,31 @@
             ? (typeof result.bmo_sessions === 'string' ? JSON.parse(result.bmo_sessions) : result.bmo_sessions)
             : [];
 
-          if (!activeTask || !timerState) {
-            console.error('[Blocker] Missing active task or timer state');
-            return;
-          }
+          if (!activeTask || !timerState) return;
 
           blockData = {
             mode: timerState.mode || 'focus',
             taskName: activeTask.title,
             globalStreak: computeGlobalStreak(sessions),
-            sessionInCurrentRound: timerState.sessionInCurrentRound || 0,
-            sessionsPerRound: timerState.settings?.sessionsPerRound || 4,
             endTime: timerState.endTime,
             taskColor: activeTask.color || '#4ECDC4',
             charSvg: CHARACTER_SVGS[activeTask.color] || CHARACTER_SVGS['#4ECDC4'],
-            domain: timerState.blockedDomain || 'unknown',
             sessions: sessions
           };
 
           updateUI();
           updateTimer();
         } catch (e) {
-          console.error('[Blocker] Failed to load data:', e);
+          console.error('[Blocker] Error:', e);
         }
       });
     }
 
-    function getLast7DaysData() {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const data = [];
-
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date(today);
-        date.setDate(date.getDate() - i);
-        const dateStr = date.toLocaleDateString('en-CA');
-        
-        const count = (blockData.sessions || []).filter(s => s.date === dateStr).length;
-        data.push({ date: dateStr, count: count, dayLabel: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()] });
-      }
-
-      return data;
-    }
-
     function updateUI() {
-      const mode = blockData.mode || 'focus';
-
-      // Update task name and session
       document.getElementById('taskName').textContent = blockData.taskName || 'Current Task';
-      const modeText = mode === 'focus' ? 'Focus Mode' : mode === 'shortBreak' ? 'Short Break' : 'Long Break';
-      document.getElementById('sessionInfo').textContent = 
-        `Session ${(blockData.sessionInCurrentRound || 0) + 1}/${blockData.sessionsPerRound || 4} • ${modeText}`;
 
-      // Update character SVG
       if (blockData.charSvg) {
-        const container = document.getElementById('taskIcon');
+        const container = document.getElementById('charIcon');
         container.innerHTML = blockData.charSvg;
         const svg = container.querySelector('svg');
         if (svg) {
@@ -451,27 +387,17 @@
         }
       }
 
-      // Update message based on character
       const messages = characterMessages[blockData.taskColor] || characterMessages['#4ECDC4'];
       const randomMsg = messages[Math.floor(Math.random() * messages.length)];
-      document.getElementById('messageBox').textContent = randomMsg;
+      document.getElementById('message').textContent = randomMsg;
 
-      // Update streak - use global streak from sessions
       document.getElementById('streak').textContent = blockData.globalStreak || '0';
 
-      // Update 7-day chart
-      const last7Days = getLast7DaysData();
+      const last7Days = getLast7DaysData(blockData.sessions);
       const maxCount = Math.max(...last7Days.map(d => d.count), 1);
       
       const daysGrid = document.getElementById('daysGrid');
-      daysGrid.innerHTML = last7Days.map(day => `
-        <div class="day-bar">
-          <div class="day-label">${day.dayLabel}</div>
-          <div class="day-value ${day.count === 0 ? 'zero' : ''}" style="height: ${day.count === 0 ? '8px' : Math.max(8, (day.count / maxCount) * 40) + 'px'}">
-            ${day.count > 0 ? day.count : ''}
-          </div>
-        </div>
-      `).join('');
+      daysGrid.innerHTML = last7Days.map(day => '<div class="day-mini"><div class="day-label-mini">' + day.dayLabel + '</div><div class="day-bar-mini ' + (day.count === 0 ? 'zero' : '') + '" style="height: ' + (day.count === 0 ? '4px' : Math.max(4, (day.count / maxCount) * 20) + 'px') + '">' + (day.count > 0 ? '<div class="day-count-mini">' + day.count + '</div>' : '') + '</div></div>').join('');
     }
 
     function updateTimer() {
@@ -481,15 +407,13 @@
       const timeLeftMs = Math.max(0, blockData.endTime - now);
       const mins = Math.floor(timeLeftMs / 60000);
       const secs = Math.floor((timeLeftMs % 60000) / 1000);
-      const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')} remaining`;
-      document.getElementById('timer').textContent = formatted;
+      
+      document.getElementById('timerDisplay').textContent = String(mins).padStart(2, '0');
+      document.getElementById('timerSeconds').textContent = ':' + String(secs).padStart(2, '0');
     }
 
-    // Load initially
     loadAllData();
     setInterval(loadAllData, 2000);
-    
-    // Update timer every 100ms
     timerInterval = setInterval(updateTimer, 100);
 
     window.addEventListener('beforeunload', () => {
