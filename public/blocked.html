@@ -351,6 +351,31 @@
       ]
     };
 
+    // Calculate global streak from completed sessions
+    function computeGlobalStreak(sessions) {
+      const completedSessions = sessions.filter(s => s.completed);
+      const datesWithPomodoros = new Set(completedSessions.map(s => s.date));
+      
+      let streak = 0;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      // Count consecutive days backwards from today
+      for (let i = 0; i < 365; i++) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toLocaleDateString('en-CA');
+        
+        if (datesWithPomodoros.has(dateStr)) {
+          streak++;
+        } else {
+          break;
+        }
+      }
+      
+      return streak;
+    }
+
     function loadAllData() {
       chrome.storage.local.get(['bmo_tasks', 'bmo_activeTaskId', 'bmo_timer_state', 'bmo_sessions'], (result) => {
         try {
@@ -373,7 +398,7 @@
           blockData = {
             mode: timerState.mode || 'focus',
             taskName: activeTask.title,
-            streak: activeTask.dailyStreak !== undefined ? activeTask.dailyStreak : 0,
+            globalStreak: computeGlobalStreak(sessions),
             sessionInCurrentRound: timerState.sessionInCurrentRound || 0,
             sessionsPerRound: timerState.settings?.sessionsPerRound || 4,
             endTime: timerState.endTime,
@@ -433,8 +458,8 @@
       const randomMsg = messages[Math.floor(Math.random() * messages.length)];
       document.getElementById('messageBox').textContent = randomMsg;
 
-      // Update streak
-      document.getElementById('streak').textContent = blockData.streak || '0';
+      // Update streak - use global streak from sessions
+      document.getElementById('streak').textContent = blockData.globalStreak || '0';
 
       // Update 7-day chart
       const last7Days = getLast7DaysData();
