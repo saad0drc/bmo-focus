@@ -76,6 +76,9 @@ export function TaskModal({ isOpen, onClose, onSave, initialTask }: TaskModalPro
     // Remove www prefix if present
     domain = domain.replace(/^www\./, '');
     
+    // Remove any trailing slashes
+    domain = domain.replace(/\/$/, '');
+    
     if (domain && !allowedDomains.includes(domain) && allowedDomains.length < 3) {
       setAllowedDomains([...allowedDomains, domain]);
       setDomainInput('');

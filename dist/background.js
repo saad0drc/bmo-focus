@@ -279,9 +279,14 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete' && tab.url) {
     try {
       const url = new URL(tab.url);
-      tabOrigins.set(tabId, url.hostname.replace(/^www\./, ''));
+      // Only track real websites, not extension pages or special pages
+      if (!url.protocol.startsWith('chrome') && !url.hostname.includes('newtab')) {
+        const hostname = url.hostname.replace(/^www\./, '');
+        tabOrigins.set(tabId, hostname);
+        console.log('[BMO] Tab tracking:', tabId, '→', hostname);
+      }
     } catch (e) {
-      // Ignore invalid URLs (e.g., chrome://, about:, etc.)
+      // Ignore invalid URLs
     }
   }
 });
