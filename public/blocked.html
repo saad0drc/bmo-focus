@@ -28,6 +28,11 @@
       width: 90%;
       max-width: 1200px;
       padding: 40px;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(78, 205, 196, 0.1);
+      border: 2px solid rgba(78, 205, 196, 0.2);
     }
 
     /* LEFT PANEL */
@@ -70,12 +75,28 @@
       font-variant-numeric: tabular-nums;
       font-family: 'Courier New', monospace;
       color: #1F4E5A;
+      background: rgba(78, 205, 196, 0.1);
+      padding: 12px 20px;
+      border-radius: 8px;
+      border-left: 4px solid #FF5E5E;
+      letter-spacing: 2px;
+      animation: timer-pulse 1s ease-in-out infinite;
+    }
+
+    @keyframes timer-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.95; }
     }
 
     .session-info {
       font-size: 14px;
       color: #1F4E5A;
       opacity: 0.7;
+      background: rgba(107, 203, 119, 0.1);
+      padding: 8px 16px;
+      border-radius: 6px;
+      border-left: 3px solid #6BCB77;
+      letter-spacing: 0.5px;
     }
 
     /* CENTER PANEL - HEART */
@@ -170,6 +191,10 @@
       color: #4ECDC4;
       text-transform: uppercase;
       letter-spacing: 1px;
+      background: linear-gradient(135deg, #4ECDC4, #1F4E5A);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
     .button {
@@ -184,12 +209,31 @@
       transition: all 0.3s ease;
       text-transform: uppercase;
       letter-spacing: 1px;
+      box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: #4ECDC4;
+      transition: left 0.3s ease;
+      z-index: -1;
     }
 
     .button:hover {
-      background: #4ECDC4;
       color: white;
-      transform: translateY(-2px);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(78, 205, 196, 0.4);
+    }
+
+    .button:hover::before {
+      left: 0;
     }
 
     /* RIGHT PANEL */
@@ -203,12 +247,23 @@
 
     .streak-box {
       text-align: right;
+      background: rgba(255, 217, 61, 0.15);
+      padding: 16px 20px;
+      border-radius: 12px;
+      border: 2px solid rgba(255, 217, 61, 0.3);
+      animation: streak-glow 2s ease-in-out infinite;
+    }
+
+    @keyframes streak-glow {
+      0%, 100% { box-shadow: 0 0 0px rgba(255, 217, 61, 0); }
+      50% { box-shadow: 0 0 12px rgba(255, 217, 61, 0.3); }
     }
 
     .streak-number {
       font-size: 48px;
       font-weight: bold;
       color: #FFD93D;
+      text-shadow: 0 2px 8px rgba(255, 217, 61, 0.3);
     }
 
     .streak-label {
@@ -306,43 +361,70 @@
   <script>
     let blockData = {};
     let timerInterval = null;
+    let timerEndTime = null;
 
-    // Load initial data from chrome.storage
-    chrome.storage.local.get(['blockedData', 'bmo_tasks', 'bmo_activeTaskId'], (result) => {
-      if (result.blockedData) {
-        blockData = result.blockedData;
-        
-        // Enrich blockData with real task info
-        if (result.bmo_tasks && result.bmo_activeTaskId) {
-          try {
-            const tasks = typeof result.bmo_tasks === 'string' 
-              ? JSON.parse(result.bmo_tasks) 
-              : result.bmo_tasks;
-            const activeTask = tasks.find(t => t.id === result.bmo_activeTaskId);
-            if (activeTask) {
-              blockData.streak = activeTask.dailyStreak || 0;
-              blockData.completedPomodoros = activeTask.completedPomodoros || 0;
-              blockData.taskName = activeTask.title;
-            }
-          } catch (e) {
-            console.error('[Blocker] Failed to parse tasks:', e);
+    // Load and refresh data from chrome.storage
+    function loadAllData() {
+      chrome.storage.local.get(['bmo_tasks', 'bmo_activeTaskId', 'bmo_timer_state'], (result) => {
+        try {
+          // Parse tasks
+          const tasks = result.bmo_tasks 
+            ? (typeof result.bmo_tasks === 'string' ? JSON.parse(result.bmo_tasks) : result.bmo_tasks)
+            : [];
+          
+          const activeTaskId = result.bmo_activeTaskId;
+          const activeTask = tasks.find(t => t.id === activeTaskId);
+          const timerState = result.bmo_timer_state;
+
+          if (!activeTask || !timerState) {
+            console.error('[Blocker] Missing active task or timer state');
+            return;
           }
+
+          // Build blockData from REAL sources
+          blockData = {
+            mode: timerState.mode || 'focus',
+            taskName: activeTask.title,
+            streak: activeTask.dailyStreak !== undefined ? activeTask.dailyStreak : 0,
+            completedPomodoros: activeTask.completedPomodoros || 0,
+            sessionInCurrentRound: timerState.sessionInCurrentRound || 0,
+            sessionsPerRound: timerState.settings?.sessionsPerRound || 4,
+            endTime: timerState.endTime,
+            taskColor: activeTask.color || '#4ECDC4',
+            charSvg: CHARACTER_SVGS[activeTask.color] || CHARACTER_SVGS['#4ECDC4'],
+            domain: timerState.blockedDomain || 'unknown'
+          };
+
+          // Only update UI on initial load
+          if (timerEndTime === null) {
+            updateUI();
+            playBlockSound();
+            timerEndTime = blockData.endTime;
+          }
+
+          updateTimer();
+        } catch (e) {
+          console.error('[Blocker] Failed to load data:', e);
         }
-        
-        updateUI();
-        playBlockSound();
-        updateTimer(); // Update timer immediately
-      }
-    });
+      });
+    }
+
+    // Load on page open
+    loadAllData();
+    
+    // Refresh data every 2 seconds to catch changes
+    setInterval(loadAllData, 2000);
 
     function updateUI() {
       // Set mode badge
       const modeBadge = document.getElementById('modeBadge');
-      modeBadge.textContent = blockData.mode === 'focus' ? 'FOCUS' : blockData.mode === 'shortBreak' ? 'BREAK' : 'LONG BREAK';
-      modeBadge.className = `mode-badge ${blockData.mode === 'focus' ? 'focus' : blockData.mode === 'shortBreak' ? 'break' : 'longbreak'}`;
+      const mode = blockData.mode || 'focus';
+      modeBadge.textContent = mode === 'focus' ? 'FOCUS' : mode === 'shortBreak' ? 'BREAK' : 'LONG BREAK';
+      modeBadge.className = `mode-badge ${mode === 'focus' ? 'focus' : mode === 'shortBreak' ? 'break' : 'longbreak'}`;
 
-      // Set session info
-      document.getElementById('sessionInfo').textContent = blockData.sessionInfo || 'Session 1/4';
+      // Set session info with REAL data
+      const sessionStr = `Session ${(blockData.sessionInCurrentRound || 0) + 1}/${blockData.sessionsPerRound || 4}`;
+      document.getElementById('sessionInfo').textContent = sessionStr;
 
       // Set character SVG
       if (blockData.charSvg) {
@@ -352,8 +434,33 @@
       // Set task name
       document.getElementById('taskName').textContent = blockData.taskName || 'Current Task';
 
-      // Set streak (real data from task)
+      // Set REAL streak from active task
       document.getElementById('streak').textContent = blockData.streak || '0';
+      
+      // Set BMO message based on mode
+      const messages = {
+        focus: [
+          "hey… this isn't part of the mission 👀",
+          "stay focused, friend 💛",
+          "mission first… always 🎯",
+          "let's finish this together 🤝"
+        ],
+        shortBreak: [
+          "take a breath… but stay close 💚",
+          "break time! don't wander off 🌳",
+          "see you in a few 👋"
+        ],
+        longBreak: [
+          "you earned this! enjoy ✨",
+          "rest up, we'll be back soon 🌙",
+          "recharge those batteries 🔋"
+        ]
+      };
+      
+      const modeKey = mode === 'focus' ? 'focus' : mode === 'shortBreak' ? 'shortBreak' : 'longBreak';
+      const messageList = messages[modeKey] || messages.focus;
+      const randomMsg = messageList[Math.floor(Math.random() * messageList.length)];
+      document.getElementById('message').textContent = randomMsg;
 
       // Apply crack animation on load
       triggerHeartCrack();
@@ -436,28 +543,18 @@
     
     // Real-time timer updates - calculate locally for smooth display
     function updateTimer() {
-      chrome.storage.local.get(['bmo_timer_state'], (result) => {
-        if (result.bmo_timer_state && result.bmo_timer_state.endTime) {
-          // Store endTime on first call, then use it for smooth updates
-          if (!timerEndTime) {
-            timerEndTime = result.bmo_timer_state.endTime;
-          }
-          
-          const timeLeftMs = Math.max(0, timerEndTime - Date.now());
-          const mins = Math.floor(timeLeftMs / 60000);
-          const secs = Math.floor((timeLeftMs % 60000) / 1000);
-          const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-          document.getElementById('timer').textContent = formatted;
-          
-          // If timer expired, update one more time from storage
-          if (timeLeftMs <= 0) {
-            clearInterval(timerInterval);
-          }
-        }
-      });
+      if (!blockData.endTime) return;
+      
+      const now = Date.now();
+      const timeLeftMs = Math.max(0, blockData.endTime - now);
+      const mins = Math.floor(timeLeftMs / 60000);
+      const secs = Math.floor((timeLeftMs % 60000) / 1000);
+      const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      document.getElementById('timer').textContent = formatted;
     }
 
-    timerInterval = setInterval(updateTimer, 500);  // Update every 500ms for smooth display
+    // Update timer smoothly every 100ms
+    timerInterval = setInterval(updateTimer, 100);
 
     // Allow for this session button
     document.getElementById('allowBtn').addEventListener('click', () => {
