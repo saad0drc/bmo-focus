@@ -305,15 +305,33 @@
   <script src="characterSvgs.js"></script>
   <script>
     let blockData = {};
-    let heartCrackCount = 0;
     let timerInterval = null;
 
     // Load initial data from chrome.storage
-    chrome.storage.local.get(['blockedData'], (result) => {
+    chrome.storage.local.get(['blockedData', 'bmo_tasks', 'bmo_activeTaskId'], (result) => {
       if (result.blockedData) {
         blockData = result.blockedData;
+        
+        // Enrich blockData with real task info
+        if (result.bmo_tasks && result.bmo_activeTaskId) {
+          try {
+            const tasks = typeof result.bmo_tasks === 'string' 
+              ? JSON.parse(result.bmo_tasks) 
+              : result.bmo_tasks;
+            const activeTask = tasks.find(t => t.id === result.bmo_activeTaskId);
+            if (activeTask) {
+              blockData.streak = activeTask.dailyStreak || 0;
+              blockData.completedPomodoros = activeTask.completedPomodoros || 0;
+              blockData.taskName = activeTask.title;
+            }
+          } catch (e) {
+            console.error('[Blocker] Failed to parse tasks:', e);
+          }
+        }
+        
         updateUI();
         playBlockSound();
+        updateTimer(); // Update timer immediately
       }
     });
 
@@ -322,9 +340,6 @@
       const modeBadge = document.getElementById('modeBadge');
       modeBadge.textContent = blockData.mode === 'focus' ? 'FOCUS' : blockData.mode === 'shortBreak' ? 'BREAK' : 'LONG BREAK';
       modeBadge.className = `mode-badge ${blockData.mode === 'focus' ? 'focus' : blockData.mode === 'shortBreak' ? 'break' : 'longbreak'}`;
-
-      // Set timer
-      document.getElementById('timer').textContent = blockData.timeRemaining || '25:00';
 
       // Set session info
       document.getElementById('sessionInfo').textContent = blockData.sessionInfo || 'Session 1/4';
@@ -337,7 +352,7 @@
       // Set task name
       document.getElementById('taskName').textContent = blockData.taskName || 'Current Task';
 
-      // Set streak
+      // Set streak (real data from task)
       document.getElementById('streak').textContent = blockData.streak || '0';
 
       // Apply crack animation on load
@@ -416,20 +431,33 @@
       }
     }
 
-    // Real-time timer updates
+    // Timer state for live updates
+    let timerEndTime = null;
+    
+    // Real-time timer updates - calculate locally for smooth display
     function updateTimer() {
       chrome.storage.local.get(['bmo_timer_state'], (result) => {
         if (result.bmo_timer_state && result.bmo_timer_state.endTime) {
-          const timeLeftMs = Math.max(0, result.bmo_timer_state.endTime - Date.now());
+          // Store endTime on first call, then use it for smooth updates
+          if (!timerEndTime) {
+            timerEndTime = result.bmo_timer_state.endTime;
+          }
+          
+          const timeLeftMs = Math.max(0, timerEndTime - Date.now());
           const mins = Math.floor(timeLeftMs / 60000);
           const secs = Math.floor((timeLeftMs % 60000) / 1000);
           const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
           document.getElementById('timer').textContent = formatted;
+          
+          // If timer expired, update one more time from storage
+          if (timeLeftMs <= 0) {
+            clearInterval(timerInterval);
+          }
         }
       });
     }
 
-    timerInterval = setInterval(updateTimer, 1000);
+    timerInterval = setInterval(updateTimer, 500);  // Update every 500ms for smooth display
 
     // Allow for this session button
     document.getElementById('allowBtn').addEventListener('click', () => {
