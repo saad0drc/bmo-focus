@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BMO - Stay Focused</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mission Blocked</title>
   <style>
     * {
       margin: 0;
@@ -13,428 +13,265 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-      background: linear-gradient(135deg, #E8F5E9 0%, #D4F1E8 100%);
-      min-height: 100vh;
+      background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #1F4E5A;
+      min-height: 100vh;
       padding: 20px;
     }
 
-    .card {
+    .container {
       background: white;
-      border-radius: 32px;
-      padding: 60px 48px;
-      max-width: 520px;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      max-width: 1000px;
       width: 100%;
-      box-shadow: 0 20px 60px rgba(78, 205, 196, 0.12), 0 0 0 1px rgba(78, 205, 196, 0.05);
+      display: grid;
+      grid-template-columns: 1fr 280px 200px;
+      gap: 60px;
+      padding: 60px;
+    }
+
+    .left-section {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 28px;
-      text-align: center;
+      gap: 24px;
+    }
+
+    .urgent-badge {
+      display: inline-block;
+      background: #EF4444;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 800;
+      font-size: 12px;
+      letter-spacing: 1px;
+      width: fit-content;
     }
 
     .title {
-      font-size: 32px;
+      font-size: 48px;
       font-weight: 900;
-      color: #1F4E5A;
+      line-height: 1.1;
+      color: #0F172A;
       letter-spacing: -1px;
-    }
-
-    .heart {
-      width: 120px;
-      height: 120px;
-      animation: heartbeat 1.5s ease-in-out infinite;
-      filter: drop-shadow(0 4px 12px rgba(78, 205, 196, 0.2));
-    }
-
-    @keyframes heartbeat {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.12); }
-    }
-
-    .task-name {
-      font-size: 28px;
-      font-weight: 800;
-      color: #1F4E5A;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-    }
-
-    .character-icon {
-      width: 110px;
-      height: 110px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, rgba(78, 205, 196, 0.08), rgba(107, 203, 119, 0.05));
-      border-radius: 20px;
-      border: 3px solid #4ECDC4;
-      box-shadow: inset 0 4px 12px rgba(78, 205, 196, 0.05);
-    }
-
-    .character-icon svg {
-      width: 90px;
-      height: 90px;
     }
 
     .message {
-      font-size: 18px;
-      color: #1F4E5A;
+      font-size: 16px;
+      color: #404040;
       line-height: 1.7;
-      opacity: 0.8;
-      margin: 12px 0;
       font-weight: 500;
     }
 
-    .stats-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-      width: 100%;
-      margin-top: 20px;
-      padding-top: 28px;
-      border-top: 2px solid #f0f0f0;
-    }
-
-    .stat {
-      text-align: center;
-    }
-
-    .stat-value {
-      font-size: 36px;
-      font-weight: 900;
-      color: #4ECDC4;
-      display: block;
-      letter-spacing: -1px;
-    }
-
-    .stat-label {
-      font-size: 13px;
-      font-weight: 700;
-      color: #1F4E5A;
-      opacity: 0.5;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-top: 6px;
-    }
-
-    .timer {
-      font-size: 24px;
-      font-weight: 800;
-      color: #FF5E5E;
+    .ascii-face {
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 32px;
+      color: #0F172A;
+      margin-top: 8px;
+      font-weight: bold;
+      white-space: pre;
       letter-spacing: 2px;
-      font-family: 'Courier New', monospace;
-      margin-top: 6px;
     }
 
-    .seven-days-mini {
-      width: 100%;
-      margin-top: 20px;
-      padding: 16px;
-      background: linear-gradient(135deg, rgba(78, 205, 196, 0.05), rgba(78, 205, 196, 0.02));
-      border-radius: 16px;
-      border: 2px solid rgba(78, 205, 196, 0.1);
-    }
-
-    .seven-days-label {
-      font-size: 12px;
-      font-weight: 700;
-      color: #1F4E5A;
-      opacity: 0.5;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 12px;
-    }
-
-    .days-mini {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 6px;
-    }
-
-    .day-mini {
+    .center-section {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 3px;
+      gap: 24px;
+      justify-content: flex-start;
     }
 
-    .day-label-mini {
-      font-size: 10px;
-      font-weight: 700;
-      color: #1F4E5A;
-      opacity: 0.5;
-    }
-
-    .day-bar-mini {
-      width: 100%;
-      height: 24px;
-      background: linear-gradient(180deg, #4ECDC4, #1F4E5A);
-      border-radius: 4px;
-      min-height: 4px;
-      box-shadow: 0 2px 4px rgba(78, 205, 196, 0.1);
-    }
-
-    .day-bar-mini.zero {
-      background: #f5f5f5;
-      border: 1px solid #e0e0e0;
-      box-shadow: none;
-    }
-
-    .day-count-mini {
-      font-size: 9px;
-      font-weight: 800;
-      color: white;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    .character-icon {
+      width: 220px;
+      height: 220px;
       display: flex;
       align-items: center;
       justify-content: center;
+      background: rgba(15, 23, 42, 0.05);
+      border-radius: 20px;
+      padding: 20px;
+      border: 2px solid rgba(15, 23, 42, 0.08);
+    }
+
+    .character-icon svg {
+      width: 100%;
       height: 100%;
     }
 
-    @media (max-width: 480px) {
-      .card {
-        padding: 32px 24px;
-        gap: 20px;
-      }
+    .block-message {
+      background: #D1D5DB;
+      padding: 14px 24px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #1F2937;
+      text-align: center;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: center;
+      width: 100%;
+    }
 
-      .title {
-        font-size: 24px;
-      }
+    .lock-icon {
+      font-size: 16px;
+    }
 
-      .heart {
-        width: 80px;
-        height: 80px;
-      }
+    .right-section {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
 
-      .task-name {
-        font-size: 20px;
-      }
+    .streak-badge {
+      background: linear-gradient(135deg, #FEF3C7 0%, #FCD34D 100%);
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      border: 2px solid #FBBF24;
+    }
 
-      .character-icon {
-        width: 80px;
-        height: 80px;
-      }
+    .streak-icon {
+      font-size: 42px;
+      margin-bottom: 8px;
+    }
 
-      .character-icon svg {
-        width: 70px;
-        height: 70px;
-      }
+    .streak-label {
+      font-size: 11px;
+      font-weight: 800;
+      color: #D97706;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .streak-note {
+      font-size: 12px;
+      color: #744210;
+      margin-top: 8px;
+      font-weight: 600;
+    }
+
+    .streak-message {
+      font-size: 11px;
+      color: #7C2D12;
+      margin-top: 12px;
+      line-height: 1.5;
+      font-weight: 500;
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="title">BMOFocus</div>
-    
-    <svg class="heart" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="heartGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:#D4A574;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#A0794A;stop-opacity:1" />
-        </linearGradient>
-      </defs>
-      <path d="M50,90 C20,70 5,55 5,40 C5,25 15,15 25,15 C35,15 45,25 50,32 C55,25 65,15 75,15 C85,15 95,25 95,40 C95,55 80,70 50,90 Z" 
-            fill="url(#heartGrad)" stroke="#8B5A1F" stroke-width="1.5" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.1))"/>
-    </svg>
-
-    <div class="task-name" id="taskName">Study TOP</div>
-
-    <div class="character-icon" id="charIcon">
+  <div class="container">
+    <!-- Left Section -->
+    <div class="left-section">
+      <div class="urgent-badge">URGENT MISSION</div>
+      <div class="title" id="mainTitle"></div>
+      <div class="message" id="mainMessage"></div>
+      <div class="ascii-face" id="asciiEmoji"></div>
     </div>
 
-    <div class="message" id="message">
-      BMO is watching... un-approved diversion detected.
-    </div>
-
-    <div class="stats-row">
-      <div class="stat">
-        <span class="stat-value" id="streak">1</span>
-        <span class="stat-label">Day Streak</span>
-      </div>
-      <div class="stat">
-        <span class="stat-value" id="timerDisplay">25</span>
-        <span class="stat-label">Time Left</span>
-        <div class="timer" id="timerSeconds">:00</div>
+    <!-- Center Section -->
+    <div class="center-section">
+      <div class="character-icon" id="characterIcon"></div>
+      <div class="block-message">
+        <span class="lock-icon">🔒</span>
+        <span>NO ALLOWANCE.<br />BACK TO THE CODING MINES.</span>
       </div>
     </div>
 
-    <div class="seven-days-mini">
-      <div class="seven-days-label">Last 7 Days</div>
-      <div class="days-mini" id="daysGrid">
+    <!-- Right Section -->
+    <div class="right-section">
+      <div class="streak-badge">
+        <div class="streak-icon">❌</div>
+        <div class="streak-label">STREAK PAUSED</div>
+        <div class="streak-note" id="streakNote">(Wasted Potential)</div>
+        <div class="streak-message">Don't let us un-invite you!</div>
       </div>
     </div>
   </div>
 
   <script src="characterSvgs.js"></script>
   <script>
-    let blockData = {};
-    let timerInterval = null;
-
-    const characterMessages = {
-      '#4ECDC4': [
-        "BMO is watching... un-approved diversion detected.",
-        "Stay focused, friend 💛",
-        "Let's finish this mission together 🤝"
-      ],
-      '#5B9BD5': [
-        "Yo dude, get back to your mathematical destiny!",
-        "This isn't the way, bro 🎩",
-        "Focus up! Time is ticking ⏰"
-      ],
-      '#FFB6C1': [
-        "Oh my Glob! Get back to work! 👑",
-        "This is unacceptable, bestie! 💎",
-        "Focus! It's mathematical! ✨"
-      ],
-      '#FF6B9D': [
-        "Yo, stay on task! 🔥",
-        "Stop fooling around! ⚡",
-        "Get back in there! 💯"
-      ],
-      '#9370DB': [
-        "Get back to your mission! 🎭",
-        "No distractions allowed! 🚫",
-        "Focus is key 🌙"
-      ]
+    const CHARACTER_MESSAGES = {
+      '#4ECDC4': {
+        title: 'YOU ARE WASTING THE MISSION.',
+        message: 'Hey... stop making BMO sad.\nF***ING STUDY.',
+        emoji: '. .\n:-'
+      },
+      '#6BCB77': {
+        title: 'DUDE, WHAT ARE YOU DOING?',
+        message: 'Yo, get back to it!\nAdventure awaits!',
+        emoji: '^ ^\n:-)'
+      },
+      '#FFD93D': {
+        title: 'OH MY GLOB, SWEETIE!',
+        message: 'Return to studying!\nDon\'t disappoint us!',
+        emoji: 'o o\n:-)'
+      },
+      '#FF5E5E': {
+        title: 'BACK OFF, DUDE.',
+        message: 'This is not cool.\nFocus up NOW.',
+        emoji: '- -\n:('
+      },
+      '#1F4E5A': {
+        title: 'YO, FOCUS UP!',
+        message: 'Stop wasting time!\nGet it together.',
+        emoji: '. .\n:/'
+      }
     };
 
-    function computeGlobalStreak(sessions) {
-      const completedSessions = sessions.filter(s => s.completed);
-      const datesWithPomodoros = new Set(completedSessions.map(s => s.date));
+    function computeGlobalStreak() {
+      const sessions = JSON.parse(localStorage.getItem('bmo_sessions') || '[]');
+      const completedDates = new Set(sessions.filter(s => s.completed).map(s => s.date));
       
-      let streak = 0;
+      if (completedDates.size === 0) return 0;
+
       const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
+      let streak = 0;
+      let currentDate = new Date(today.toLocaleDateString('en-CA'));
+
       for (let i = 0; i < 365; i++) {
-        const d = new Date(today);
-        d.setDate(d.getDate() - i);
-        const dateStr = d.toLocaleDateString('en-CA');
-        
-        if (datesWithPomodoros.has(dateStr)) {
+        const dateStr = currentDate.toLocaleDateString('en-CA');
+        if (completedDates.has(dateStr)) {
           streak++;
+          currentDate.setDate(currentDate.getDate() - 1);
         } else {
           break;
         }
       }
-      
+
       return streak;
     }
 
-    function getLast7DaysData(sessions) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const data = [];
-
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date(today);
-        date.setDate(date.getDate() - i);
-        const dateStr = date.toLocaleDateString('en-CA');
-        
-        const count = (sessions || []).filter(s => s.date === dateStr && s.completed).length;
-        data.push({ 
-          date: dateStr, 
-          count: count, 
-          dayLabel: ['S', 'M', 'T', 'W', 'T', 'F', 'S'][date.getDay()] 
-        });
-      }
-
-      return data;
-    }
-
     function loadAllData() {
-      chrome.storage.local.get(['bmo_tasks', 'bmo_activeTaskId', 'bmo_timer_state', 'bmo_sessions'], (result) => {
-        try {
-          const tasks = result.bmo_tasks 
-            ? (typeof result.bmo_tasks === 'string' ? JSON.parse(result.bmo_tasks) : result.bmo_tasks)
-            : [];
-          
-          const activeTaskId = result.bmo_activeTaskId;
-          const activeTask = tasks.find(t => t.id === activeTaskId);
-          let timerState = result.bmo_timer_state;
-          const sessions = result.bmo_sessions 
-            ? (typeof result.bmo_sessions === 'string' ? JSON.parse(result.bmo_sessions) : result.bmo_sessions)
-            : [];
+      const tasks = JSON.parse(localStorage.getItem('bmo_tasks') || '[]');
+      const blockData = JSON.parse(sessionStorage.getItem('bmo_blockData') || '{}');
+      
+      const task = tasks.find(t => t.id === blockData.taskId);
+      const color = task?.color || '#4ECDC4';
+      
+      const selected = CHARACTER_MESSAGES[color] || CHARACTER_MESSAGES['#4ECDC4'];
 
-          // Fallback to localStorage if chrome.storage doesn't have timer state
-          if (!timerState) {
-            const localTimer = localStorage.getItem('bmo_timer_state');
-            if (localTimer) {
-              timerState = JSON.parse(localTimer);
-            }
-          }
+      document.getElementById('mainTitle').textContent = selected.title;
+      document.getElementById('mainMessage').textContent = selected.message;
+      document.getElementById('asciiEmoji').textContent = selected.emoji;
 
-          if (!activeTask || !timerState) {
-            console.warn('[Blocker] Missing task or timer:', { hasTask: !!activeTask, hasTimer: !!timerState });
-            return;
-          }
-
-          blockData = {
-            mode: timerState.mode || 'focus',
-            taskName: activeTask.title,
-            globalStreak: computeGlobalStreak(sessions),
-            endTime: timerState.endTime,
-            taskColor: activeTask.color || '#4ECDC4',
-            charSvg: CHARACTER_SVGS[activeTask.color] || CHARACTER_SVGS['#4ECDC4'],
-            sessions: sessions
-          };
-
-          updateUI();
-          updateTimer();
-        } catch (e) {
-          console.error('[Blocker] Error:', e);
-        }
-      });
-    }
-
-    function updateUI() {
-      document.getElementById('taskName').textContent = blockData.taskName || 'Current Task';
-
-      if (blockData.charSvg) {
-        const container = document.getElementById('charIcon');
-        container.innerHTML = blockData.charSvg;
-        const svg = container.querySelector('svg');
-        if (svg) {
-          svg.style.width = '80px';
-          svg.style.height = '80px';
-        }
+      const iconSVG = CHARACTER_SVGS?.[color];
+      if (iconSVG) {
+        document.getElementById('characterIcon').innerHTML = iconSVG;
       }
 
-      const messages = characterMessages[blockData.taskColor] || characterMessages['#4ECDC4'];
-      const randomMsg = messages[Math.floor(Math.random() * messages.length)];
-      document.getElementById('message').textContent = randomMsg;
-
-      document.getElementById('streak').textContent = blockData.globalStreak || '0';
-
-      const last7Days = getLast7DaysData(blockData.sessions);
-      const maxCount = Math.max(...last7Days.map(d => d.count), 1);
-      
-      const daysGrid = document.getElementById('daysGrid');
-      daysGrid.innerHTML = last7Days.map(day => '<div class="day-mini"><div class="day-label-mini">' + day.dayLabel + '</div><div class="day-bar-mini ' + (day.count === 0 ? 'zero' : '') + '" style="height: ' + (day.count === 0 ? '4px' : Math.max(4, (day.count / maxCount) * 20) + 'px') + '">' + (day.count > 0 ? '<div class="day-count-mini">' + day.count + '</div>' : '') + '</div></div>').join('');
+      const streak = computeGlobalStreak();
+      document.getElementById('streakNote').textContent = '(' + streak + ' day streak)';
     }
 
-    function updateTimer() {
-      if (!blockData.endTime) return;
-      
-      const now = Date.now();
-      const timeLeftMs = Math.max(0, blockData.endTime - now);
-      const mins = Math.floor(timeLeftMs / 60000);
-      const secs = Math.floor((timeLeftMs % 60000) / 1000);
-      
-      document.getElementById('timerDisplay').textContent = String(mins).padStart(2, '0');
-      document.getElementById('timerSeconds').textContent = ':' + String(secs).padStart(2, '0');
-    }
-
-    loadAllData();
-    setInterval(loadAllData, 2000);
-    timerInterval = setInterval(updateTimer, 100);
-
-    window.addEventListener('beforeunload', () => {
-      if (timerInterval) clearInterval(timerInterval);
+    document.addEventListener('DOMContentLoaded', () => {
+      loadAllData();
+      setInterval(loadAllData, 2000);
     });
   </script>
 </body>
