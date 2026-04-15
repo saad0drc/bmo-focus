@@ -367,6 +367,12 @@
     function loadAllData() {
       chrome.storage.local.get(['bmo_tasks', 'bmo_activeTaskId', 'bmo_timer_state'], (result) => {
         try {
+          console.log('[Blocker] Storage snapshot:', {
+            tasks: result.bmo_tasks ? 'exists' : 'missing',
+            activeTaskId: result.bmo_activeTaskId,
+            timerState: result.bmo_timer_state
+          });
+
           // Parse tasks
           const tasks = result.bmo_tasks 
             ? (typeof result.bmo_tasks === 'string' ? JSON.parse(result.bmo_tasks) : result.bmo_tasks)
@@ -377,9 +383,12 @@
           const timerState = result.bmo_timer_state;
 
           if (!activeTask || !timerState) {
-            console.error('[Blocker] Missing active task or timer state');
+            console.error('[Blocker] Missing active task or timer state', { activeTask: !!activeTask, timerState: !!timerState });
             return;
           }
+
+          console.log('[Blocker] Found active task:', { title: activeTask.title, dailyStreak: activeTask.dailyStreak });
+          console.log('[Blocker] Timer state:', { mode: timerState.mode, sessionInCurrentRound: timerState.sessionInCurrentRound, endTime: timerState.endTime });
 
           // Build blockData from REAL sources
           blockData = {
@@ -394,6 +403,8 @@
             charSvg: CHARACTER_SVGS[activeTask.color] || CHARACTER_SVGS['#4ECDC4'],
             domain: timerState.blockedDomain || 'unknown'
           };
+
+          console.log('[Blocker] blockData ready:', blockData);
 
           // Only update UI on initial load
           if (timerEndTime === null) {

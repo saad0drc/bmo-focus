@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TEST Blocker</title>
+  <style>
+    body {
+      font-family: monospace;
+      background: #E8F5E9;
+      padding: 20px;
+      color: #1F4E5A;
+    }
+    pre {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      overflow: auto;
+      border-left: 4px solid #FF5E5E;
+    }
+    h1 { color: #4ECDC4; }
+    .error { color: red; }
+    .success { color: #6BCB77; }
+  </style>
+</head>
+<body>
+  <h1>🧪 BMO Blocker Test Page</h1>
+  <h2>Storage Debug Info:</h2>
+  <pre id="debug"></pre>
+
+  <script>
+    const debug = document.getElementById('debug');
+    let output = 'Loading storage data...\n';
+    debug.textContent = output;
+    
+    setTimeout(() => {
+      chrome.storage.local.get(null, (result) => {
+        try {
+          output = '';
+          
+          if (!result || Object.keys(result).length === 0) {
+            output += '❌ NO DATA IN STORAGE!\n\n';
+          }
+          
+          output += '=== KEYS IN STORAGE ===\n';
+          output += Object.keys(result).join(', ') + '\n\n';
+          
+          output += '=== bmo_activeTaskId ===\n';
+          output += (result.bmo_activeTaskId || '❌ MISSING') + '\n\n';
+          
+          output += '=== bmo_timer_state ===\n';
+          if (result.bmo_timer_state) {
+            output += JSON.stringify(result.bmo_timer_state, null, 2) + '\n\n';
+          } else {
+            output += '❌ MISSING\n\n';
+          }
+          
+          output += '=== bmo_tasks (count) ===\n';
+          if (result.bmo_tasks) {
+            try {
+              const tasks = typeof result.bmo_tasks === 'string' 
+                ? JSON.parse(result.bmo_tasks) 
+                : result.bmo_tasks;
+              output += `✅ Found ${tasks.length} tasks\n`;
+              const activeTask = tasks.find(t => t.id === result.bmo_activeTaskId);
+              if (activeTask) {
+                output += '\n✅ Active Task Found:\n';
+                output += `  title: ${activeTask.title}\n`;
+                output += `  dailyStreak: ${activeTask.dailyStreak}\n`;
+                output += `  allowedDomains: ${JSON.stringify(activeTask.allowedDomains)}\n`;
+                output += `  color: ${activeTask.color}\n`;
+              } else {
+                output += '\n❌ Active task ID not found in tasks array!\n';
+              }
+            } catch (e) {
+              output += `❌ ERROR parsing tasks: ${e.message}\n`;
+            }
+          } else {
+            output += '❌ MISSING bmo_tasks!\n';
+          }
+          
+          debug.textContent = output;
+          console.log('[TEST] Storage state:', result);
+        } catch (e) {
+          debug.textContent = `❌ ERROR: ${e.message}`;
+        }
+      });
+    }, 500);
+  </script>
+</body>
+</html>

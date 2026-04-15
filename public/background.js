@@ -272,7 +272,23 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   }, AUTO_ADVANCE_DELAY_MS);
 });
 
-console.log('[BMO] Service worker loaded, registering navigation listener...');
+// ── Tab tracking for Trusted Bubble ──
+const tabOrigins = new Map(); // tabId -> hostname of allowed domain
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === 'complete' && tab.url) {
+    try {
+      const url = new URL(tab.url);
+      tabOrigins.set(tabId, url.hostname.replace(/^www\./, ''));
+    } catch (e) {
+      // Ignore invalid URLs (e.g., chrome://, about:, etc.)
+    }
+  }
+});
+
+chrome.tabs.onRemoved.addListener((tabId) => {
+  tabOrigins.delete(tabId);
+});
 
 // ── Allowed World Blocker: Intercept navigations via webNavigation API (MV3 compatible) ─
 try {
@@ -285,8 +301,8 @@ try {
 
     const state = await getState();
 
-    // Only block if focus mode is active
-    if (!state.isActive || state.mode !== 'focus') {
+    // Block during all modes when active (focus, shortBreak, longBreak)
+    if (!state.isActive) {
       return {};
     }
 
@@ -321,7 +337,7 @@ try {
     }
 
     if (!activeTask.allowedDomains || activeTask.allowedDomains.length === 0) {
-      console.log('[Blocker] No allowed domains for task:', activeTask.title);
+      console.log('[Blocker] No allowed domains for task:', activeTask.title, '- ALLOWING ALL');
       return {};
     }
 
@@ -333,30 +349,40 @@ try {
     // Remove www prefix for matching
     const normalizedHostname = requestHostname.replace(/^www\./, '');
 
-    console.log('[Blocker] Checking:', normalizedHostname, 'against allowed:', activeTask.allowedDomains);
+    console.log('[Blocker] Blocking check for:', {
+      requestedDomain: normalizedHostname,
+      allowedDomains: activeTask.allowedDomains,
+      requestUrl: details.url
+    });
 
     // Check allowed domains (with www normalization)
-    const isAllowed = activeTask.allowedDomains.some(domain =>
-      normalizedHostname === domain || normalizedHostname.endsWith('.' + domain) ||
-      requestHostname === domain || requestHostname.endsWith('.' + domain)
-    ) || sessionAllowlist.some(domain =>
+    const isAllowed = activeTask.allowedDomains.some(domain => {
+      const match = normalizedHostname === domain || normalizedHostname.endsWith('.' + domain) ||
+                   requestHostname === domain || requestHostname.endsWith('.' + domain);
+      console.log(`  Comparing "${normalizedHostname}" with "${domain}": ${match}`);
+      return match;
+    }) || sessionAllowlist.some(domain =>
       normalizedHostname === domain || normalizedHostname.endsWith('.' + domain) ||
       requestHostname === domain || requestHostname.endsWith('.' + domain)
     );
     
     // Check if referrer is from an allowed domain (trusted bubble)
+    // Use tab tracking: if the tab was on an allowed domain, allow outbound navigation
     let isFromTrustedSite = false;
-    if (details.initiator) {
-      const initiatorUrl = new URL(details.initiator);
-      const initiatorHostname = initiatorUrl.hostname.replace(/^www\./, '');
+    const tabHostname = tabOrigins.get(details.tabId);
+    
+    if (tabHostname) {
       isFromTrustedSite = activeTask.allowedDomains.some(domain =>
-        initiatorHostname === domain || initiatorHostname.endsWith('.' + domain)
+        tabHostname === domain || tabHostname.endsWith('.' + domain)
       );
-      console.log('[Blocker] Request from:', initiatorHostname, '- Trusted:', isFromTrustedSite);
+      console.log('[Blocker] Tab is on:', tabHostname, '- Trusted:', isFromTrustedSite);
+    } else {
+      console.log('[Blocker] Tab not tracked or no history');
     }
     
     // Allow if: directly allowed OR coming from trusted site (clicking links inside allowed domain)
     const shouldAllow = isAllowed || isFromTrustedSite;
+    console.log('[Blocker] Final decision:', { isAllowed, isFromTrustedSite, shouldAllow });
 
     if (!shouldAllow) {
       console.log('[Blocker] BLOCKED:', normalizedHostname);
