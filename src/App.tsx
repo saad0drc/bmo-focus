@@ -53,7 +53,7 @@ export default function App() {
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
 
   const { tasks, addTask, updateTask, toggleTask, deleteTask, incrementPomodoro, completeRound, clearAllTasks } = useTasks();
-  const { sessions, addSession, clearAllSessions } = useSessions();
+  const { sessions, addSession, clearAllSessions, globalStreak, incrementGlobalStreakIfFirstPomoOfDay } = useSessions();
 
   // Compute daily stats for history modal
   const dailyStats = useMemo(() => computeAllDailyStats(sessions), [sessions]);
@@ -169,10 +169,14 @@ export default function App() {
 
         if (newCount >= target) {
           completeRound(taskId, duration);
+          // Increment global streak on first pomo of the day
+          incrementGlobalStreakIfFirstPomoOfDay(today);
           completionSound = 'taskComplete';
           flashEmotion('laughing', 3000);
         } else {
           incrementPomodoro(taskId, duration);
+          // Increment global streak on first pomo of the day
+          incrementGlobalStreakIfFirstPomoOfDay(today);
           completionSound = 'bmoLaugh';
           flashEmotion('excited', 2000);
         }
@@ -211,7 +215,7 @@ export default function App() {
 
     // Play transition sound after the completion fanfare
     setTimeout(() => playSound.transition(), 2800);
-  }, [addSession, incrementPomodoro, completeRound, flashEmotion]);
+  }, [addSession, incrementPomodoro, completeRound, flashEmotion, incrementGlobalStreakIfFirstPomoOfDay]);
 
   const { timeLeft, isActive, mode, startTimer, pauseTimer, resetTimer, setMode, settings, updateSettings } =
     useTimer(handleTimerComplete, useMemo(() => {

@@ -245,16 +245,12 @@ export function useTasks() {
           // Pomo 3 of 4 completes → sessionInCurrentRound = 2
           // Pomo 4 of 4 completes → sessionInCurrentRound = 3 (triggers long break)
           const newSessionInRound = (newCompleted - 1) % sessionsPerRound;
-          // Increment streak on first pomodoro of the day
-          const isFirstPomoOfDay = t.lastCompletedDate !== today;
-          const newStreak = isFirstPomoOfDay ? (t.dailyStreak ?? 0) + 1 : (t.dailyStreak ?? 0);
           return {
             ...t,
             completedPomodoros: newCompleted,
             totalFocusMinutes: t.totalFocusMinutes + duration,
             sessionInCurrentRound: newSessionInRound,
             lastCompletedDate: today,
-            dailyStreak: newStreak,
           };
         }),
       );

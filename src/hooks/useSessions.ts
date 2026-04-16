@@ -1,8 +1,14 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Session } from '../types';
 import { toDateStr, todayStr } from '../utils/date';
 
 const STORAGE_KEY = 'bmo_sessions';
+const STREAK_KEY = 'bmo_global_streak';
+
+interface GlobalStreak {
+  current: number;
+  lastDate: string; // YYYY-MM-DD of last streak increment
+}
 
 function loadSessions(): Session[] {
   try {
@@ -27,6 +33,48 @@ function loadSessions(): Session[] {
     return raw ? (JSON.parse(raw) as Session[]) : [];
   } catch {
     return [];
+  }
+}
+
+function loadGlobalStreak(): GlobalStreak {
+  try {
+    const raw = localStorage.getItem(STREAK_KEY);
+    if (!raw) return { current: 0, lastDate: '' };
+    const streak = JSON.parse(raw) as GlobalStreak;
+    
+    // Check if streak should break (skipped a day)
+    if (streak.lastDate) {
+      const lastDateObj = new Date(streak.lastDate + 'T00:00:00');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      const lastDateStr = toDateStr(lastDateObj);
+      const yesterdayStr = toDateStr(yesterday);
+      
+      // If last date was before yesterday, streak is broken
+      if (lastDateStr < yesterdayStr) {
+        console.log('[BMO] Streak broken: last date was', lastDateStr, 'but yesterday was', yesterdayStr);
+        return { current: 0, lastDate: '' };
+      }
+    }
+    
+    return streak;
+  } catch {
+    return { current: 0, lastDate: '' };
+  }
+}
+
+function persistGlobalStreak(streak: GlobalStreak) {
+  localStorage.setItem(STREAK_KEY, JSON.stringify(streak));
+  // Also sync to Chrome storage
+  if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+    try {
+      chrome.storage.local.set({ [STREAK_KEY]: streak });
+    } catch (e) {
+      console.warn('[BMO] Chrome storage sync failed for global streak');
+    }
   }
 }
 
@@ -99,13 +147,20 @@ export function computeWeekStats(sessions: Session[]): WeekStats {
 
 export function computeStreak(sessions: Session[]): number {
   const datesWithPomodoros = new Set(
-    sessions.filter(s => s.completed).map(s => s.date),
+    sessions.filter(s => s.completed && (s.type === 'focus' || !s.type)).map(s => s.date),
   );
+  
+  if (datesWithPomodoros.size === 0) return 0;
+  
+  // Get the most recent date with sessions
+  const sortedDates = [...datesWithPomodoros].sort();
+  const mostRecentDate = sortedDates[sortedDates.length - 1];
+  
+  // Compute streak backwards from the most recent date (not from today)
   let streak = 0;
-  const today = new Date();
-  // Start from today (i=0) to include today's sessions in the streak count
+  const startDate = new Date(mostRecentDate + 'T00:00:00');
   for (let i = 0; i < 365; i++) {
-    const d = new Date(today);
+    const d = new Date(startDate);
     d.setDate(d.getDate() - i);
     if (datesWithPomodoros.has(toDateStr(d))) {
       streak++;
@@ -158,6 +213,30 @@ export function computeAllDailyStats(sessions: Session[]): DailyStat[] {
 
 export function useSessions() {
   const [sessions, setSessions] = useState<Session[]>(loadSessions);
+  const [globalStreak, setGlobalStreak] = useState<GlobalStreak>(loadGlobalStreak);
+
+  // Initialize streak from session history if it doesn't exist yet
+  useEffect(() => {
+    if (!globalStreak.current && !globalStreak.lastDate && sessions.length > 0) {
+      // Compute streak from sessions
+      const streak = computeStreak(sessions);
+      if (streak > 0) {
+        // Get the most recent date with a session
+        const lastDate = sessions
+          .filter(s => s.completed && (s.type === 'focus' || !s.type))
+          .map(s => s.date)
+          .sort()
+          .reverse()[0];
+        
+        if (lastDate) {
+          const next = { current: streak, lastDate };
+          persistGlobalStreak(next);
+          setGlobalStreak(next);
+          console.log('[BMO] Initialized global streak from history:', next);
+        }
+      }
+    }
+  }, []);
 
   const addSession = useCallback((session: Session) => {
     setSessions(prev => {
@@ -177,10 +256,23 @@ export function useSessions() {
     });
   }, []);
 
+  const incrementGlobalStreakIfFirstPomoOfDay = useCallback((today: string) => {
+    setGlobalStreak(prev => {
+      // Only increment if it's a new day
+      if (prev.lastDate !== today) {
+        const next = { current: (prev.current ?? 0) + 1, lastDate: today };
+        persistGlobalStreak(next);
+        console.log('[BMO] Global streak incremented to', next.current);
+        return next;
+      }
+      return prev;
+    });
+  }, []);
+
   const clearAllSessions = useCallback(() => {
     setSessions([]);
     localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
   }, []);
 
-  return { sessions, addSession, clearAllSessions };
+  return { sessions, addSession, clearAllSessions, globalStreak, incrementGlobalStreakIfFirstPomoOfDay };
 }
