@@ -295,6 +295,27 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   tabOrigins.delete(tabId);
 });
 
+// Helper function to extract hostname from domain string
+function extractHostname(domain) {
+  try {
+    if (domain.startsWith('http://') || domain.startsWith('https://')) {
+      return new URL(domain).hostname.replace(/^www\./, '');
+    }
+    return domain.replace(/^www\./, '');
+  } catch (e) {
+    return domain.replace(/^www\./, '');
+  }
+}
+
+// Helper to check if a hostname matches allowed domains
+function isHostnameAllowed(hostname, allowedDomains) {
+  const normalized = hostname.replace(/^www\./, '');
+  return allowedDomains.some(domain => {
+    const normalizedDomain = extractHostname(domain);
+    return normalized === normalizedDomain || normalized.endsWith('.' + normalizedDomain);
+  });
+}
+
 // ── Allowed World Blocker: Intercept navigations via webNavigation API (MV3 compatible) ─
 try {
   chrome.webNavigation.onBeforeNavigate.addListener(
@@ -360,34 +381,39 @@ try {
       requestUrl: details.url
     });
 
-    // Check allowed domains (with www normalization)
-    const isAllowed = activeTask.allowedDomains.some(domain => {
-      const match = normalizedHostname === domain || normalizedHostname.endsWith('.' + domain) ||
-                   requestHostname === domain || requestHostname.endsWith('.' + domain);
-      console.log(`  Comparing "${normalizedHostname}" with "${domain}": ${match}`);
-      return match;
-    }) || sessionAllowlist.some(domain =>
-      normalizedHostname === domain || normalizedHostname.endsWith('.' + domain) ||
-      requestHostname === domain || requestHostname.endsWith('.' + domain)
-    );
+    // 1. Check if destination is directly in allowed domains
+    const isDirectlyAllowed = isHostnameAllowed(normalizedHostname, activeTask.allowedDomains) ||
+      sessionAllowlist.some(domain => isHostnameAllowed(normalizedHostname, [domain]));
     
-    // Check if referrer is from an allowed domain (trusted bubble)
-    // Use tab tracking: if the tab was on an allowed domain, allow outbound navigation
+    console.log('[Blocker] Destination directly allowed:', isDirectlyAllowed);
+
+    // 2. Check if coming from an allowed domain (trusted bubble via tab tracking)
     let isFromTrustedSite = false;
     const tabHostname = tabOrigins.get(details.tabId);
     
     if (tabHostname) {
-      isFromTrustedSite = activeTask.allowedDomains.some(domain =>
-        tabHostname === domain || tabHostname.endsWith('.' + domain)
-      );
+      isFromTrustedSite = isHostnameAllowed(tabHostname, activeTask.allowedDomains);
       console.log('[Blocker] Tab is on:', tabHostname, '- Trusted:', isFromTrustedSite);
     } else {
       console.log('[Blocker] Tab not tracked or no history');
     }
     
-    // Allow if: directly allowed OR coming from trusted site (clicking links inside allowed domain)
-    const shouldAllow = isAllowed || isFromTrustedSite;
-    console.log('[Blocker] Final decision:', { isAllowed, isFromTrustedSite, shouldAllow });
+    // 3. Check if coming from an allowed domain via URL referrer (backup check)
+    let isFromReferrer = false;
+    if (details.initiator) {
+      try {
+        const initiatorUrl = new URL(details.initiator);
+        const initiatorHostname = initiatorUrl.hostname;
+        isFromReferrer = isHostnameAllowed(initiatorHostname, activeTask.allowedDomains);
+        console.log('[Blocker] Request initiated from:', initiatorHostname, '- Allowed:', isFromReferrer);
+      } catch (e) {
+        console.log('[Blocker] Could not parse initiator:', details.initiator);
+      }
+    }
+    
+    // Allow if: destination is directly allowed OR coming from trusted site (clicking links inside allowed domain)
+    const shouldAllow = isDirectlyAllowed || isFromTrustedSite || isFromReferrer;
+    console.log('[Blocker] Final decision:', { isDirectlyAllowed, isFromTrustedSite, isFromReferrer, shouldAllow });
 
     if (!shouldAllow) {
       console.log('[Blocker] BLOCKED:', normalizedHostname);
