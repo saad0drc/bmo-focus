@@ -1,92 +1,229 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mission Blocked</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMOFocus | THE MISSION</title>
+    <style>
+        :root {
+            --bg-black: #0f0202;
+            --card-red: #8b1111;
+            --bmo-shell: #3d0505;
+            --glow-red: #ff3333;
+            --white: #ffffff;
+        }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-      background: url('blocker-bg.png') center/cover no-repeat;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--bg-black);
+            font-family: 'Inter', sans-serif;
+            color: var(--white);
+            overflow: hidden;
+        }
 
-    .overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-    }
+        /* DASHBOARD CONTAINER */
+        .container {
+            background-color: var(--card-red);
+            width: 95vw;
+            max-width: 1200px;
+            height: 520px;
+            padding: 60px;
+            border-radius: 40px;
+            display: grid;
+            grid-template-columns: 1.6fr 1.2fr 1fr;
+            align-items: center;
+            position: relative;
+            box-shadow: 0 50px 100px rgba(0,0,0,0.8);
+        }
 
-    .streak-display {
-      position: fixed;
-      right: 145px;
-      top: 190px;
-      text-align: center;
-      pointer-events: none;
-      z-index: 10;
-    }
+        /* LEFT CONTENT */
+        .mission-header {
+            background: var(--white);
+            color: var(--card-red);
+            padding: 6px 16px;
+            border-radius: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+            font-size: 14px;
+            display: inline-block;
+            margin-bottom: 25px;
+        }
 
-    .streak-number {
-      font-size: 24px;
-      font-weight: 900;
-      color: #744210;
-      font-family: 'Monaco', 'Courier New', monospace;
-    }
-  </style>
+        h1 {
+            font-size: 68px;
+            font-weight: 800;
+            line-height: 0.9;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: -2px;
+        }
+
+        .warning-text {
+            font-size: 18px;
+            opacity: 0.85;
+            line-height: 1.4;
+            margin-top: 25px;
+        }
+
+        .ascii-look {
+            font-family: monospace;
+            font-size: 60px;
+            margin-top: 25px;
+            letter-spacing: 5px;
+            font-weight: bold;
+        }
+
+        /* CENTER: BMO HARDWARE */
+        .bmo-wrapper { display: flex; justify-content: center; }
+
+        .bmo-hardware {
+            width: 280px;
+            height: 310px;
+            background: var(--bmo-shell);
+            border-radius: 45px;
+            border: 6px solid #1a0101;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 5px 5px 15px rgba(255,255,255,0.05), 20px 20px 60px rgba(0,0,0,0.6);
+        }
+
+        .screen {
+            width: 210px;
+            height: 180px;
+            background: #000;
+            border-radius: 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            box-shadow: inset 0 0 35px rgba(255, 0, 0, 0.4);
+            border: 2px solid #000;
+        }
+
+        /* CSS NEON FACE */
+        .neon-eyes { display: flex; gap: 45px; }
+        .neon-t { width: 45px; height: 45px; position: relative; }
+        .neon-t::before, .neon-mouth {
+            content: '';
+            position: absolute;
+            background: var(--glow-red);
+            height: 8px;
+            border-radius: 4px;
+            box-shadow: 0 0 12px var(--glow-red), 0 0 25px var(--glow-red);
+        }
+        .neon-t::before { width: 100%; top: 0; left: 0; }
+        .neon-t::after {
+            content: '';
+            position: absolute;
+            background: var(--glow-red);
+            width: 8px;
+            height: 32px;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 4px;
+            box-shadow: 0 0 10px var(--glow-red);
+        }
+        .neon-mouth { width: 45px; position: relative; }
+
+        /* RIGHT: THE HERO'S VOW */
+        .vow-panel {
+            text-align: left;
+            padding-left: 20px;
+            border-left: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .vow-title {
+            font-weight: 900;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            display: block;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .vow-quote {
+            font-size: 22px;
+            font-style: italic;
+            line-height: 1.3;
+            font-weight: 300;
+        }
+
+        /* INTENSE FOOTER WARNING */
+        .footer-warning {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 13px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            font-weight: 900;
+            color: var(--glow-red);
+            text-shadow: 0 0 10px var(--glow-red);
+            white-space: nowrap;
+            animation: flicker 3s infinite;
+        }
+
+        @keyframes flicker {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+            20%, 22%, 24%, 55% { opacity: 0.4; }
+        }
+
+    </style>
 </head>
 <body>
-  <div class="overlay">
-    <div class="streak-display">
-      <div class="streak-number" id="streakNumber">1</div>
+
+    <div class="container">
+        <div class="left-section">
+            <div class="mission-header">Urgent Mission</div>
+            <h1>YOU ARE<br>WASTING THE<br>MISSION.</h1>
+            <p class="warning-text">
+                Hey... stop making BMO sad.<br>
+                <strong>F***ING STUDY.</strong>
+            </p>
+            <div class="ascii-look">T _ T</div>
+        </div>
+
+        <div class="bmo-wrapper">
+            <div class="bmo-hardware">
+                <div class="screen">
+                    <div class="neon-eyes">
+                        <div class="neon-t"></div>
+                        <div class="neon-t"></div>
+                    </div>
+                    <div class="neon-mouth"></div>
+                </div>
+                <div style="width:100px; height:10px; background:#000; border-radius:20px; margin-top:25px;"></div>
+            </div>
+        </div>
+
+        <div class="vow-panel">
+            <span class="vow-title">The Hero's Vow</span>
+            <p class="vow-quote">
+                "I will work with my mind.<br>
+                I will follow my heart.<br>
+                The 1337 school awaits<br>
+                the focused warrior."
+            </p>
+            <p style="margin-top: 20px; font-size: 14px; opacity: 0.5;">
+                The Big Gap is waiting.<br>
+                Don't let the noise win.
+            </p>
+        </div>
+
+        <div class="footer-warning">
+            THE BIG GAP IS STILL OPEN • CLOSE IT AT THE TERMINAL • NO DIVERSIONS 🔒
+        </div>
     </div>
-  </div>
 
-  <script>
-    function computeGlobalStreak() {
-      const sessions = JSON.parse(localStorage.getItem('bmo_sessions') || '[]');
-      const completedDates = new Set(sessions.filter(s => s.completed).map(s => s.date));
-      
-      if (completedDates.size === 0) return 0;
-
-      const today = new Date();
-      let streak = 0;
-      let currentDate = new Date(today.toLocaleDateString('en-CA'));
-
-      for (let i = 0; i < 365; i++) {
-        const dateStr = currentDate.toLocaleDateString('en-CA');
-        if (completedDates.has(dateStr)) {
-          streak++;
-          currentDate.setDate(currentDate.getDate() - 1);
-        } else {
-          break;
-        }
-      }
-
-      return streak;
-    }
-
-    function updateStreak() {
-      const streak = computeGlobalStreak();
-      document.getElementById('streakNumber').textContent = streak;
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      updateStreak();
-      setInterval(updateStreak, 2000);
-    });
-  </script>
 </body>
 </html>

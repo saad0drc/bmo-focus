@@ -39,6 +39,7 @@ function migrateTask(t: any): Task {
     dailyStreak: t.dailyStreak ?? 0,
     sessionInCurrentRound: t.sessionInCurrentRound ?? sessionInCurrentRound,
     color: t.color,
+    allowedDomains: t.allowedDomains,
   };
 }
 
@@ -119,6 +120,8 @@ function loadTasks(): Task[] {
     
     // IMPORTANT: Save the reset data back to localStorage immediately
     if (needsSave) {
+      const resetCheck = result.map(t => ({ id: t.id, title: t.title, domains: t.allowedDomains }));
+      console.log('[BMO] Reset tasks with domains:', resetCheck);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
       
       // CRITICAL: Clear active task selection if it was one of the reset tasks
@@ -144,6 +147,9 @@ function persist(tasks: Task[]) {
   // Also sync to Chrome storage for background service worker (Allowed World blocker)
   if (typeof chrome !== 'undefined' && chrome.storage?.local) {
     try {
+      // Log domains before sync
+      const domainsCheck = tasks.map(t => ({ id: t.id, title: t.title, domains: t.allowedDomains }));
+      console.log('[BMO] Persisting tasks with domains:', domainsCheck);
       chrome.storage.local.set({ [STORAGE_KEY]: tasksJson });
     } catch (e) {
       console.warn('[BMO] Chrome storage sync failed for tasks');
@@ -239,12 +245,16 @@ export function useTasks() {
           // Pomo 3 of 4 completes → sessionInCurrentRound = 2
           // Pomo 4 of 4 completes → sessionInCurrentRound = 3 (triggers long break)
           const newSessionInRound = (newCompleted - 1) % sessionsPerRound;
+          // Increment streak on first pomodoro of the day
+          const isFirstPomoOfDay = t.lastCompletedDate !== today;
+          const newStreak = isFirstPomoOfDay ? (t.dailyStreak ?? 0) + 1 : (t.dailyStreak ?? 0);
           return {
             ...t,
             completedPomodoros: newCompleted,
             totalFocusMinutes: t.totalFocusMinutes + duration,
             sessionInCurrentRound: newSessionInRound,
             lastCompletedDate: today,
+            dailyStreak: newStreak,
           };
         }),
       );
