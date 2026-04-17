@@ -166,7 +166,7 @@ export function useTasks() {
   }, []);
 
   const addTask = useCallback(
-    (title: string, settings: TaskSettings = DEFAULT_TASK_SETTINGS, dueDate?: string, pinned?: boolean, repeatDaily?: boolean) => {
+    (title: string, settings: TaskSettings = DEFAULT_TASK_SETTINGS, dueDate?: string, pinned?: boolean, repeatDaily?: boolean, color?: string, allowedDomains?: string[]) => {
       const newTask: Task = {
         id: crypto.randomUUID(),
         title,
@@ -179,6 +179,8 @@ export function useTasks() {
         pinned: pinned ?? false,
         repeatDaily: repeatDaily ?? false,
         sessionInCurrentRound: 0,
+        color,
+        allowedDomains,
       };
       save([newTask, ...tasks]); // prepend — newest missions appear first
     },

@@ -107,13 +107,7 @@ export default function App() {
     if (editingTask) {
       updateTask(editingTask.id, { title, settings, dueDate, pinned, repeatDaily, color, allowedDomains });
     } else {
-      addTask(title, settings, dueDate, pinned, repeatDaily);
-      if (color || allowedDomains) {
-        const newTask = tasks.find(t => t.title === title && !t.completed);
-        if (newTask) {
-          updateTask(newTask.id, { color, allowedDomains });
-        }
-      }
+      addTask(title, settings, dueDate, pinned, repeatDaily, color, allowedDomains);
     }
   };
 
