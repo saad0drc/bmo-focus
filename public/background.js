@@ -197,8 +197,9 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   const completedMode = state.mode;
   const sessionsPerRound = state.settings.sessionsPerRound ?? 4;
   
-  // Fetch active task's sessionsPerRound from storage if available
+  // Fetch active task's settings and session info from storage if available
   let activeTaskSessionsPerRound = undefined;
+  let activeTaskSessionInCurrentRound = undefined;
   try {
     const { bmo_activeTaskId, bmo_tasks } = await chrome.storage.local.get(['bmo_activeTaskId', 'bmo_tasks']);
     if (bmo_activeTaskId && bmo_tasks) {
@@ -206,7 +207,8 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
       const activeTask = tasks.find(t => t.id === bmo_activeTaskId);
       if (activeTask?.settings?.sessionsPerRound) {
         activeTaskSessionsPerRound = activeTask.settings.sessionsPerRound;
-        console.log('[Alarm] Active task found:', activeTask.title, 'sessionsPerRound:', activeTaskSessionsPerRound);
+        activeTaskSessionInCurrentRound = activeTask.sessionInCurrentRound ?? 0;
+        console.log('[Alarm] Active task found:', activeTask.title, 'sessionsPerRound:', activeTaskSessionsPerRound, 'sessionInCurrentRound:', activeTaskSessionInCurrentRound);
       }
     }
   } catch (e) {
@@ -218,7 +220,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   // - Otherwise, use global sessionInCurrentRound and sessionsPerRound
   const isTaskMode = activeTaskSessionsPerRound !== undefined;
   const currentSessionInRound = isTaskMode 
-    ? (state.activeTaskSessionInCurrentRound ?? 0)
+    ? (activeTaskSessionInCurrentRound ?? 0)
     : (state.sessionInCurrentRound ?? 0);
   const effectiveSessionsPerRound = isTaskMode 
     ? activeTaskSessionsPerRound 
