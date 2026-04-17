@@ -39,7 +39,7 @@ function migrateTask(t: any): Task {
     dailyStreak: t.dailyStreak ?? 0,
     sessionInCurrentRound: t.sessionInCurrentRound ?? sessionInCurrentRound,
     color: t.color,
-    allowedDomains: t.allowedDomains,
+    allowedDomains: t.allowedDomains ?? [],
   };
 }
 
