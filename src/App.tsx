@@ -69,7 +69,11 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('bmo_activeTaskId', activeTaskId || '');
+    try {
+      localStorage.setItem('bmo_activeTaskId', activeTaskId || '');
+    } catch (err) {
+      console.warn('[BMO] Failed to save active task ID:', err);
+    }
     // Also sync to chrome.storage.local for background service worker (Allowed World blocker)
     if (typeof chrome?.storage?.local?.set === 'function') {
       chrome.storage.local.set({ bmo_activeTaskId: activeTaskId || '' });
@@ -309,10 +313,18 @@ export default function App() {
   useEffect(() => {
     const autoStart = settings.autoStart ?? false;
     if (!autoStart || isActive) return;
-    const hasStarted = sessionStorage.getItem('bmo_auto_start_done');
-    if (!hasStarted) {
-      sessionStorage.setItem('bmo_auto_start_done', '1');
-      setTimeout(() => startTimer(), 500);
+    try {
+      const hasStarted = sessionStorage.getItem('bmo_auto_start_done');
+      if (!hasStarted) {
+        sessionStorage.setItem('bmo_auto_start_done', '1');
+        setTimeout(() => startTimer(), 500);
+      }
+    } catch (err) {
+      console.warn('[BMO] sessionStorage unavailable (private browsing?):', err);
+      // Still try to start if not already active
+      if (!isActive) {
+        setTimeout(() => startTimer(), 500);
+      }
     }
   }, [settings.autoStart, isActive, startTimer]);
 

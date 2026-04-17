@@ -28,7 +28,8 @@ export function useBMOState() {
   /** Set emotion and revert to idle after `duration` ms */
   const flashEmotion = useCallback((e: Emotion, duration = 5000) => {
     setEmotionRaw(e);
-    setTimeout(() => setEmotionRaw('idle'), duration);
+    const timer = setTimeout(() => setEmotionRaw('idle'), duration);
+    return () => clearTimeout(timer);
   }, []);
 
   return { emotion, setEmotion, flashEmotion };

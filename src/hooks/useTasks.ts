@@ -63,22 +63,7 @@ function yesterdayStr() {
 
 function loadTasks(): Task[] {
   try {
-    let raw = localStorage.getItem(STORAGE_KEY);
-    
-    // If empty, try Chrome storage backup
-    if (!raw && typeof chrome !== 'undefined' && chrome.storage?.local) {
-      try {
-        const result = chrome.storage.local.get(STORAGE_KEY);
-        if (result && result[STORAGE_KEY]) {
-          raw = JSON.stringify(result[STORAGE_KEY]);
-          // Restore to localStorage
-          localStorage.setItem(STORAGE_KEY, raw);
-          console.log('[BMO] Recovered tasks from Chrome storage backup');
-        }
-      } catch (e) {
-        console.warn('[BMO] Chrome storage backup unavailable');
-      }
-    }
+    const raw = localStorage.getItem(STORAGE_KEY);
     
     if (!raw) return [];
     const today = todayStr();

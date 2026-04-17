@@ -13,23 +13,7 @@ interface GlobalStreak {
 function loadSessions(): Session[] {
   try {
     // Try localStorage first (primary storage)
-    let raw = localStorage.getItem(STORAGE_KEY);
-    
-    // If empty, try Chrome storage backup
-    if (!raw && typeof chrome !== 'undefined' && chrome.storage?.local) {
-      try {
-        const result = chrome.storage.local.get(STORAGE_KEY);
-        if (result && result[STORAGE_KEY]) {
-          raw = JSON.stringify(result[STORAGE_KEY]);
-          // Restore to localStorage
-          localStorage.setItem(STORAGE_KEY, raw);
-          console.log('[BMO] Recovered sessions from Chrome storage backup');
-        }
-      } catch (e) {
-        console.warn('[BMO] Chrome storage backup unavailable');
-      }
-    }
-    
+    const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? (JSON.parse(raw) as Session[]) : [];
   } catch {
     return [];
@@ -272,6 +256,15 @@ export function useSessions() {
   const clearAllSessions = useCallback(() => {
     setSessions([]);
     localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
+    
+    // Also sync to Chrome storage
+    if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+      try {
+        chrome.storage.local.set({ [STORAGE_KEY]: [] });
+      } catch (e) {
+        console.warn('[BMO] Chrome storage clear failed');
+      }
+    }
   }, []);
 
   return { sessions, addSession, clearAllSessions, globalStreak, incrementGlobalStreakIfFirstPomoOfDay };

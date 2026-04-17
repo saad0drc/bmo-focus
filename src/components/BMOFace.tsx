@@ -70,7 +70,10 @@ export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle, ta
       }
     };
     window.addEventListener('mousemove', onMove);
-    return () => window.removeEventListener('mousemove', onMove);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      clearTimeout(speedTimer.current);
+    };
   }, []);
 
   const handleMouseEnter = () => {
@@ -148,13 +151,16 @@ export function BMOFace({ emotion, timeLeft, isActive, mode, activeTaskTitle, ta
   // ── Blinking ──────────────────────────────────────────────────────────────
   const [isBlinking, setIsBlinking] = useState(false);
   useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
     const blink = () => {
       setIsBlinking(true);
-      setTimeout(() => setIsBlinking(false), 140);
-      setTimeout(blink, Math.random() * 4500 + 2000);
+      const t1 = setTimeout(() => setIsBlinking(false), 140);
+      const t2 = setTimeout(blink, Math.random() * 4500 + 2000);
+      timers.push(t1, t2);
     };
     const t = setTimeout(blink, 3000);
-    return () => clearTimeout(t);
+    timers.push(t);
+    return () => timers.forEach(clearTimeout);
   }, []);
 
   const formatTime = (s: number) =>
