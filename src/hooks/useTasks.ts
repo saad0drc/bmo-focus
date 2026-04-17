@@ -268,6 +268,10 @@ export function useTasks() {
         tasks.map(t => {
           if (t.id !== id) return t;
           const newCompleted = t.completedPomodoros + 1;
+          const sessionsPerRound = t.settings.sessionsPerRound ?? 4;
+          // Keep sessionInCurrentRound at the last session's position (sessionsPerRound - 1)
+          // so background knows this was the final session when calculating break type
+          const finalSessionInRound = sessionsPerRound - 1;
           return {
             ...t,
             completedPomodoros: newCompleted,
@@ -275,7 +279,7 @@ export function useTasks() {
             completed: true,
             lastCompletedDate: today,
             dailyStreak: t.repeatDaily ? (t.dailyStreak ?? 0) + 1 : (t.dailyStreak ?? 0),
-            sessionInCurrentRound: 0,
+            sessionInCurrentRound: finalSessionInRound,
           };
         }),
       );
