@@ -87,6 +87,15 @@ function loadTasks(): Task[] {
     let needsSave = false;
     const resettedTaskIds: string[] = [];
     
+    // Check if any task has ISO dates (needs migration)
+    const hasMigration = parsed.some(t => 
+      t.createdAt && typeof t.createdAt === 'string' && t.createdAt.includes('T')
+    );
+    if (hasMigration) {
+      console.log('[BMO] Migrating tasks to local YYYY-MM-DD date format...');
+      needsSave = true;
+    }
+    
     const result = parsed.map(t => {
       const task = migrateTask(t);
       
@@ -130,10 +139,10 @@ function loadTasks(): Task[] {
       return task;
     });
     
-    // IMPORTANT: Save the reset data back to localStorage immediately
+    // IMPORTANT: Save migrated/reset data back to localStorage immediately
     if (needsSave) {
-      const resetCheck = result.map(t => ({ id: t.id, title: t.title, domains: t.allowedDomains }));
-      console.log('[BMO] Reset tasks with domains:', resetCheck);
+      const resetCheck = result.map(t => ({ id: t.id, title: t.title, createdAt: t.createdAt, domains: t.allowedDomains }));
+      console.log('[BMO] Persisting migrated/reset tasks:', resetCheck);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
       
       // CRITICAL: Clear active task selection if it was one of the reset tasks
