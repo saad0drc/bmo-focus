@@ -19,16 +19,28 @@ function migrateTask(t: any): Task {
   const completedPomodoros = t.completedPomodoros ?? t.sessionsCompleted ?? 0;
   // Calculate session position in current round based on completed pomodoros
   const sessionInCurrentRound = completedPomodoros % (settings.sessionsPerRound ?? 4);
+  
+  // Convert createdAt to local YYYY-MM-DD format
+  let createdAt: string;
+  if (t.createdAt) {
+    if (typeof t.createdAt === 'number') {
+      createdAt = toDateStr(new Date(t.createdAt));
+    } else if (typeof t.createdAt === 'string' && t.createdAt.includes('T')) {
+      // ISO format: extract date part
+      createdAt = t.createdAt.split('T')[0];
+    } else {
+      // Already in YYYY-MM-DD format
+      createdAt = t.createdAt;
+    }
+  } else {
+    createdAt = todayStr();
+  }
+  
   return {
     id: t.id ?? crypto.randomUUID(),
     title: t.title ?? t.text ?? '',
     completed: t.completed ?? false,
-    createdAt:
-      t.createdAt
-        ? typeof t.createdAt === 'number'
-          ? new Date(t.createdAt).toISOString()
-          : t.createdAt
-        : new Date().toISOString(),
+    createdAt,
     completedPomodoros,
     totalFocusMinutes: t.totalFocusMinutes ?? 0,
     settings,
@@ -80,7 +92,7 @@ function loadTasks(): Task[] {
       
       // Check if task needs reset: has pomodoros from a previous day
       // Use lastCompletedDate if available, fallback to createdAt for old tasks
-      const taskDateStr = task.lastCompletedDate || (task.createdAt ? task.createdAt.split('T')[0] : null);
+      const taskDateStr = task.lastCompletedDate || task.createdAt;
       const needsReset = taskDateStr && taskDateStr !== today && task.completedPomodoros > 0;
       
       if (needsReset) {
@@ -171,7 +183,7 @@ export function useTasks() {
         id: crypto.randomUUID(),
         title,
         completed: false,
-        createdAt: new Date().toISOString(),
+        createdAt: todayStr(),
         completedPomodoros: 0,
         totalFocusMinutes: 0,
         settings,

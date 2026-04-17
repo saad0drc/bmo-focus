@@ -12,7 +12,7 @@ export interface Task {
   title: string;
   completedPomodoros: number;
   totalFocusMinutes: number;
-  createdAt: string; // ISO string
+  createdAt: string; // YYYY-MM-DD, local timezone
   completed: boolean;
   settings: TaskSettings;
   dueDate?: string;
