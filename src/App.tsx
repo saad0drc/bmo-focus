@@ -164,21 +164,31 @@ export default function App() {
 
       if (taskId) {
         const task = tasksRef.current.find(t => t.id === taskId);
-        const newCount = (task?.completedPomodoros ?? 0) + 1;
-        const target   = task?.settings?.sessionsPerRound ?? 4;
-
-        if (newCount >= target) {
-          completeRound(taskId, duration);
-          // Increment global streak on first pomo of the day
-          incrementGlobalStreakIfFirstPomoOfDay(today);
-          completionSound = 'taskComplete';
-          flashEmotion('laughing', 3000);
+        
+        // CRITICAL: Don't count additional pomos if the task is already completed for today
+        // This prevents incrementing past the target if the user restarts the timer
+        if (task?.completed) {
+          console.warn(`[BMO] Task "${task.title}" is already completed today, skipping increment`);
+          // Still add the session for tracking purposes, but don't modify the task
+          completionSound = 'focusComplete';
+          flashEmotion('success');
         } else {
-          incrementPomodoro(taskId, duration);
-          // Increment global streak on first pomo of the day
-          incrementGlobalStreakIfFirstPomoOfDay(today);
-          completionSound = 'bmoLaugh';
-          flashEmotion('excited', 2000);
+          const newCount = (task?.completedPomodoros ?? 0) + 1;
+          const target   = task?.settings?.sessionsPerRound ?? 4;
+
+          if (newCount >= target) {
+            completeRound(taskId, duration);
+            // Increment global streak on first pomo of the day
+            incrementGlobalStreakIfFirstPomoOfDay(today);
+            completionSound = 'taskComplete';
+            flashEmotion('laughing', 3000);
+          } else {
+            incrementPomodoro(taskId, duration);
+            // Increment global streak on first pomo of the day
+            incrementGlobalStreakIfFirstPomoOfDay(today);
+            completionSound = 'bmoLaugh';
+            flashEmotion('excited', 2000);
+          }
         }
       } else {
         completionSound = 'focusComplete';

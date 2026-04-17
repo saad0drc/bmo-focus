@@ -197,15 +197,31 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   const completedMode = state.mode;
   const sessionsPerRound = state.settings.sessionsPerRound ?? 4;
   
+  // Fetch active task's sessionsPerRound from storage if available
+  let activeTaskSessionsPerRound = undefined;
+  try {
+    const { bmo_activeTaskId, bmo_tasks } = await chrome.storage.local.get(['bmo_activeTaskId', 'bmo_tasks']);
+    if (bmo_activeTaskId && bmo_tasks) {
+      const tasks = typeof bmo_tasks === 'string' ? JSON.parse(bmo_tasks) : bmo_tasks;
+      const activeTask = tasks.find(t => t.id === bmo_activeTaskId);
+      if (activeTask?.settings?.sessionsPerRound) {
+        activeTaskSessionsPerRound = activeTask.settings.sessionsPerRound;
+        console.log('[Alarm] Active task found:', activeTask.title, 'sessionsPerRound:', activeTaskSessionsPerRound);
+      }
+    }
+  } catch (e) {
+    console.warn('[Alarm] Failed to fetch active task settings:', e);
+  }
+  
   // Determine which session tracker to use:
-  // - If there's an active task, use its sessionInCurrentRound
-  // - Otherwise, use global sessionInCurrentRound
-  const isTaskMode = state.activeTaskSessionsPerRound !== undefined;
+  // - If there's an active task, use its sessionInCurrentRound and sessionsPerRound
+  // - Otherwise, use global sessionInCurrentRound and sessionsPerRound
+  const isTaskMode = activeTaskSessionsPerRound !== undefined;
   const currentSessionInRound = isTaskMode 
     ? (state.activeTaskSessionInCurrentRound ?? 0)
     : (state.sessionInCurrentRound ?? 0);
   const effectiveSessionsPerRound = isTaskMode 
-    ? state.activeTaskSessionsPerRound 
+    ? activeTaskSessionsPerRound 
     : sessionsPerRound;
 
   // Calculate next session position
