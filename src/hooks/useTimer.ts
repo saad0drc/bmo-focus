@@ -284,7 +284,12 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void, activeT
 
         // Auto-advance only for focus and short breaks
         // Long breaks end the session — user must manually start next round
-        if (completedMode !== 'longBreak') {
+        if (completedMode === 'longBreak') {
+          console.log('[Timer] Long break complete — STOPPING (not auto-advancing)');
+          setIsActive(false);
+          endTimeRef.current = null;
+        } else {
+          console.log('[Timer] Mode complete:', completedMode, '→ Auto-advancing to:', nextMode);
           setTimeout(() => {
             setModeState(nextMode);
             setTimeLeft(settingsRef.current[nextMode] * 60);
