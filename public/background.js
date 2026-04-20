@@ -312,6 +312,12 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 
   // Auto-advance after a delay, giving the React tab time to handle completion
   // If the tab already sent START (user clicked), the isActive check prevents double-start
+  // BUT: Do NOT auto-advance after long break — user must manually start next round
+  if (nextMode === 'longBreak') {
+    console.log('[Alarm] Long break — NOT auto-advancing (user must manually start next round)');
+    return; // Stop here, don't auto-advance
+  }
+
   setTimeout(async () => {
     const fresh = await getState();
     if (!fresh.isActive && fresh.mode === nextMode) {
