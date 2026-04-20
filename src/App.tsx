@@ -163,30 +163,40 @@ export default function App() {
       if (taskId) {
         const task = tasksRef.current.find(t => t.id === taskId);
         
-        // CRITICAL: Don't count additional pomos if the task is already completed for today
-        // This prevents incrementing past the target if the user restarts the timer
-        if (task?.completed) {
-          console.warn(`[BMO] Task "${task.title}" is already completed today, skipping increment`);
-          // Still add the session for tracking purposes, but don't modify the task
-          completionSound = 'focusComplete';
-          flashEmotion('success');
-        } else {
+        if (task) {
           const newCount = (task?.completedPomodoros ?? 0) + 1;
           const target   = task?.settings?.sessionsPerRound ?? 4;
-
-          if (newCount >= target) {
-            completeRound(taskId, duration);
-            // Increment global streak on first pomo of the day
-            incrementGlobalStreakIfFirstPomoOfDay(today);
-            completionSound = 'taskComplete';
-            flashEmotion('laughing', 3000);
+          
+          // Check if task is truly completed FOR THIS TARGET:
+          // It's only "already done" if:
+          // 1. It's marked completed AND
+          // 2. The current count already meets or exceeds the target
+          // This allows users to change sessionsPerRound mid-round and continue
+          const isAlreadyDone = task.completed && task.completedPomodoros >= target;
+          
+          if (isAlreadyDone) {
+            console.warn(`[BMO] Task "${task.title}" (${task.completedPomodoros}/${target}) is already completed, skipping increment`);
+            // Still add the session for tracking purposes, but don't modify the task
+            completionSound = 'focusComplete';
+            flashEmotion('success');
           } else {
-            incrementPomodoro(taskId, duration);
-            // Increment global streak on first pomo of the day
-            incrementGlobalStreakIfFirstPomoOfDay(today);
-            completionSound = 'bmoLaugh';
-            flashEmotion('excited', 2000);
+            if (newCount >= target) {
+              completeRound(taskId, duration);
+              // Increment global streak on first pomo of the day
+              incrementGlobalStreakIfFirstPomoOfDay(today);
+              completionSound = 'taskComplete';
+              flashEmotion('laughing', 3000);
+            } else {
+              incrementPomodoro(taskId, duration);
+              // Increment global streak on first pomo of the day
+              incrementGlobalStreakIfFirstPomoOfDay(today);
+              completionSound = 'bmoLaugh';
+              flashEmotion('excited', 2000);
+            }
           }
+        } else {
+          completionSound = 'focusComplete';
+          flashEmotion('success');
         }
       } else {
         completionSound = 'focusComplete';

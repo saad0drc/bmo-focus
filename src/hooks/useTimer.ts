@@ -254,16 +254,15 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void, activeT
         if (completedMode === 'focus') {
           const taskInfo = activeTaskInfoRef.current;
           if (taskInfo) {
-            // For tasks: check if the current session (about to complete) is the last in the round
-            // If so, take a long break. Otherwise, short break.
+            // For tasks: check if we just completed the final session needed to finish this round
+            // Use the same logic as App.tsx: newCount >= sessionsPerRound
             const sessionsPerRound = taskInfo.sessionsPerRound;
-            const currentSessionInRound = taskInfo.sessionInCurrentRound ?? 0;
-            // Check if this is the last session (0-indexed, so last is sessionsPerRound - 1)
-            const isLastInRound = currentSessionInRound === (sessionsPerRound - 1);
-            nextMode = isLastInRound ? 'longBreak' : 'shortBreak';
-            // Update global session count for UI consistency
             const newCount = (taskInfo.sessionCount ?? 0) + 1;
             setSessionCount(newCount);
+            
+            // If this was the last session needed, take a long break. Otherwise, short break.
+            const isLastInRound = newCount >= sessionsPerRound;
+            nextMode = isLastInRound ? 'longBreak' : 'shortBreak';
           } else {
             // For no-task sessions: use global counter and global setting
             const sessionsPerRound = s.sessionsPerRound ?? 4;
