@@ -61,16 +61,20 @@ function getNextMode(completedMode, sessionInRound, sessionsPerRound, completedC
   if (completedMode === 'longBreak') return 'longBreak'; // Placeholder, won't actually auto-start
   
   // completedMode === 'focus': check if THIS session is the last
-  // For task mode with completedCount: the alarm fires AFTER session completes, 
-  // so completedCount is already incremented. Check if it meets or exceeds target.
-  if (completedCount !== undefined) {
-    return completedCount >= sessionsPerRound ? 'longBreak' : 'shortBreak';
+  // Primary: use completedCount if available (most reliable, actual source of truth)
+  if (completedCount !== undefined && completedCount > 0) {
+    const isLast = completedCount >= sessionsPerRound;
+    if (isLast) return 'longBreak';
   }
   
-  // Fallback: use sessionInRound (for global sessions)
-  // This calculates if the NEXT position wraps to 0
-  const nextSessionInRound = (sessionInRound + 1) % sessionsPerRound;
-  return nextSessionInRound === 0 ? 'longBreak' : 'shortBreak';
+  // Fallback/Defensive: if sessionInRound is at the end position, it's definitely the last session
+  // This handles edge cases where completedCount might be slightly stale due to async storage sync
+  if (sessionInRound === sessionsPerRound - 1) {
+    return 'longBreak';
+  }
+  
+  // Otherwise: short break
+  return 'shortBreak';
 }
 
 // ── Notification content ────────────────────────────────────────────────────
@@ -258,6 +262,14 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     : currentSessionInRound;
 
   const nextMode = getNextMode(completedMode, currentSessionInRound, effectiveSessionsPerRound, completedCountForBreakDecision);
+  console.log('[Alarm] Break decision:', {
+    completedMode,
+    currentSessionInRound,
+    effectiveSessionsPerRound,
+    completedCountForBreakDecision,
+    nextMode,
+    isTaskMode,
+  });
   const nextDurationMs = modeDurationMs(nextMode, state.settings);
 
   // Update state: track sessions both globally and per-task
