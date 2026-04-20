@@ -9,13 +9,23 @@
   "background": {
     "service_worker": "background.js"
   },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
   "permissions": [
     "storage",
     "alarms",
     "notifications",
     "tabs",
     "windows",
-    "webNavigation"
+    "webNavigation",
+    "scripting",
+    "webRequest"
   ],
   "host_permissions": [
     "<all_urls>"

@@ -20,6 +20,8 @@ interface StatsBoardProps {
   onOpenHistory?: () => void;
   mode?: TimerMode;
   activeTaskId?: string | null;
+  timeLeft?: number;
+  totalFocusTime?: number;
 }
 
 interface MiniStatProps {
@@ -327,9 +329,11 @@ interface BMOHeartStatProps {
   mode?: TimerMode;
   activeTaskId?: string | null;
   tasks?: Task[];
+  timeLeft?: number;
+  totalFocusTime?: number;
 }
 
-function BMOHeartStat({ emotion, mode = 'focus', activeTaskId, tasks = [] }: BMOHeartStatProps) {
+function BMOHeartStat({ emotion, mode = 'focus', activeTaskId, tasks = [], timeLeft = 0, totalFocusTime = 0 }: BMOHeartStatProps) {
   const activeTask = activeTaskId && tasks.length > 0 ? tasks.find(t => t.id === activeTaskId) : undefined;
   const taskColor = activeTask?.color || '#4ECDC4';
   const taskName = activeTask?.title || 'Ready';
@@ -337,39 +341,49 @@ function BMOHeartStat({ emotion, mode = 'focus', activeTaskId, tasks = [] }: BMO
   // Get SVG for this color (use heart variants)
   const characterSvg = heartCharacterSVGs[taskColor] || heartCharacterSVGs['#4ECDC4'];
   
-  // State indicator: focus, break, or long break - visual style only
-  const getStateStyle = (timerMode: TimerMode) => {
-    switch (timerMode) {
-      case 'focus':
-        return { icon: '🔥', bgGradient: 'from-[#FF5E5E]/10 to-[#FFB347]/10', borderColor: 'border-[#FF5E5E]/40' };
-      case 'shortBreak':
-        return { icon: '☕', bgGradient: 'from-[#6BCB77]/10 to-[#FFB347]/10', borderColor: 'border-[#6BCB77]/30' };
-      case 'longBreak':
-        return { icon: '🎉', bgGradient: 'from-[#FFD93D]/15 to-[#FFB347]/15', borderColor: 'border-[#FFD93D]/40' };
-      default:
-        return { icon: '⭕', bgGradient: 'from-gray-400/10 to-[#FFB347]/5', borderColor: 'border-gray-400/20' };
-    }
+  // Calculate damage percentage during focus (0 to 100)
+  const damagePercent = mode === 'focus' && totalFocusTime > 0 
+    ? Math.min(100, ((totalFocusTime - timeLeft) / totalFocusTime) * 100)
+    : 0;
+
+  // Helper to convert hex color to lighter/darker variants
+  const getLighterColor = (hex: string): string => {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const r = Math.min(255, (num >> 16) + 60);
+    const g = Math.min(255, ((num >> 8) & 0x00FF) + 60);
+    const b = Math.min(255, (num & 0x0000FF) + 60);
+    return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
   };
-  
-  const stateStyle = getStateStyle(mode);
+
+  const getDarkerColor = (hex: string): string => {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const r = Math.max(0, (num >> 16) - 80);
+    const g = Math.max(0, ((num >> 8) & 0x0000FF) - 80);
+    const b = Math.max(0, (num & 0x0000FF) - 80);
+    return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+  };
+
+  const lighterColor = getLighterColor(taskColor);
+  const darkerColor = getDarkerColor(taskColor);
 
   return (
     <motion.div
-      className={`col-span-2 flex flex-col items-center gap-1`}
+      className={`col-span-2 flex items-center gap-6 lg:gap-8`}
     >
-      {/* Heartbeat Effect Container - Compact */}
-      <div className="relative w-32 h-32 lg:w-40 lg:h-40 flex items-center justify-center">
+      {/* Heart on left with ripple effect */}
+      <div className="relative w-32 h-32 lg:w-40 lg:h-40 flex items-center justify-center flex-shrink-0">
         
-        {/* Animated ripple effect rings - shows heartbeat */}
+        {/* Animated ripple effect rings - task color gradient */}
         {mode === 'focus' && (
           <>
             {[0, 1, 2].map((i) => (
               <motion.div
                 key={`ripple-focus-${i}`}
-                className="absolute rounded-full border-2 border-[#FF5E5E]"
+                className="absolute rounded-full border-2"
                 style={{
                   width: '100%',
                   height: '100%',
+                  borderColor: taskColor,
                 }}
                 animate={{
                   scale: [1, 1.4, 1.8],
@@ -414,10 +428,11 @@ function BMOHeartStat({ emotion, mode = 'focus', activeTaskId, tasks = [] }: BMO
             {[0, 1, 2].map((i) => (
               <motion.div
                 key={`ripple-longbreak-${i}`}
-                className="absolute rounded-full border-2 border-[#FFD93D]"
+                className="absolute rounded-full border-2"
                 style={{
                   width: '100%',
                   height: '100%',
+                  borderColor: darkerColor,
                 }}
                 animate={{
                   scale: [1, 1.5, 2],
@@ -433,7 +448,7 @@ function BMOHeartStat({ emotion, mode = 'focus', activeTaskId, tasks = [] }: BMO
           </>
         )}
 
-        {/* SVG Heart - bigger to fit character better */}
+        {/* Heart SVG with task color and progressive damage */}
         <motion.div
           className="relative z-10"
           animate={
@@ -458,12 +473,11 @@ function BMOHeartStat({ emotion, mode = 'focus', activeTaskId, tasks = [] }: BMO
             xmlns="http://www.w3.org/2000/svg"
             className="drop-shadow-lg"
           >
-            {/* Richer copper-bronze heart with warm depth */}
             <defs>
               <linearGradient id="heartGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style={{ stopColor: '#D4A574', stopOpacity: 1 }} />
-                <stop offset="50%" style={{ stopColor: '#C9915E', stopOpacity: 1 }} />
-                <stop offset="100%" style={{ stopColor: '#B8742E', stopOpacity: 1 }} />
+                <stop offset="0%" style={{ stopColor: lighterColor, stopOpacity: 1 }} />
+                <stop offset="50%" style={{ stopColor: taskColor, stopOpacity: 1 }} />
+                <stop offset="100%" style={{ stopColor: darkerColor, stopOpacity: 1 }} />
               </linearGradient>
               <filter id="heartGlow">
                 <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
@@ -473,19 +487,54 @@ function BMOHeartStat({ emotion, mode = 'focus', activeTaskId, tasks = [] }: BMO
                 </feMerge>
               </filter>
             </defs>
-            {/* Real smooth heart shape - warmer, richer tone */}
+            {/* Heart shape */}
             <path
               d="M50,90 C20,70 5,55 5,40 C5,25 15,15 25,15 C35,15 45,25 50,32 C55,25 65,15 75,15 C85,15 95,25 95,40 C95,55 80,70 50,90 Z"
               fill="url(#heartGradient)"
-              stroke="#8B5A1F"
+              stroke={darkerColor}
               strokeWidth="1.5"
               filter="url(#heartGlow)"
             />
+            
+            {/* Progressive crack overlays based on damage */}
+            {damagePercent > 20 && (
+              <motion.path
+                d="M50,32 Q60,50 55,70"
+                stroke={darkerColor}
+                strokeWidth="2"
+                fill="none"
+                strokeLinecap="round"
+                opacity={Math.min(1, (damagePercent - 20) / 20)}
+              />
+            )}
+            {damagePercent > 45 && (
+              <motion.path
+                d="M50,32 Q40,50 45,70"
+                stroke={darkerColor}
+                strokeWidth="2"
+                fill="none"
+                strokeLinecap="round"
+                opacity={Math.min(1, (damagePercent - 45) / 20)}
+              />
+            )}
+            {damagePercent > 70 && (
+              <motion.path
+                d="M30,55 L70,50"
+                stroke={darkerColor}
+                strokeWidth="2"
+                fill="none"
+                strokeLinecap="round"
+                opacity={Math.min(1, (damagePercent - 70) / 30)}
+              />
+            )}
           </svg>
         </motion.div>
+      </div>
 
-        {/* Character SVG in center */}
-        <div className="absolute w-8 h-8 lg:w-10 lg:h-10 z-20">
+      {/* Icon and Title on right side */}
+      <div className="flex flex-col items-center gap-1 flex-shrink-0">
+        {/* Character SVG */}
+        <div className="w-12 h-12 lg:w-16 lg:h-16">
           <svg
             viewBox="0 0 256 256"
             xmlns="http://www.w3.org/2000/svg"
@@ -493,12 +542,12 @@ function BMOHeartStat({ emotion, mode = 'focus', activeTaskId, tasks = [] }: BMO
             className="w-full h-full drop-shadow-md"
           />
         </div>
-      </div>
 
-      {/* Task name below - tight spacing */}
-      <div className="text-center mt-1">
-        <div className="font-pixel text-[9px] lg:text-xs text-[#1F4E5A] leading-none font-bold truncate max-w-[100px] uppercase tracking-tight">
-          {taskName}
+        {/* Task name below */}
+        <div className="text-center">
+          <div className="font-pixel text-[9px] lg:text-xs text-[#1F4E5A] leading-none font-bold truncate max-w-[80px] uppercase tracking-tight">
+            {taskName}
+          </div>
         </div>
       </div>
     </motion.div>
@@ -678,7 +727,7 @@ function AllTimeHistory({ sessions, tasks }: { sessions: Session[]; tasks: Task[
   );
 }
 
-export const StatsBoard = memo(function StatsBoard({ sessions, tasks, emotion, onOpenHistory, mode = 'focus', activeTaskId }: StatsBoardProps) {
+export const StatsBoard = memo(function StatsBoard({ sessions, tasks, emotion, onOpenHistory, mode = 'focus', activeTaskId, timeLeft = 0, totalFocusTime = 0 }: StatsBoardProps) {
   const today    = useMemo(() => computeTodayStats(sessions), [sessions]);
   const week     = useMemo(() => computeWeekStats(sessions),  [sessions]);
   const streak   = useMemo(() => computeStreak(sessions),     [sessions]);
@@ -739,7 +788,7 @@ export const StatsBoard = memo(function StatsBoard({ sessions, tasks, emotion, o
           <TimeStats focusMinutes={today.focusMinutes} totalMinutes={today.totalTimeMinutes} />
           
           {/* Row 3: BMO Heart (full width) */}
-          <BMOHeartStat emotion={emotion} mode={mode} activeTaskId={activeTaskId} tasks={tasks} />
+          <BMOHeartStat emotion={emotion} mode={mode} activeTaskId={activeTaskId} tasks={tasks} timeLeft={timeLeft} totalFocusTime={totalFocusTime} />
         </div>
       </div>
 

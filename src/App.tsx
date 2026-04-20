@@ -581,6 +581,8 @@ export default function App() {
                     onOpenHistory={() => setIsHistoryOpen(true)}
                     mode={mode}
                     activeTaskId={activeTaskId}
+                    timeLeft={timeLeft}
+                    totalFocusTime={activeTaskId && tasks.length > 0 ? (tasks.find(t => t.id === activeTaskId)?.settings.focusDuration ?? 25) * 60 : 0}
                   />
                 </Suspense>
               </div>

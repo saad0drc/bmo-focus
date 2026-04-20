@@ -2,6 +2,12 @@ const STORAGE_KEY = 'bmo_timer_state';
 const ALARM_NAME = 'bmo_pomodoro';
 const AUTO_ADVANCE_DELAY_MS = 3000;
 
+// Track current tab URLs by tabId for referrer detection
+const tabUrls = {};
+
+// Track referrers from HTTP headers for first-click detection
+const requestReferrers = {};
+
 // Character SVGs for blocked page
 const CHARACTER_SVGS = {
   '#4ECDC4': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><rect x="20" y="20" width="216" height="216" rx="24" fill="#4ECDC4" stroke="#1F4E5A" stroke-width="8"/><rect x="40" y="40" width="176" height="176" rx="16" fill="#E8F5E9" stroke="#1F4E5A" stroke-width="6"/><g><rect x="55" y="65" width="45" height="55" rx="4" fill="#1F4E5A"/><rect x="62" y="72" width="18" height="22" fill="#E8F5E9" rx="2"/><circle cx="71" cy="83" r="4" fill="#1F4E5A"/></g><g><rect x="156" y="65" width="45" height="55" rx="4" fill="#1F4E5A"/><rect x="163" y="72" width="18" height="22" fill="#E8F5E9" rx="2"/><circle cx="172" cy="83" r="4" fill="#1F4E5A"/></g><path d="M 70 130 Q 128 150 186 130" stroke="#1F4E5A" stroke-width="8" fill="none" stroke-linecap="round"/><circle cx="35" cy="140" r="6" fill="#1F4E5A"/><circle cx="35" cy="165" r="6" fill="#1F4E5A"/></svg>`,
@@ -292,25 +298,64 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 
 // ── Tab tracking for Trusted Bubble ──
 const tabOrigins = new Map(); // tabId -> hostname of allowed domain
+const tabReferrers = new Map(); // tabId -> referrer hostname for blocking checks
+const recentLinkClicks = new Map(); // destination domain -> timestamp (expires after 5s)
 
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.status === 'complete' && tab.url) {
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  // Track on both 'loading' and 'complete' to catch the page as soon as possible
+  if (tab.url) {
     try {
       const url = new URL(tab.url);
       // Only track real websites, not extension pages or special pages
-      if (!url.protocol.startsWith('chrome') && !url.hostname.includes('newtab')) {
+      if (!url.protocol.startsWith('chrome') && !url.hostname.includes('newtab') && !url.hostname.includes('blocked')) {
         const hostname = url.hostname.replace(/^www\./, '');
         tabOrigins.set(tabId, hostname);
-        console.log('[BMO] Tab tracking:', tabId, '→', hostname);
+        // Store the hostname as referrer for the NEXT navigation
+        tabReferrers.set(tabId, hostname);
+        
+        // During focus sessions, auto-add this domain to session allowlist if it's from an allowed domain
+        const state = await getState();
+        if (state.isActive) {
+          const { bmo_activeTaskId } = await chrome.storage.local.get('bmo_activeTaskId');
+          if (bmo_activeTaskId) {
+            const { bmo_tasks } = await chrome.storage.local.get('bmo_tasks');
+            if (bmo_tasks) {
+              try {
+                const tasks = typeof bmo_tasks === 'string' ? JSON.parse(bmo_tasks) : bmo_tasks;
+                const activeTask = tasks.find(t => t.id === bmo_activeTaskId);
+                if (activeTask && activeTask.allowedDomains) {
+                  // If this page is from an allowed domain, add it to session allowlist
+                  // This allows clicking links FROM this page to go anywhere
+                  if (isHostnameAllowed(hostname, activeTask.allowedDomains)) {
+                    const sessionAllowlist = state.sessionAllowlist || [];
+                    // Don't add already-allowed domains to the list, but DO add this domain itself
+                    // so links from allowed domains work
+                    if (!sessionAllowlist.includes(hostname)) {
+                      sessionAllowlist.push(hostname);
+                      await saveState({ sessionAllowlist });
+                      console.log('[BMO] Added to session allowlist (source domain):', hostname);
+                    }
+                  }
+                }
+              } catch (e) {
+                console.log('[BMO] Error processing allowed domain:', e.message);
+              }
+            }
+          }
+        }
+        
+        console.log('[BMO] Tab updated (status=' + changeInfo.status + '):', tabId, '→', hostname, 'tabReferrers size:', tabReferrers.size);
       }
     } catch (e) {
-      // Ignore invalid URLs
+      console.log('[BMO] Error in onUpdated:', e.message);
     }
   }
 });
 
 chrome.tabs.onRemoved.addListener((tabId) => {
   tabOrigins.delete(tabId);
+  tabReferrers.delete(tabId);
+  delete tabUrls[tabId]; // Clean up tab URL tracking
 });
 
 // Helper function to extract hostname from domain string
@@ -332,6 +377,84 @@ function isHostnameAllowed(hostname, allowedDomains) {
     const normalizedDomain = extractHostname(domain);
     return normalized === normalizedDomain || normalized.endsWith('.' + normalizedDomain);
   });
+}
+
+// ── Extract links from a page and store as pre-allowed ──
+async function extractAndStoreLinks(pageUrl, sourceHostname) {
+  try {
+    const response = await fetch(pageUrl);
+    const html = await response.text();
+    
+    // Extract href values using regex
+    const linkRegex = /href=["']([^"']+)["']/gi;
+    const destinations = new Set();
+    let match;
+    
+    while ((match = linkRegex.exec(html)) !== null) {
+      try {
+        const href = match[1];
+        if (href.startsWith('http://') || href.startsWith('https://')) {
+          const url = new URL(href);
+          const hostname = url.hostname.replace(/^www\./, '');
+          if (hostname !== sourceHostname) {
+            destinations.add(hostname);
+          }
+        }
+      } catch (e) {
+        // Skip invalid URLs
+      }
+    }
+    
+    if (destinations.size > 0) {
+      const preallowedData = {
+        source: sourceHostname,
+        destinations: Array.from(destinations),
+        timestamp: Date.now()
+      };
+      
+      await chrome.storage.session.set({
+        [`preallowed_from_${sourceHostname}`]: preallowedData
+      });
+      
+      console.log('[Blocker] ✅ Pre-allowed', destinations.size, 'destinations from', sourceHostname, ':', Array.from(destinations).slice(0, 5).join(', '));
+    }
+  } catch (e) {
+    console.log('[Blocker] Could not extract links from', pageUrl, ':', e.message);
+  }
+}
+
+// ── Capture HTTP Referer headers for first-click detection ─
+try {
+  chrome.webRequest.onBeforeSendHeaders.addListener(
+    (details) => {
+      if (details.frameId !== 0) return; // Only main frame
+      
+      const headers = details.requestHeaders || [];
+      const refererHeader = headers.find(h => h.name.toLowerCase() === 'referer');
+      
+      if (refererHeader && refererHeader.value) {
+        try {
+          const refererUrl = new URL(refererHeader.value);
+          const refererHostname = refererUrl.hostname.replace(/^www\./, '');
+          const targetUrl = new URL(details.url);
+          const targetHostname = targetUrl.hostname.replace(/^www\./, '');
+          
+          // Store referrer for this target domain
+          requestReferrers[`${details.tabId}_${targetHostname}`] = {
+            referrer: refererHostname,
+            timestamp: Date.now()
+          };
+          console.log('[Blocker] HTTP Referer captured: from', refererHostname, '→', targetHostname);
+        } catch (e) {
+          console.log('[Blocker] Could not parse referer header:', e.message);
+        }
+      }
+    },
+    { urls: ['http://*/*', 'https://*/*'] },
+    ['requestHeaders']
+  );
+} catch (e) {
+  console.log('[Blocker] webRequest not available:', e.message);
 }
 
 // ── Allowed World Blocker: Intercept navigations via webNavigation API (MV3 compatible) ─
@@ -399,29 +522,92 @@ try {
       requestUrl: details.url
     });
 
+    // Debug: Check each allowed domain match
+    if (activeTask.allowedDomains && activeTask.allowedDomains.length > 0) {
+      activeTask.allowedDomains.forEach(domain => {
+        const normalizedDomain = extractHostname(domain);
+        const exactMatch = normalizedHostname === normalizedDomain;
+        const suffixMatch = normalizedHostname.endsWith('.' + normalizedDomain);
+        console.log(`[Blocker] Domain check: "${normalizedHostname}" vs "${normalizedDomain}" (exact: ${exactMatch}, suffix: ${suffixMatch})`);
+      });
+    }
+
     // 1. Check if destination is directly in allowed domains
     const isDirectlyAllowed = isHostnameAllowed(normalizedHostname, activeTask.allowedDomains) ||
       sessionAllowlist.some(domain => isHostnameAllowed(normalizedHostname, [domain]));
     
-    console.log('[Blocker] Destination directly allowed:', isDirectlyAllowed);
-
-    // 2. Check if coming from an allowed domain (trusted bubble via tab tracking)
-    let isFromTrustedSite = false;
-    const tabHostname = tabOrigins.get(details.tabId);
-    
-    if (tabHostname) {
-      isFromTrustedSite = isHostnameAllowed(tabHostname, activeTask.allowedDomains);
-      console.log('[Blocker] Tab is on:', tabHostname, '- Trusted:', isFromTrustedSite);
-    } else {
-      console.log('[Blocker] Tab not tracked or no history');
+     // 2. Check if destination is in pre-allowed list from allowed domains
+    let isPreallowed = false;
+    try {
+      // Check all allowed domains to see if they have pre-allowed this destination
+      for (const allowedDomain of activeTask.allowedDomains) {
+        const normalizedAllowed = extractHostname(allowedDomain);
+        const preallowedKey = `preallowed_from_${normalizedAllowed}`;
+        const preallowedData = await chrome.storage.session.get(preallowedKey);
+        
+        if (preallowedData[preallowedKey]) {
+          const { destinations, timestamp } = preallowedData[preallowedKey];
+          const isWithinWindow = (Date.now() - timestamp) < 3600000; // 1 hour window
+          
+          if (isWithinWindow && destinations.includes(normalizedHostname)) {
+            console.log('[Blocker] ✅ PREALLOWED: destination found in allowed domain:', normalizedAllowed);
+            isPreallowed = true;
+            break;
+          }
+        }
+      }
+    } catch (e) {
+      console.log('[Blocker] Could not check pre-allowed list:', e.message);
     }
     
-    // 3. Check if coming from an allowed domain via URL referrer (backup check)
+    // 3. Check if this was recently clicked from an allowed domain (via session storage from content script)
+     let isRecentlyClicked = false;
+     try {
+       const clickData = await chrome.storage.session.get(`lastLinkClick_${normalizedHostname}`);
+       const key = `lastLinkClick_${normalizedHostname}`;
+       console.log('[Blocker] Checking session storage for key:', key, 'Data:', clickData[key]);
+       if (clickData[key]) {
+         const { domain, timestamp, source } = clickData[key];
+         const isWithinWindow = (Date.now() - timestamp) < 5000;
+         const isSourceAllowed = isHostnameAllowed(source, activeTask.allowedDomains);
+         console.log('[Blocker] Click data found - source:', source, 'sourceAllowed:', isSourceAllowed, 'withinWindow:', isWithinWindow);
+         
+         if (isWithinWindow && isSourceAllowed) {
+           console.log('[Blocker] Domain was recently clicked from allowed domain:', source, '→', domain);
+           isRecentlyClicked = true;
+           // Clean up
+           await chrome.storage.session.remove(key);
+         }
+       }
+     } catch (e) {
+       console.log('[Blocker] Could not check session storage:', e.message);
+     }
+    
+    // 4. Check if coming from an allowed domain via HTTP referer OR initiator
     let isFromReferrer = false;
-    if (details.initiator) {
+    
+    // PRIMARY: Check HTTP Referer header (captured via onBeforeSendHeaders)
+    const refererKey = `${details.tabId}_${normalizedHostname}`;
+    if (requestReferrers[refererKey]) {
+      const { referrer, timestamp } = requestReferrers[refererKey];
+      const isWithinWindow = (Date.now() - timestamp) < 1000; // 1 second window for header capture
+      isFromReferrer = isWithinWindow && isHostnameAllowed(referrer, activeTask.allowedDomains);
+      if (isFromReferrer) {
+        console.log('[Blocker] ✅ HTTP Referer ALLOWED:', referrer, '→', normalizedHostname);
+        delete requestReferrers[refererKey]; // Clean up
+      } else {
+        console.log('[Blocker] HTTP Referer available but not allowed:', referrer);
+      }
+    }
+    
+    // Debug: Check what initiator value we have
+    console.log('[Blocker] Initiator available:', !!details.initiator, 'Value:', details.initiator);
+    
+    // SECONDARY: Check details.initiator (immediate source of navigation)
+    if (!isFromReferrer && details.initiator) {
       try {
         const initiatorUrl = new URL(details.initiator);
-        const initiatorHostname = initiatorUrl.hostname;
+        const initiatorHostname = initiatorUrl.hostname.replace(/^www\./, '');
         isFromReferrer = isHostnameAllowed(initiatorHostname, activeTask.allowedDomains);
         console.log('[Blocker] Request initiated from:', initiatorHostname, '- Allowed:', isFromReferrer);
       } catch (e) {
@@ -429,9 +615,44 @@ try {
       }
     }
     
-    // Allow if: destination is directly allowed OR coming from trusted site (clicking links inside allowed domain)
-    const shouldAllow = isDirectlyAllowed || isFromTrustedSite || isFromReferrer;
-    console.log('[Blocker] Final decision:', { isDirectlyAllowed, isFromTrustedSite, isFromReferrer, shouldAllow });
+    // FALLBACK: Check tab's previous URL from tabUrls tracking
+    // This handles cases where initiator is not available
+    if (!isFromReferrer && tabUrls[details.tabId]) {
+      try {
+        const referrerUrl = new URL(tabUrls[details.tabId]);
+        const referrerHostname = referrerUrl.hostname.replace(/^www\./, '');
+        isFromReferrer = isHostnameAllowed(referrerHostname, activeTask.allowedDomains);
+        if (isFromReferrer) {
+          console.log('[Blocker] Request from tab referrer (tab history):', referrerHostname);
+        }
+      } catch (e) {
+        console.log('[Blocker] Could not parse tab URL:', tabUrls[details.tabId]);
+      }
+    }
+    
+    // FALLBACK 2: Check if last navigation was recent (within 5 seconds) and from allowed domain
+    // This handles cases where initiator is not available and tabUrls not set yet
+    if (!isFromReferrer && state.lastNavigatedUrl && state.lastNavigatedTimestamp) {
+      const timeSinceLastNav = Date.now() - state.lastNavigatedTimestamp;
+      if (timeSinceLastNav < 5000) { // 5 second window
+        try {
+          const referrerUrl = new URL(state.lastNavigatedUrl);
+          const referrerHostname = referrerUrl.hostname.replace(/^www\./, '');
+          isFromReferrer = isHostnameAllowed(referrerHostname, activeTask.allowedDomains);
+          if (isFromReferrer) {
+            console.log('[Blocker] Request came from allowed domain (within 5s window):', referrerHostname);
+          }
+        } catch (e) {
+          console.log('[Blocker] Could not parse lastNavigatedUrl:', state.lastNavigatedUrl);
+        }
+      }
+    }
+    
+    // Allow if: destination is directly allowed OR preallowed OR recently clicked OR came from allowed initiator
+    const shouldAllow = isDirectlyAllowed || isPreallowed || isRecentlyClicked || isFromReferrer;
+    console.log('[Blocker] Final decision reasons: directlyAllowed=%s, preallowed=%s, recentlyClicked=%s, fromReferrer=%s', 
+      isDirectlyAllowed, isPreallowed, isRecentlyClicked, isFromReferrer);
+    console.log('[Blocker] Final decision:', { isDirectlyAllowed, isPreallowed, isRecentlyClicked, isFromReferrer, shouldAllow });
 
     if (!shouldAllow) {
       console.log('[Blocker] BLOCKED:', normalizedHostname);
@@ -468,6 +689,54 @@ try {
   { url: [{ urlMatches: '.*' }] }
 );
   console.log('[BMO] webNavigation listener registered successfully!');
+  
+  // Track successful navigations and extract links from allowed domains
+  chrome.webNavigation.onCommitted.addListener(
+    async (details) => {
+      if (details.frameId !== 0) return; // Only track main frame
+      const state = await getState();
+      if (state.isActive) {
+        // Store the URL in memory by tabId for immediate referrer detection
+        tabUrls[details.tabId] = details.url;
+        console.log('[Blocker] Tab', details.tabId, 'navigated to:', details.url);
+        
+        // Also store in state for fallback checking
+        await saveState({ 
+          lastNavigatedUrl: details.url,
+          lastNavigatedTimestamp: Date.now()
+        });
+        
+        // If this is an allowed domain, extract links from it
+        try {
+          const { bmo_activeTaskId } = await chrome.storage.local.get('bmo_activeTaskId');
+          const { bmo_tasks } = await chrome.storage.local.get('bmo_tasks');
+          
+          if (bmo_activeTaskId && bmo_tasks) {
+            const tasks = typeof bmo_tasks === 'string' ? JSON.parse(bmo_tasks) : bmo_tasks;
+            const activeTask = tasks.find(t => t.id === bmo_activeTaskId);
+            
+            if (activeTask && activeTask.allowedDomains) {
+              const navigatedUrl = new URL(details.url);
+              const navigatedHostname = navigatedUrl.hostname.replace(/^www\./, '');
+              const isAllowedDomain = activeTask.allowedDomains.some(d => {
+                const normalized = extractHostname(d);
+                return navigatedHostname === normalized || navigatedHostname.endsWith('.' + normalized);
+              });
+              
+              if (isAllowedDomain) {
+                console.log('[Blocker] Extracting links from allowed domain:', navigatedHostname);
+                extractAndStoreLinks(details.url, navigatedHostname);
+              }
+            }
+          }
+        } catch (e) {
+          console.log('[Blocker] Could not extract links:', e.message);
+        }
+      }
+    },
+    { url: [{ urlMatches: '.*' }] }
+  );
+  
 } catch (e) {
   console.error('[BMO] Failed to register webNavigation listener:', e);
 }
@@ -502,6 +771,32 @@ async function handleMessage(msg) {
       await chrome.alarms.clear(ALARM_NAME);
       chrome.alarms.create(ALARM_NAME, { when: endTime });
       await saveState({ isActive: true, endTime, pausedTimeLeft: null });
+      
+      // Pre-extract links from all allowed domains when focus starts
+      try {
+        const { bmo_activeTaskId } = await chrome.storage.local.get('bmo_activeTaskId');
+        const { bmo_tasks } = await chrome.storage.local.get('bmo_tasks');
+        
+        if (bmo_activeTaskId && bmo_tasks) {
+          const tasks = typeof bmo_tasks === 'string' ? JSON.parse(bmo_tasks) : bmo_tasks;
+          const activeTask = tasks.find(t => t.id === bmo_activeTaskId);
+          
+          if (activeTask && activeTask.allowedDomains) {
+            console.log('[Blocker] 🚀 Pre-extracting links from allowed domains...');
+            for (const allowedDomain of activeTask.allowedDomains) {
+              const hostname = extractHostname(allowedDomain);
+              const pageUrl = `https://${hostname}`;
+              // Fire and forget - extract in background
+              extractAndStoreLinks(pageUrl, hostname).catch(e => {
+                console.log('[Blocker] Pre-extract failed for', hostname, ':', e.message);
+              });
+            }
+          }
+        }
+      } catch (e) {
+        console.log('[Blocker] Could not pre-extract links:', e.message);
+      }
+      
       return { ok: true };
     }
 
@@ -563,6 +858,49 @@ async function handleMessage(msg) {
         sessionAllowlist.push(domain);
         await saveState({ sessionAllowlist });
       }
+      return { ok: true };
+    }
+
+    case 'LINK_CLICKED': {
+      // Content script detected a link click
+      // If the source is an allowed domain, mark the target for temporary allowance
+      console.log('[Blocker] LINK_CLICKED received: from', msg.sourceHostname, 'to', msg.targetDomain);
+      const { sourceHostname, targetDomain } = msg;
+      const current = await getState();
+      const { bmo_activeTaskId } = await chrome.storage.local.get('bmo_activeTaskId');
+      
+      console.log('[Blocker] Active task:', bmo_activeTaskId, 'isActive:', current.isActive);
+      
+      if (!bmo_activeTaskId || !current.isActive) {
+        return { ok: true }; // Not in a focus session, allow any navigation
+      }
+
+      // Get active task
+      const { bmo_tasks } = await chrome.storage.local.get('bmo_tasks');
+      if (!bmo_tasks) return { ok: true };
+      
+      try {
+        const tasks = typeof bmo_tasks === 'string' ? JSON.parse(bmo_tasks) : bmo_tasks;
+        const activeTask = tasks.find(t => t.id === bmo_activeTaskId);
+        
+        if (!activeTask || !activeTask.allowedDomains || activeTask.allowedDomains.length === 0) {
+          return { ok: true }; // No domain restrictions
+        }
+
+        // Check if link came FROM an allowed domain
+        const isSourceAllowed = isHostnameAllowed(sourceHostname, activeTask.allowedDomains);
+        if (isSourceAllowed) {
+          // User clicked a link FROM an allowed domain TO target
+          // Mark target destination so we can allow the navigation within 5 seconds
+          recentLinkClicks.set(targetDomain, Date.now());
+          console.log('[Blocker] Marked link click FROM allowed domain to:', targetDomain);
+        } else {
+          console.log('[Blocker] Link click from non-allowed domain:', sourceHostname);
+        }
+      } catch (e) {
+        console.error('[Blocker] Error processing LINK_CLICKED:', e);
+      }
+      
       return { ok: true };
     }
 
