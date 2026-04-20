@@ -205,11 +205,13 @@ export function useTasks() {
         const shouldAutoUncomplete = sessionsPerRoundChanged && t.completed;
         
         if (shouldAutoUncomplete) {
-          console.log(`[Tasks] Auto-uncompleting task "${t.title}" because sessionsPerRound changed`);
+          console.log(`[Tasks] Auto-uncompleting task "${t.title}" because sessionsPerRound changed from ${t.settings.sessionsPerRound} to ${updates.settings.sessionsPerRound}`);
           return { 
             ...t, 
             ...updates,
             completed: false, // Auto-uncomplete so user can continue with new target
+            // Also reset sessionInCurrentRound to 0 to avoid stale position in break logic
+            sessionInCurrentRound: 0,
           };
         }
         
