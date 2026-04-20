@@ -360,6 +360,10 @@ export function useTimer(onComplete: (completedMode: TimerMode) => void, activeT
     setIsActive(false);
     setTimeLeft(full);
     endTimeRef.current = null;
+    // NOTE: Intentionally NOT resetting sessionInCurrentRound here.
+    // This allows users to skip breaks: if they're in a break and switch to focus,
+    // the round counter stays the same so the system knows this is pomo N of the round,
+    // not pomo 1 of a new round. Break-skipping should NOT reset the session counter.
     if (isChromeExt) sendBgMessage('SET_MODE', { mode: newMode });
   }, []);
 

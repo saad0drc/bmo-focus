@@ -840,6 +840,9 @@ async function handleMessage(msg) {
     case 'SET_MODE': {
       await chrome.alarms.clear(ALARM_NAME);
       const duration = modeDurationMs(msg.mode, state.settings);
+      // NOTE: Intentionally NOT resetting sessionInCurrentRound/activeTaskSessionInCurrentRound.
+      // This supports break-skipping: users can jump from break to focus without resetting
+      // the round counter. The next focus will correctly count as the next pomo in the round.
       await saveState({
         mode: msg.mode,
         isActive: false,
