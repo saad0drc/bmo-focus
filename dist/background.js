@@ -77,9 +77,12 @@ function buildNotification(completedMode, nextMode, sessionInRound, sessionsPerR
   if (completedMode === 'focus') {
     // Use task-specific sessionsPerRound if available (for mission notifications)
     const effectiveSessionsPerRound = taskSessionsPerRound || sessionsPerRound;
-    const isRoundComplete = sessionInRound === 0;
-    const displaySessionNumber = sessionInRound || effectiveSessionsPerRound;
-    const remaining = isRoundComplete ? 0 : effectiveSessionsPerRound - sessionInRound;
+    // Round is complete if nextMode is longBreak (the actual indicator of round completion)
+    const isRoundComplete = nextMode === 'longBreak';
+    // Current session number (for display): sessionInRound is 0-indexed, so add 1
+    const displaySessionNumber = sessionInRound + 1;
+    // Remaining sessions: how many more until long break
+    const remaining = isRoundComplete ? 0 : effectiveSessionsPerRound - displaySessionNumber;
 
     // Round complete → long break
     if (isRoundComplete) {
