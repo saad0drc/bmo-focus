@@ -207,7 +207,14 @@ export function useTasks() {
         if (t.id !== id) return t;
         const nowCompleted = !t.completed;
         if (!t.repeatDaily) {
-          return { ...t, completed: nowCompleted, lastCompletedDate: nowCompleted ? today : t.lastCompletedDate };
+          return { 
+            ...t, 
+            completed: nowCompleted, 
+            lastCompletedDate: nowCompleted ? today : t.lastCompletedDate,
+            // When un-completing, reset pomodoro progress so user can try again
+            completedPomodoros: nowCompleted ? t.completedPomodoros : 0,
+            sessionInCurrentRound: nowCompleted ? t.sessionInCurrentRound : 0,
+          };
         }
         // Daily mission: track streak
         if (nowCompleted) {
@@ -218,11 +225,13 @@ export function useTasks() {
             dailyStreak: (t.dailyStreak ?? 0) + 1,
           };
         } else {
-          // Un-completing: only roll back streak if it was completed today
+          // Un-completing: reset pomodoro progress and roll back streak if needed
           const wasToday = t.lastCompletedDate === today;
           return {
             ...t,
             completed: false,
+            completedPomodoros: 0,
+            sessionInCurrentRound: 0,
             dailyStreak: wasToday ? Math.max(0, (t.dailyStreak ?? 1) - 1) : (t.dailyStreak ?? 0),
           };
         }
