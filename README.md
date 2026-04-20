@@ -12,6 +12,7 @@ A beautiful **Pomodoro focus timer and task manager** that replaces your Chrome 
 
 Quick links to navigate this guide:
 
+- [📷 Showcase](#-showcase)
 - [🤖 What is BMO?](#-what-is-bmo)
 - [✨ Features](#-features)
   - [🍅 Pomodoro Timer](#-pomodoro-timer-with-three-modes)
@@ -41,6 +42,12 @@ Quick links to navigate this guide:
 - [🐛 Troubleshooting](#-troubleshooting)
 - [📄 License](#-license)
 - [🙏 Credits](#-credits)
+
+---
+
+## 📷 Showcase
+
+![BMO Focus UI](./bmo.png)
 
 ---
 
