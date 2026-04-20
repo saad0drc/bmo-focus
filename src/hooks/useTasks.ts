@@ -195,7 +195,26 @@ export function useTasks() {
 
   const updateTask = useCallback(
     (id: string, updates: Partial<Task>) => {
-      save(tasks.map(t => (t.id === id ? { ...t, ...updates } : t)));
+      save(tasks.map(t => {
+        if (t.id !== id) return t;
+        
+        // If sessionsPerRound changed and task was completed, auto-uncomplete it
+        // This allows users to edit the target and continue working
+        const sessionsPerRoundChanged = updates.settings?.sessionsPerRound !== undefined && 
+                                       updates.settings.sessionsPerRound !== t.settings.sessionsPerRound;
+        const shouldAutoUncomplete = sessionsPerRoundChanged && t.completed;
+        
+        if (shouldAutoUncomplete) {
+          console.log(`[Tasks] Auto-uncompleting task "${t.title}" because sessionsPerRound changed`);
+          return { 
+            ...t, 
+            ...updates,
+            completed: false, // Auto-uncomplete so user can continue with new target
+          };
+        }
+        
+        return { ...t, ...updates };
+      }));
     },
     [tasks, save],
   );
@@ -207,14 +226,7 @@ export function useTasks() {
         if (t.id !== id) return t;
         const nowCompleted = !t.completed;
         if (!t.repeatDaily) {
-          return { 
-            ...t, 
-            completed: nowCompleted, 
-            lastCompletedDate: nowCompleted ? today : t.lastCompletedDate,
-            // When un-completing, reset pomodoro progress so user can try again
-            completedPomodoros: nowCompleted ? t.completedPomodoros : 0,
-            sessionInCurrentRound: nowCompleted ? t.sessionInCurrentRound : 0,
-          };
+          return { ...t, completed: nowCompleted, lastCompletedDate: nowCompleted ? today : t.lastCompletedDate };
         }
         // Daily mission: track streak
         if (nowCompleted) {
@@ -225,13 +237,11 @@ export function useTasks() {
             dailyStreak: (t.dailyStreak ?? 0) + 1,
           };
         } else {
-          // Un-completing: reset pomodoro progress and roll back streak if needed
+          // Un-completing: only roll back streak if it was completed today
           const wasToday = t.lastCompletedDate === today;
           return {
             ...t,
             completed: false,
-            completedPomodoros: 0,
-            sessionInCurrentRound: 0,
             dailyStreak: wasToday ? Math.max(0, (t.dailyStreak ?? 1) - 1) : (t.dailyStreak ?? 0),
           };
         }
