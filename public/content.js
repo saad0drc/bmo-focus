@@ -41,10 +41,12 @@ function extractAndPreallowLinks() {
       
       chrome.storage.session.set({
         [`preallowed_from_${currentHostname}`]: preallowedData
-      }).then(() => {
-        console.log('[Content] ✅ Pre-allowed destinations stored:', Array.from(destinations));
-      }).catch(err => {
-        console.log('[Content] ❌ Pre-allow storage write failed:', err);
+      }, () => {
+        if (chrome.runtime.lastError) {
+          console.log('[Content] ❌ Pre-allow storage write failed:', chrome.runtime.lastError);
+        } else {
+          console.log('[Content] ✅ Pre-allowed destinations stored:', Array.from(destinations));
+        }
       });
     }
   } catch (e) {
@@ -104,10 +106,12 @@ const clickHandler = (e) => {
     
     chrome.storage.session.set({ 
       [`lastLinkClick_${targetHostname}`]: clickData 
-    }).then(() => {
-      console.log('[Content] ✅ Storage write successful');
-    }).catch(err => {
-      console.log('[Content] ❌ Storage write failed:', err);
+    }, () => {
+      if (chrome.runtime.lastError) {
+        console.log('[Content] ❌ Storage write failed:', chrome.runtime.lastError);
+      } else {
+        console.log('[Content] ✅ Storage write successful');
+      }
     });
     
   } catch (e) {
@@ -117,6 +121,10 @@ const clickHandler = (e) => {
 
 document.addEventListener('click', clickHandler, true);
 window.addEventListener('click', clickHandler, true);
-document.body.addEventListener('click', clickHandler, true);
+
+// Only attach to body if it exists (defensive check to avoid null errors)
+if (document.body) {
+  document.body.addEventListener('click', clickHandler, true);
+}
 
 console.log('[Content] ✅ All listeners attached');

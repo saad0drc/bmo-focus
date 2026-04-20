@@ -53,8 +53,14 @@ function modeDurationMs(mode, settings) {
 }
 
 function getNextMode(completedMode, sessionInRound, sessionsPerRound) {
-  if (completedMode !== 'focus') return 'focus';
-  // Calculate next session position: (current + 1) % sessionsPerRound
+  // After short break: advance to focus
+  if (completedMode === 'shortBreak') return 'focus';
+  
+  // After long break: STOP (don't auto-advance)
+  // User must manually start next round
+  if (completedMode === 'longBreak') return 'longBreak'; // Placeholder, won't actually auto-start
+  
+  // completedMode === 'focus': calculate next break type
   const nextSessionInRound = (sessionInRound + 1) % sessionsPerRound;
   // Long break if next position is 0 (we're at the end of the round)
   return nextSessionInRound === 0 ? 'longBreak' : 'shortBreak';
