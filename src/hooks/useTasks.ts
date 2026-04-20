@@ -198,20 +198,25 @@ export function useTasks() {
       save(tasks.map(t => {
         if (t.id !== id) return t;
         
-        // If sessionsPerRound changed and task was completed, auto-uncomplete it
-        // This allows users to edit the target and continue working
-        const sessionsPerRoundChanged = updates.settings?.sessionsPerRound !== undefined && 
-                                       updates.settings.sessionsPerRound !== t.settings.sessionsPerRound;
-        const shouldAutoUncomplete = sessionsPerRoundChanged && t.completed;
+        // If sessionsPerRound changed and task was completed, handle it carefully
+        const oldRounds = t.settings.sessionsPerRound;
+        const newRounds = updates.settings?.sessionsPerRound;
+        const sessionsPerRoundChanged = newRounds !== undefined && newRounds !== oldRounds;
+        const taskWasCompleted = t.completed;
         
-        if (shouldAutoUncomplete) {
-          console.log(`[Tasks] Auto-uncompleting task "${t.title}" because sessionsPerRound changed from ${t.settings.sessionsPerRound} to ${updates.settings.sessionsPerRound}`);
+        if (sessionsPerRoundChanged && taskWasCompleted) {
+          const completed = t.completedPomodoros ?? 0;
+          
+          // If new target is HIGHER (6→7): keep position, just uncomplete so they can add more
+          // If new target is LOWER (7→6): reset position to 0 since old positions don't apply
+          const shouldResetPosition = newRounds < completed;
+          
+          console.log(`[Tasks] Auto-uncompleting task "${t.title}" because sessionsPerRound changed from ${oldRounds} to ${newRounds} (resetPos=${shouldResetPosition})`);
           return { 
             ...t, 
             ...updates,
             completed: false, // Auto-uncomplete so user can continue with new target
-            // Also reset sessionInCurrentRound to 0 to avoid stale position in break logic
-            sessionInCurrentRound: 0,
+            sessionInCurrentRound: shouldResetPosition ? 0 : t.sessionInCurrentRound, // Keep position if expanding, reset if shrinking
           };
         }
         
