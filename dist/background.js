@@ -52,7 +52,7 @@ function modeDurationMs(mode, settings) {
   return mins * 60 * 1000;
 }
 
-function getNextMode(completedMode, sessionInRound, sessionsPerRound) {
+function getNextMode(completedMode, sessionInRound, sessionsPerRound, completedCount) {
   // After short break: advance to focus
   if (completedMode === 'shortBreak') return 'focus';
   
@@ -60,9 +60,16 @@ function getNextMode(completedMode, sessionInRound, sessionsPerRound) {
   // User must manually start next round
   if (completedMode === 'longBreak') return 'longBreak'; // Placeholder, won't actually auto-start
   
-  // completedMode === 'focus': calculate next break type
+  // completedMode === 'focus': check if THIS session is the last
+  // For task mode with completedCount: the alarm fires AFTER session completes, 
+  // so completedCount is already incremented. Check if it meets or exceeds target.
+  if (completedCount !== undefined) {
+    return completedCount >= sessionsPerRound ? 'longBreak' : 'shortBreak';
+  }
+  
+  // Fallback: use sessionInRound (for global sessions)
+  // This calculates if the NEXT position wraps to 0
   const nextSessionInRound = (sessionInRound + 1) % sessionsPerRound;
-  // Long break if next position is 0 (we're at the end of the round)
   return nextSessionInRound === 0 ? 'longBreak' : 'shortBreak';
 }
 
@@ -215,6 +222,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   // Fetch active task's settings and session info from storage if available
   let activeTaskSessionsPerRound = undefined;
   let activeTaskSessionInCurrentRound = undefined;
+  let activeTaskCompletedPomodoros = undefined;
   try {
     const { bmo_activeTaskId, bmo_tasks } = await chrome.storage.local.get(['bmo_activeTaskId', 'bmo_tasks']);
     if (bmo_activeTaskId && bmo_tasks) {
@@ -223,7 +231,8 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
       if (activeTask?.settings?.sessionsPerRound) {
         activeTaskSessionsPerRound = activeTask.settings.sessionsPerRound;
         activeTaskSessionInCurrentRound = activeTask.sessionInCurrentRound ?? 0;
-        console.log('[Alarm] Active task found:', activeTask.title, 'sessionsPerRound:', activeTaskSessionsPerRound, 'sessionInCurrentRound:', activeTaskSessionInCurrentRound);
+        activeTaskCompletedPomodoros = activeTask.completedPomodoros ?? 0;
+        console.log('[Alarm] Active task found:', activeTask.title, 'completed:', activeTaskCompletedPomodoros, '/', activeTaskSessionsPerRound, 'sessionInCurrentRound:', activeTaskSessionInCurrentRound);
       }
     }
   } catch (e) {
@@ -240,13 +249,15 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   const effectiveSessionsPerRound = isTaskMode 
     ? activeTaskSessionsPerRound 
     : sessionsPerRound;
+  // For task mode, use actual completedPomodoros count for break decision (more reliable than sessionInRound)
+  const completedCountForBreakDecision = isTaskMode ? activeTaskCompletedPomodoros : undefined;
 
   // Calculate next session position
   const newSessionInRound = completedMode === 'focus' 
     ? (currentSessionInRound + 1) % effectiveSessionsPerRound 
     : currentSessionInRound;
 
-  const nextMode = getNextMode(completedMode, currentSessionInRound, effectiveSessionsPerRound);
+  const nextMode = getNextMode(completedMode, currentSessionInRound, effectiveSessionsPerRound, completedCountForBreakDecision);
   const nextDurationMs = modeDurationMs(nextMode, state.settings);
 
   // Update state: track sessions both globally and per-task
