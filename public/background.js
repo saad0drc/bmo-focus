@@ -61,19 +61,16 @@ function getNextMode(completedMode, sessionInRound, sessionsPerRound, completedC
   if (completedMode === 'longBreak') return 'longBreak'; // Placeholder, won't actually auto-start
   
   // completedMode === 'focus': check if THIS session is the last
-  // Primary: use completedCount if available (most reliable, actual source of truth)
-  if (completedCount !== undefined && completedCount > 0) {
-    const isLast = completedCount >= sessionsPerRound;
-    if (isLast) return 'longBreak';
-  }
+  // We just completed a focus session, so the NEXT sessionInRound would be (sessionInRound + 1)
+  // If THAT next position hits the end, then THIS session was the last one
   
-  // Fallback/Defensive: if sessionInRound is at the end position, it's definitely the last session
-  // This handles edge cases where completedCount might be slightly stale due to async storage sync
-  if (sessionInRound === sessionsPerRound - 1) {
+  const nextSessionInRound = (sessionInRound + 1) % sessionsPerRound;
+  const isLastSession = nextSessionInRound === 0;
+  
+  if (isLastSession) {
     return 'longBreak';
   }
   
-  // Otherwise: short break
   return 'shortBreak';
 }
 
@@ -253,20 +250,17 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   const effectiveSessionsPerRound = isTaskMode 
     ? activeTaskSessionsPerRound 
     : sessionsPerRound;
-  // For task mode, use actual completedPomodoros count for break decision (more reliable than sessionInRound)
-  const completedCountForBreakDecision = isTaskMode ? activeTaskCompletedPomodoros : undefined;
 
   // Calculate next session position
   const newSessionInRound = completedMode === 'focus' 
     ? (currentSessionInRound + 1) % effectiveSessionsPerRound 
     : currentSessionInRound;
 
-  const nextMode = getNextMode(completedMode, currentSessionInRound, effectiveSessionsPerRound, completedCountForBreakDecision);
+  const nextMode = getNextMode(completedMode, currentSessionInRound, effectiveSessionsPerRound);
   console.log('[Alarm] Break decision:', {
     completedMode,
     currentSessionInRound,
     effectiveSessionsPerRound,
-    completedCountForBreakDecision,
     nextMode,
     isTaskMode,
   });
@@ -300,9 +294,9 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
       const { title, message } = buildNotification(
         completedMode, 
         nextMode, 
-        newSessionInRound,
+        currentSessionInRound,  // Use the ACTUAL current session in round (not newSessionInRound which is for storage)
         effectiveSessionsPerRound, 
-        state.activeTaskSessionsPerRound
+        activeTaskSessionsPerRound  // Use ACTUAL active task's rounds (not state.activeTaskSessionsPerRound which is stale)
       );
       chrome.notifications.create(ALARM_NAME, {
         type: 'basic',
